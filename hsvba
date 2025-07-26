@@ -1530,11 +1530,10 @@ function \
 stream__read_guid_string( \
     stream, \
     \
-    _it, _i, _o, _s \
+    _it, _i, _o \
 ) {
 
     _it = stream[__stream__M_iit];
-    _s = "";
 
     for (_i = 1; _i <= 4; ++_i) {
         _o = _o str__hex[stream[++_it]];
@@ -9579,13 +9578,12 @@ __acp__decode_charmap( \
     map, base64str, \
     \
     _iit, _size, \
-    _o, _c, _i, _cl, _cr, _tmp, _buf \
+    _c, _i, _cl, _cr, _tmp, _buf \
 ) {
     split(base64str, _buf, "");
     _size = length(base64str);
     _iit = 0;
     _i = 0;
-    _o = "";
     _tmp = "";
 
     while (1) {
@@ -18563,7 +18561,7 @@ function \
 pcode__disasm_name( \
     pcode, stream, store, offset, optype, opcode, \
     \
-    _v, _op_type, _idt_offset, \
+    _op_type, _idt_offset, \
    _jmp_buf_op, _str_type, _var_name, _var_types \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
@@ -18576,7 +18574,7 @@ pcode__disasm_name( \
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, _idt_offset + 4 + offset);
 
-    _v = _var_name = pcode__getid(pcode, store, offset);
+    _var_name = pcode__getid(pcode, store, offset);
     stream__longjmp(stream, _jmp_buf_op);
 
     if (_op_type < 13) {
