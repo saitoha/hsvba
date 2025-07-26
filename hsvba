@@ -941,7 +941,7 @@ stream__rsearch( \
     stream, word, \
     \
     _i, _buf, _len, _c, \
-    _it, _it_end, _w \
+    _it, _it_end \
 ) {
     _len = length(word);
     for (_i = 1; _i <= _len; ++_i) {
@@ -992,7 +992,7 @@ function \
 stream__read_bits( \
     stream, n, \
     \
-    _it, _it_bits, _bytes, _bits, _p, _bitsbuf \
+    _it, _it_bits, _bits, _p, _bitsbuf \
 ) {
     _it = stream[__stream__M_iit];
     _it_bits = _bits = stream[__stream__M_ibit];
@@ -2021,7 +2021,7 @@ stream__lz77_copy( \
 # }}}
 # {{{ stream::decode_huffman
 function \
-stream__decode_huffman(stream, huffman_table,    _p, _c, _l) {
+stream__decode_huffman(stream, huffman_table,    _p, _l) {
 
     _l = 0;
     _p = 1;
@@ -2372,7 +2372,7 @@ function vector__new(size,    _p) {
 }
 # }}}
 # {{{ vector::index
-function vector__index(p, n,    _size, _p) {
+function vector__index(p, n,    _size) {
     _size = addr__deref(p);
     if (addr__errno < 0) {
         return (-1);
@@ -2529,7 +2529,7 @@ function list__clone(p,    _p) {
 }
 # }}}
 # {{{ (private)::list::clone_impl
-function __list__clone_impl(p,    _p, _v, _left, _right) {
+function __list__clone_impl(p,    _p, _v) {
     _v = addr__deref(p);
     if (addr__errno < 0) {
         return addr__C_NIL;
@@ -4017,7 +4017,7 @@ function __map__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _map,
 #
 # {{{ atom::init
 function \
-atom__init(    _i, _s, _status) {
+atom__init(    _status) {
 
     if (__atom__init_guard) {
         return (1);
@@ -4315,7 +4315,7 @@ function \
 atom__tostring( \
     t, v, \
     \
-    _fmt, _pos, _status, _key, _offset, _v \
+    _pos, _status, _key, _offset \
 ) {
     if (_pos = index(t, ",")) {
         t = substr(t, 1, _pos - 1);
@@ -4351,7 +4351,7 @@ function \
 atom__validate( \
     t, v, valid_arg, \
     \
-    _type, _validations, _arg1, _strval, _regexp, _range \
+    _type, _arg1, _strval, _regexp, _range \
 ) {
     _type = t;
     while (index(_type, ",")) {
@@ -4715,9 +4715,9 @@ __atom__parse( \
     definition, tokens, \
     \
     _status, _i, _count, \
-    _token, _piece, _parser_status, _stack, _word, _attr, \
+    _token, _parser_status, _stack, \
     _atomname, _params, _params_map, _baseparams, \
-    _n_params, _v, _type, _attrid, _size, _tag, _lhs, _rhs, \
+    _n_params, _v, _type, _attrid, _tag, _lhs, _rhs, \
     _priority_lhs, _priority_rhs, _nested, _n \
 ) {
     __atom__S_pst_sp = 0;
@@ -5610,7 +5610,7 @@ function \
 __atom__instantiate( \
     atomname, \
     \
-    _i, _n, _type, _pos, _next, \
+    _type, _pos, _next, \
     _lhs, _rhs, _v, _params, \
     _size, _sizeunit, _encoding, _base \
 ) {
@@ -5752,7 +5752,7 @@ function \
 __atom__eval( \
     cell, params, \
     \
-    _tag, _lhs, _rhs, _v, _status, _addr \
+    _tag, _lhs, _rhs, _v \
 ) {
     atom__errno = 0;
     if (! cell) {
@@ -5896,7 +5896,7 @@ __atom__eval( \
 #
 # {{{ astore::init
 function \
-astore__init(    _i, _status) {
+astore__init(    _status) {
 
     if (__astore__init_guard) {
         return (1);
@@ -6924,7 +6924,7 @@ function \
 astore__new( \
     store, key, \
     \
-    _arr, _agg, _base \
+    _base \
 ) {
     #=# '${__pp_debug_assert:+"$(cut -d\# -f3-<<<'
     #=#     ASSERT(index(key, "/") == 1);
@@ -6965,7 +6965,7 @@ function \
 astore__set( \
     store, key, val, valid_arg, \
     \
-    _base, _path, _branch, \
+    _base, _path, \
     _leaf, _dir, _type, _target, \
     _ret, _dir_index_path, _branch_index_path, \
     _pos, _t \
@@ -8527,7 +8527,7 @@ function \
 struct__type__init( \
     type, \
     \
-    _status, _tokens \
+    _status \
 ) {
     if (__struct__type__init_guard) {
         return (1);
@@ -8585,7 +8585,7 @@ struct__type__init( \
 #    +-----------------+
 #
 function \
-struct__type__new(    _p, _type, _v) {
+struct__type__new(    _type, _v) {
 
     _type = addr__malloc(6);
     if (addr__errno < 0) {
@@ -8748,7 +8748,7 @@ function \
 struct__member__init( \
     type, \
     \
-    _status, _tokens \
+    _status \
 ) {
     if (__struct__member__init_guard) {
         return (1);
@@ -8777,7 +8777,7 @@ struct__member__init( \
 # {{{ struct::member::new
 #
 function \
-struct__member__new(     _p, _member, _v) {
+struct__member__new(     _member) {
 
     _member = addr__malloc(5);
     if (addr__errno < 0) {
@@ -8811,9 +8811,9 @@ struct__unpack( \
     stream, store, def, vars, \
     \
     _pos, _typename, _store, _v, _i, _j, _k, _n, _c, \
-    _key, _option_key, _args, _argkey, _argval, _expr, _t, \
+    _key, _option_key, _argkey, _argval, _expr, \
     _stream_pos, _stream_pos_base, _align_offset, _is_array, \
-    _count, _status, _encoding, _stem, _params \
+    _count, _status, _encoding \
 ) {
     # op_expansion
     # replace variables such as $... to a immediate value
@@ -15944,9 +15944,8 @@ function \
 __zlib__inflate__build_huffman_dictionary( \
     stream, code_lengths, huffman_table, \
     \
-    _i, _length, _bl_count, _code, _bits, \
-    _n, _min_bits, _max_bits, _max_code, _next_code, \
-    _num_codes, _value \
+    _length, _bl_count, _code, _bits, \
+    _n, _min_bits, _max_bits, _max_code, _next_code \
 ) {
     # '${__pp_comment:+'
     #
@@ -16262,7 +16261,7 @@ zip__unpack_directories( \
     stream, store, \
     \
     _store, _count, _status, _offset, _i, \
-    _file_name, _v \
+    _file_name \
 ) {
     if (stream__rsearch(stream, "PK\005\006") < 0) {
         E__message = "Zip: cannot find the end of central directory"
@@ -18201,7 +18200,7 @@ function \
 pcode__get_typename( \
     pcode, id, \
     \
-    _builtin_types, _type_name, _flags \
+    _type_name, _flags \
 ) {
     _flags = num__and(id, 224);
     id = num__and(id, 31);
@@ -18221,7 +18220,7 @@ function \
 pcode__disasm_imp( \
     pcode, stream, store, word, optype, opcode, \
     \
-    _v, _i, \
+    _v, \
     _jmp_buf_op \
 ) {
     if (opcode == __pcode__C_op_Open) {
@@ -18244,7 +18243,7 @@ function \
 pcode__disasm_name( \
     pcode, stream, store, offset, optype, opcode, \
     \
-    _v, _i, _store, _op_type, _idt_offset, \
+    _v, _op_type, _idt_offset, \
    _jmp_buf_op \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
@@ -18293,7 +18292,7 @@ function \
 pcode__disasm_var( \
     pcode, stream, store, dword, optype, opcode, \
     \
-    _v, _i, _store, _jmp_buf_op, _text \
+    _v, _jmp_buf_op, _text \
 ) {
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, pcode__get_idt_offset(pcode) + 4 + dword);
@@ -18976,7 +18975,7 @@ function \
 cfb__unpack_stream( \
     istream, store, path, ostream, \
     \
-    _i, _start_secno, _sector_no, _sector_size, \
+    _start_secno, _sector_no, _sector_size, \
     _mini_secsize, _mini_secno, _mini_stream_cutoff_size, \
     _body_offset, _stream_size, _minifat_per_fat, _id \
 ) {
@@ -19088,7 +19087,7 @@ function \
 __cfb__unpack_header( \
     stream, store, \
     \
-    _store, _difats_store, _i, _v \
+    _store, _i, _v \
 ) {
     astore__fork(store, "Header", _store);
 
@@ -19355,7 +19354,7 @@ __cfb__build_fat_chain( \
     stream, store, \
     \
     _difat, _sector_size, _sizeof_sector_no, \
-    _i, _sector_no, _v, _j, _n \
+    _i, _v, _j, _n \
 ) {
     _sector_size = num__lshift(1, astore__get(store, "Header/Sector Shift"));
     _sizeof_sector_no = 4;
@@ -19464,7 +19463,7 @@ function \
 __cfb__build_minifat_chain( \
     stream, store, \
     \
-    _difat, _sector_size, _sizeof_long, _sector_no, \
+    _sector_size, _sector_no, \
     _i, _j, _minifat_sectno, _v, _n, _minifat_per_fat \
 ) {
     _sector_size = num__lshift(1, astore__get(store, "Header/Sector Shift"));
@@ -19751,7 +19750,7 @@ function \
 vba__lz77__unpack( \
     istream, store, ostream, \
     \
-    _v, _chunk_header, _chunk_size, _chunk_flag, _store, _i \
+    _v, _store, _i \
 ) {
     # SignatureByte (1 byte)
     _v = stream__read_uint8(istream);
@@ -20324,7 +20323,7 @@ function \
 __vba__dirstream__unpack_project_information_syskind( \
     stream, store, \
     \
-    _v, _size \
+    _v \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -21012,7 +21011,7 @@ function \
 __vba__dirstream__unpack_project_information_constants( \
     stream, store, \
     \
-    _v, _size \
+    _v \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -21111,7 +21110,7 @@ function \
 __vba__dirstream__unpack_project_references_reference( \
     stream, store, \
     \
-    _i, _id, _r \
+    _id, _r \
 ) {
 
     _r = __vba__dirstream__unpack_project_references_reference_name(stream, store);
@@ -21444,7 +21443,7 @@ function \
 __vba__dirstream__unpack_project_references_reference_registered( \
     stream, store, \
     \
-    _v, _size, _cbsize, _left \
+    _v, _cbsize, _left \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -21711,7 +21710,7 @@ function \
 __vba__dirstream__unpack_project_modules_cookie( \
     stream, store, \
     \
-    _v, _id, _size \
+    _v, _id \
 ) {
     # Id (2 bytes)
     _v = _id = stream__read_uint16(stream);
@@ -21792,7 +21791,7 @@ function \
 __vba__dirstream__unpack_project_modules_module( \
     stream, store, \
     \
-    _id, _r, _store \
+    _r, _store \
 ) {
     # NameRecord (variable)
     astore__fork(store, "NameRecord", _store);
@@ -22480,7 +22479,7 @@ function \
 __vba__projectstream__unpack_projectproperties( \
     stream, store, \
     \
-    _v, _r, _store, _i \
+    _r, _store, _i \
 ) {
     if (stream__read_ansi_string(stream, (-1), stream__C_NWLN) == (-1)) {
         return vba__projectstream__E_FAIL;
@@ -22618,7 +22617,7 @@ function \
 __vba__projectstream__unpack_projectitem( \
     stream, store, \
     \
-    _v \
+    \
 ) {
     _r = __vba__projectstream__unpack_projectmodule(stream, store);
     if (_r != vba__projectstream__S_FALSE) {
@@ -22688,7 +22687,7 @@ function \
 __vba__projectstream__unpack_projectmodule( \
     stream, store, \
     \
-    _v \
+    \
 ) {
     # ProjectDocModule
     _r = __vba__projectstream__unpack_projectdocmodule(stream, store);
@@ -23453,7 +23452,7 @@ function \
 __vba__projectstream__unpack_hostextenders( \
     stream, store, \
     \
-    _v, _r, _store, _i, _len \
+    _v, _store, _i, _len \
 ) {
     if (stream__read_ansi_string(stream, (-1), stream__C_NWLN) == (-1)) {
         return vba__projectstream__E_FAIL;
@@ -23612,7 +23611,7 @@ function \
 __vba__projectstream__unpack_projectwindowrecord( \
     stream, store, \
     \
-    _v, _r, _len, _store \
+    _v, _len, _store \
 ) {
     _v = stream__currentline(stream);
     if (! match(_v, /^[^=]+=/)) {
@@ -23754,8 +23753,8 @@ vba__projectstream__unpack_encrypteddata( \
     \
     _v, _seed, _versionenc, _projkeyenc, _projkey, \
     _unencrypted_byte1, _encrypted_byte1, _encrypted_byte2, \
-    _byte_index, _temp_value, _data_length_enc, _byte, _byte_enc, \
-    _length, _data \
+    _byte_index, _temp_value, _byte, _byte_enc, \
+    _length \
 ) {
     # Seed (1 byte)
     _v = _seed = stream__read_uint8(stream);
@@ -24062,7 +24061,7 @@ function \
 vba__projectstream__unpack_passwordhashdata_decodenulls( \
     stream, store, ostream, \
     \
-    _v, _r, _grbithashnull, _i \
+    _v, _grbithashnull, _i \
 ) {
     stream__new(ostream);
 
@@ -24119,7 +24118,7 @@ function \
 vba__vbaprojectstream__unpack( \
     stream, store, \
     \
-    _r, _v, _stream, _path \
+    _r, _stream, _path \
 ) {
     _path = astore__get(store, "/@VBA Root Directory") "/" \
             astore__get(store, "/@VBA Directory") "/_VBA_PROJECT";
@@ -24286,7 +24285,6 @@ __vba__vbaprojectstream__unpack_cache( \
     stream, store, \
     \
     _r, _v, _i, _store, \
-    _length, _type, _is_kwd, \
     _base_id, _count_of_all_ids, \
     _count_of_junk_ids, _count_of_ids \
 ) {
@@ -25215,7 +25213,7 @@ vba__modulestream__unpack( \
     stream, \
     \
     _stream_name, _offset, \
-    _entry_no, _content, \
+    _entry_no, \
     _store, _path, _r, _src, \
     _istream, _ostream, _store_p, _vbaroot, _vba \
 ) {
@@ -25291,11 +25289,10 @@ function \
 vba__modulestream__unpack_pcode( \
     stream, store, \
     \
-    _v, _i, _r, _syskind, _vba_version, _length, \
-    _declaration_tbl_size, _idt_offset, _opcount, \
-    _object_table_start, _object_table_size, \
-    _offset, _num_lines,_pcode_start, _store, \
-    _store_op, _code, _jmp_buf_line, _pos \
+    _v, _i, _length, \
+    _opcount, \
+    _offset, _num_lines, _store, \
+    _store_op, _jmp_buf_line, _pos \
 ) {
     # Magic (2 bytes)
     _v = stream__read_uint16(stream);
@@ -25848,7 +25845,7 @@ function \
 __forms20__unpack_compobjstream( \
     stream, store, path, \
     \
-    _store, _v, _r, _title \
+    _store, _v, _r \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
@@ -26028,7 +26025,7 @@ function \
 __forms20__unpack_compobjstream_clipboardformatoransistring( \
     stream, store, path, \
     \
-    _store, _v, _r \
+    _v \
 ) {
     # '${__pp_comment:+'
     #
@@ -26108,7 +26105,7 @@ function \
 __forms20__unpack_compobjstream_compobjheader( \
     stream, store, path, \
     \
-    _store, _v, _r \
+    _v \
 ) {
     # Reserved1 (4 bytes)
     _v = stream__read_uint32(stream);
@@ -26153,7 +26150,7 @@ function \
 __forms20__unpack_compobjstream_lengthprefixedansistring( \
     stream, store, path, maxsize, \
     \
-    _store, _v, _r \
+    _v \
 ) {
     # Length (4 bytes)
     #
@@ -26210,7 +26207,7 @@ function \
 __forms20__unpack_compobjstream_lengthprefixedunicodestring( \
     stream, store, path, \
     \
-    _store, _v, _r, _maxsize \
+    _v, _maxsize \
 ) {
     # Length (4 bytes)
     #
@@ -26248,9 +26245,7 @@ __forms20__unpack_compobjstream_lengthprefixedunicodestring( \
 # {{{ [MS-OFORMS] 2.1.2.3 MultiPage Control Structure
 function \
 forms20__unpack_pagecontrolstructure( \
-    stream, store, path, \
-    \
-    _store, _v, _r \
+    stream, store, path \
 ) {
     return forms20__S_OK;
 }
@@ -26425,7 +26420,7 @@ function \
 forms20__unpack_formstream( \
     stream, store, path, \
     \
-    _v, _r, _stream, _store \
+    _r, _stream, _store \
 ) {
     astore__new(_store, "/Forms" path);
 
@@ -26463,7 +26458,7 @@ function \
 forms20__unpack_objectstream( \
     stream, store, path, \
     \
-    _v, _r, _i, _stream, _store, _entry, _size, \
+    _v, _r, _i, _stream, _store, _size, \
     _count, _index, _store_f, _remain \
 ) {
     astore__new(_store_f, "/Forms" path "/../f");
@@ -26725,7 +26720,7 @@ function \
 forms20__unpack_commandbuttondatablock( \
     stream, store, \
     \
-    _v, _store, _r, _padding \
+    _v, _store, _r \
 ) {
     stream__set_align_base(stream);
 
@@ -26939,7 +26934,7 @@ function \
 forms20__unpack_commandbuttonextradatablock( \
     stream, store, \
     \
-    _v, _store, _r, _size, _compressed \
+    _store, _r, _size, _compressed \
 ) {
     # Caption (variable bytes)
     if (astore__get(store, "../PropMask/fCaption")) {
@@ -27035,7 +27030,7 @@ function \
 forms20__unpack_commandbuttonstreamdata( \
     stream, store, \
     \
-    _v, _store, _r \
+    _store, _r \
 ) {
     # Picture (variable)
     if (astore__get(store, "../PropMask/fPicture")) {
@@ -27317,7 +27312,7 @@ function \
 forms20__unpack_labeldatablock( \
     stream, store, \
     \
-    _v, _store, _r, _padding \
+    _v, _store, _r \
 ) {
     stream__set_align_base(stream);
 
@@ -27567,7 +27562,7 @@ function \
 forms20__unpack_labelextradatablock( \
     stream, store, \
     \
-    _v, _store, _r, _size, _compressed \
+    _store, _r, _size, _compressed \
 ) {
     # Caption (variable bytes)
     if (astore__get(store, "../PropMask/fCaption")) {
@@ -27663,7 +27658,7 @@ function \
 forms20__unpack_labelstreamdata( \
     stream, store, \
     \
-    _v, _store, _r \
+    _store, _r \
 ) {
     # Picture (variable)
     if (astore__get(store, "../PropMask/fPicture")) {
@@ -28068,7 +28063,7 @@ function \
 forms20__unpack_formdatablock( \
     stream, store, \
     \
-    _v, _store, _r, _padding \
+    _v, _store, _r \
 ) {
     stream__set_align_base(stream);
 
@@ -28465,7 +28460,7 @@ function \
 forms20__unpack_formextradatablock( \
     stream, store, \
     \
-    _v, _store, _r, _size, _compressed \
+    _store, _r, _size, _compressed \
 ) {
     # DisplayedSize (8 bytes)
     if (astore__get(store, "../PropMask/fDisplayedSize")) {
@@ -28581,7 +28576,7 @@ function \
 forms20__unpack_formstreamdata( \
     stream, store, \
     \
-    _v, _store, _r \
+    _store, _r \
 ) {
     # MouseIcon (variable)
     if (astore__get(store, "../PropMask/fMouseIcon")) {
@@ -28832,7 +28827,7 @@ function \
 forms20__unpack_formdesignexdata( \
     stream, store, \
     \
-    _v, _store, _r \
+    _store, _r \
 ) {
     if (astore__get(store, "../DataBlock/BooleanProperties/FORM_FLAG_DESINKPERSISTED")) {
         #
@@ -28884,7 +28879,7 @@ function \
 forms20__unpack_siteclassinfo( \
     stream, store, \
     \
-    _v, _store, _size \
+    _v, _store \
 ) {
     # Version (2 bytes)
     _v = stream__read_uint16(stream);
@@ -29078,7 +29073,7 @@ function \
 forms20__unpack_classinfodatablock( \
     stream, store, \
     \
-    _v, _store, _size \
+    _v, _store \
 ) {
     stream__set_align_base(stream);
 
@@ -29287,7 +29282,7 @@ function \
 forms20__unpack_classinfoextradatablock( \
     stream, store, \
     \
-    _v, _size \
+    _v \
 ) {
     if (astore__get(store, "../PropMask/fClsID")) {
         # ClsID (16 bytes)
@@ -29652,7 +29647,7 @@ function \
 forms20__unpack_sitepropmask( \
     stream, store, \
     \
-    _v, _store \
+    _v \
 ) {
     # A - fName (1 bit)
     #   -> DataBlock.NameData
@@ -30017,7 +30012,7 @@ function \
 forms20__unpack_siteextradatablock( \
     stream, store, \
     \
-    _v, _store, _size, _compressed \
+    _store, _size, _compressed \
 ) {
     stream__set_align_base(stream);
 
@@ -30373,7 +30368,7 @@ function \
 forms20__unpack_textpropsdatablock( \
     stream, store, \
     \
-    _v, _store, _r, _padding \
+    _v, _store, _r \
 ) {
     stream__set_align_base(stream);
 
@@ -30516,7 +30511,7 @@ function \
 forms20__unpack_textpropsextradatablock( \
     stream, store, \
     \
-    _v, _store, _r, _size, _compressed \
+    _store, _r, _size, _compressed \
 ) {
     # FontName (variable bytes)
     if (astore__get(store, "../PropMask/fFontName")) {
@@ -30640,7 +30635,7 @@ function \
 forms20__unpack_fontflags( \
     stream, store, \
     \
-    _v, _size \
+    _v \
 ) {
     # FONT_fBold (1 bit)
     _v = stream__read_bits(stream, 1);
@@ -31052,7 +31047,7 @@ function \
 forms20__unpack_siteflag( \
     stream, store, \
     \
-    _v, _store \
+    _v \
 ) {
     # A - fTabStop (1 bit)
     _v = stream__read_bits(stream, 1);
@@ -31945,7 +31940,7 @@ function \
 forms20__unpack_vbframestream( \
     stream, store, path, \
     \
-    _size, _src, _r, _stream, _store \
+    _size, _src, _r, _stream \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
@@ -32226,7 +32221,7 @@ cli__read_input( \
     filename, stream, \
     \
     _line, _res, _size, \
-    _buf, _oit, _iit, _command, _cl, _cr \
+    _buf, _iit, _command, _cl, _cr \
 ) {
     if (__feat__is_binary_safe) {   # binary safe
 
@@ -32385,7 +32380,7 @@ function \
 cli__process_vbaproject_binary( \
     stream, \
     \
-    _stream, _store, _r, _status \
+    _store, _r, _status \
 ) {
     astore__new(_store, "/CFB");
     _r = cfb__unpack(stream, _store);
