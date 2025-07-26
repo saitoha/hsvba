@@ -1,6 +1,6 @@
 #!/usr/bin/env LANG=C awk -f
 #
-#   ██╗  ██╗███████╗██╗   ██╗██████╗  █████╗ 
+#   ██╗  ██╗███████╗██╗   ██╗██████╗  █████╗
 #   ██║  ██║██╔════╝██║   ██║██╔══██╗██╔══██╗
 #   ███████║███████╗██║   ██║██████╔╝███████║
 #   ██╔══██║╚════██║╚██╗ ██╔╝██╔══██╗██╔══██║
@@ -28,7 +28,7 @@
 #  basic usage:
 #
 #    $ hsvba -- [-p <switches>] <file1> <file2> ...
-#    $ hsvba <file1> <file2> ... [-p <switches>] 
+#    $ hsvba <file1> <file2> ... [-p <switches>]
 #
 #  or input via stdin,
 #
@@ -376,27 +376,27 @@ BEGIN {
 #=# TRACE(t) {
 #=#     printf t > E__file;
 #=# }
-#=# 
+#=#
 #=# function \
 #=# TRACE1(t, arg1) {
 #=#     printf t, arg1 >> E__file;
 #=# }
-#=# 
+#=#
 #=# function \
 #=# TRACE2(t, arg1, arg2) {
 #=#     printf t, arg1, arg2 >> E__file;
 #=# }
-#=# 
+#=#
 #=# function \
 #=# TRACE3(t, arg1, arg2, arg3) {
 #=#     printf t, arg1, arg2, arg3 >> E__file;
 #=# }
-#=# 
+#=#
 #=# function \
 #=# TRACE4(t, arg1, arg2, arg3, arg4) {
 #=#     printf t, arg1, arg2, arg3, arg4 >> E__file;
 #=# }
-#=# 
+#=#
 #=# function \
 #=# TRACE5(t, arg1, arg2, arg3, arg4, arg5) {
 #=#     printf t, arg1, arg2, arg3, arg4, arg5 > E__file;
@@ -2434,7 +2434,7 @@ function map__insert( \
             if (_status < 0) {
                 return _status;
             }
-            return cell__C_err_success;    
+            return cell__C_err_success;
         }
     }
 
@@ -2501,7 +2501,7 @@ function map__insert( \
         return _status;
     }
 
-    return cell__C_err_success;    
+    return cell__C_err_success;
 }
 # }}}
 # {{{ (private)::map::fixup
@@ -2562,7 +2562,7 @@ function __map__fixup( \
 
                 # if (node == left(parent(node))
                 if (node == _v) {
-                    #         
+                    #
                     #                       +----+                     +----+
                     #                       | p3 |                     | p3 |
                     #                       +--*-+                     +--*-+
@@ -2580,13 +2580,13 @@ function __map__fixup( \
                     #               +--*--+                  +--*----+ +--*--+
                     #                 / \                      / \       / \
                     #                /   \                    /   \     /   \
-                    #               /     \                            /      
+                    #               /     \                            /
                     #         +----*--+ +--*--+                    +--*--+
                     #         |node(R)| |q1(B)|                    |q1(B)|
                     #         +---*---+ +--*--+                    +--*--+
                     #            / \      / \                        / \
                     #           /   \    /   \                      /   \
-                    #        
+                    #
 
                     # rotation patern LL
                     # get p3
@@ -2704,7 +2704,7 @@ function __map__fixup( \
                     }
 
                 } else {
-                    # 
+                    #
                     #               +----+                         +----+
                     #               | p3 |                         | p3 |
                     #               +--*-+                         +--*-+
@@ -2723,10 +2723,10 @@ function __map__fixup( \
                     #         / \                          /             \
                     #        /   \                     +--*--+         +--*--+
                     #             \                    |p1(B)|         |p2(B)|
-                    #           +--*----+              +--*--+         +--*--+      
-                    #           |node(R)|                / \             / \    
-                    #           +----*--+               /   \           /   \   
-                    #               / \                      \         /     
+                    #           +--*----+              +--*--+         +--*--+
+                    #           |node(R)|                / \             / \
+                    #           +----*--+               /   \           /   \
+                    #               / \                      \         /
                     #              /   \                   +--*--+ +--*--+
                     #             /     \                  |q1(B)| |q2(B)|
                     #         +--*--+ +--*--+              +--*--+ +--*--+
@@ -2894,7 +2894,7 @@ function __map__fixup( \
 
                 # if (node == left(parent(node))
                 if (node == _v) {
-                    #         
+                    #
                     #               +----+                             +----+
                     #               | p3 |                             | p3 |
                     #               +--*-+                             +--*-+
@@ -2907,16 +2907,16 @@ function __map__fixup( \
                     #             / \                                / \
                     #            /   \         rotate(RL)           /   \
                     #                 \             =>             /     \
-                    #               +--*--+                       /       \             
-                    #               |p1(R)|                      /         \         
-                    #               +--*--+                     /           \        
-                    #                 / \                      /             \       
-                    #                /   \                 +--*--+         +--*--+   
-                    #               /                      |p2(B)|         |p1(B)|   
-                    #         +----*--+                    +--*--+         +--*--+   
-                    #         |node(R)|                      / \             / \     
-                    #         +---*---+                     /   \           /   \     
-                    #            / \                             \         /     
+                    #               +--*--+                       /       \
+                    #               |p1(R)|                      /         \
+                    #               +--*--+                     /           \
+                    #                 / \                      /             \
+                    #                /   \                 +--*--+         +--*--+
+                    #               /                      |p2(B)|         |p1(B)|
+                    #         +----*--+                    +--*--+         +--*--+
+                    #         |node(R)|                      / \             / \
+                    #         +---*---+                     /   \           /   \
+                    #            / \                             \         /
                     #           /   \                          +--*--+ +--*--+
                     #          /     \                         |q1(B)| |q2(B)|
                     #      +--*--+ +--*--+                     +--*--+ +--*--+
@@ -3085,7 +3085,7 @@ function __map__fixup( \
                     # }}}
 
                 } else {
-                    #         
+                    #
                     #               +----+                             +----+
                     #               | p3 |                             | p3 |
                     #               +--*-+                             +--*-+
@@ -3101,15 +3101,15 @@ function __map__fixup( \
                     #               +--*--+                    +--*--+ +--*----+
                     #               |p1(R)|                    |p2(B)| |node(B)|
                     #               +--*--+                    +--*--+ +----*--+
-                    #                 / \                        / \       / \       
-                    #                /   \                      /   \     /   \      
-                    #               /     \                          \               
-                    #           +--*--+ +--*----+                  +--*--+                   
-                    #           |q1(B)| |node(R)|                  |q1(B)|                   
-                    #           +--*--+ +---*---+                  +--*--+                    
-                    #             / \      / \                       / \           
-                    #            /   \    /   \                     /   \       
-                    #                                                         
+                    #                 / \                        / \       / \
+                    #                /   \                      /   \     /   \
+                    #               /     \                          \
+                    #           +--*--+ +--*----+                  +--*--+
+                    #           |q1(B)| |node(R)|                  |q1(B)|
+                    #           +--*--+ +---*---+                  +--*--+
+                    #             / \      / \                       / \
+                    #            /   \    /   \                     /   \
+                    #
 
                     # rotation patern RR
                     # get p3
@@ -3236,7 +3236,7 @@ function __map__fixup( \
         }
     }
 
-    return cell__C_err_success;    
+    return cell__C_err_success;
 }
 # }}}
 # {{{ map::at
@@ -3723,7 +3723,7 @@ function __map__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _map,
 #
 # syntax of declare() DSL
 #
-#     definition = "atom" , <header> , "{", <body> "}" ; 
+#     definition = "atom" , <header> , "{", <body> "}" ;
 #
 #     header = <type> , ":" , <type_with_validation> ;
 #
@@ -5068,7 +5068,7 @@ __atom__type_new( \
 #       0: RAW
 #       1: RAW-HEX
 #       2: ANSI
-#       3: UNICODE 
+#       3: UNICODE
 #
 # Size:
 #   An integer size if D(SizeIsParameterized) is 0.
@@ -5081,7 +5081,7 @@ __atom__type_new( \
 #   Reference index of format string if D(SizeIsParameterized) is 0.
 #   Otherwize, this is a GOT address of ParameterizedFormat.
 #
-# Encoding: 
+# Encoding:
 #
 function \
 __atom__type_pack( \
@@ -5574,7 +5574,7 @@ __atom__eval( \
         E__message = "logic error(eval/rhs), tag: " _tag;
         return atom__errno = (-1);
     }
- 
+
     if (_tag == __atom__C_tag_cat) {
         _v = addr__ref(_lhs _rhs);
         if (_v < 0) {
@@ -5842,7 +5842,7 @@ astore__init(    _i, _status) {
     if (_status < 0) {
         return _status;
     }
- 
+
     # '${__pp_comment:+'
     #
     # SysKind (4 bytes):
@@ -6907,7 +6907,7 @@ astore__pretty_print( \
 #    |      <map>      |
 #    |     members     |
 #    +-----------------+
-# 
+#
 # '${__pp_ut__struct__:+"$(cut -d\# -f2-<<<'
 # BEGIN {
 #   _status = struct__ut();
@@ -7434,8 +7434,8 @@ __struct__parse( \
     # +-|-+---+   +-|-+---+   +-|-+---+   +-|-+---+       +---+---+
     #   v           v           v           v
     #  <integer>  <map>       <map>       <map>
-    #  n_params   binded      rmap      attribute 
-    #                                     
+    #  n_params   binded      rmap      attribute
+    #
     #
     # layout of struct
     #
@@ -7450,10 +7450,10 @@ __struct__parse( \
     #    +-----------------+
     #    |      <map>      |  reverse index
     #    |      rmap       |  {arg1:1, arg2:2, arg3:3}
-    #    +-----------------+  
-    #    |     <list>      |  
+    #    +-----------------+
+    #    |     <list>      |
     #    |     members     |  [ map1, map2, map3 ... ]
-    #    +-----------------+  
+    #    +-----------------+
     #
     #
     # '${__pp_comment:+'
@@ -7478,7 +7478,7 @@ __struct__parse( \
     # expression = <logicalOrExpression>
     #            |  "(" <expression> ")"
     #            ;
-    #           
+    #
     # logicalExpression = <logicalAndExpression>
     #                   , { ( "and" | "or" ) ,  <equalityExpression> }
     #                   ;
@@ -7507,7 +7507,7 @@ __struct__parse( \
     # uneryExpression := <primaryExpression>
     #                  | { ( "+" | "-" | "not" ) , <uneryExpression> } ;
     #
-    # primaryExpression := <variable> 
+    # primaryExpression := <variable>
     #                   |  <path>
     #                   |  <digits>
     #                   ;
@@ -8220,14 +8220,14 @@ __struct__parse( \
 #    +-----------------+
 #    |      <map>      |  reverse parameter map
 #    |      rmap       |  {arg1:1, arg2:2, arg3:3}
-#    +-----------------+  
-#    |     <list>      |  list of member 
+#    +-----------------+
+#    |     <list>      |  list of member
 #    |     members     |  [ member1, member2, member3 ... ]
-#    +-----------------+  
-#                       
-#                     
-# layout of member    
-#                       
+#    +-----------------+
+#
+#
+# layout of member
+#
 #    +-----------------+
 #    |    <binary>     |
 #    |     header      |
@@ -8313,10 +8313,10 @@ struct__type__init( \
 #    +-----------------+
 #    |      <map>      |  reverse index
 #    |      rmap       |  {arg1:1, arg2:2, arg3:3, arg4:4}
-#    +-----------------+  
-#    |     <list>      |  
+#    +-----------------+
+#    |     <list>      |
 #    |     members     |  [ map1, map2, map3 ... ]
-#    +-----------------+  
+#    +-----------------+
 #
 function \
 struct__type__new(    _p, _type, _v) {
@@ -21938,7 +21938,7 @@ __vba__dirstream__unpack_project_modules_module_readonly( \
 }
 # }}}
 # {{{ [MS-OVBA] 2.3.4.2.3.2.10 MODULEPRIVATE Record
-# 
+#
 # +===============================================================+
 # |                    1                   2                   3  |
 # |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
