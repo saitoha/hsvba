@@ -22069,7 +22069,7 @@ function \
 __vba__dirstream__unpack_project_modules_module_docstring( \
     stream, store, \
     \
-    _id, _size \
+    _v, _maxsize \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -22140,7 +22140,7 @@ function \
 __vba__dirstream__unpack_project_modules_module_offset( \
     stream, store, \
     \
-    _id, _size \
+    _v \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -23289,7 +23289,7 @@ function \
 __vba__projectstream__unpack_projectpassword( \
     stream, store, \
     \
-    _v, _size, _stream, _r, _decrypted_stream, _password_hash \
+    _v, _size, _stream, _r, _decrypted_stream, _decrypted_data \
 ) {
     _v = stream__currentline(stream);
     if (index(_v, "DPB=\"") != 1) {
