@@ -31748,7 +31748,6 @@ cli__usage() {
           "\n" \
           "-p <switch1,switch2,...>\n" \
           "--print=<switches>\n" \
-          "HAVBA_PRINT=<switches>\n" \
           "    specify the types of content to be output, separated by commas.\n" \
           "        zip: parameters stored in zip header (default: off)\n" \
           "        oox: parameters stored in ooxml (default: off)\n" \
