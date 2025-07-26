@@ -17682,9 +17682,9 @@ function pcode__unpack_headers( \
         _v = stream__read_uint16(stream);
         astore__set(store, _n "/*ReferenceCount::uint16", _v);
         _v = stream__read_hex_string(stream, 2);
-        astore__set(store, _n "/*Unkonwn2", _v);
+        astore__set(store, _n "/*Unknown2", _v);
         _v = stream__read_hex_string(stream, 2);
-        astore__set(store, _n "/*Unkonwn3", _v);
+        astore__set(store, _n "/*Unknown3", _v);
         _v = stream__read_uint16(stream);
         astore__set(store, _n "/*ObjectID/@ModifiedValue::hexint16", _v);
         _v = pcode__getid(pcode, store, _v);
@@ -23612,7 +23612,7 @@ vba__projectstream__unpack_passwordhashdata( \
 ) {
     # Reserved (1 byte)
     _v = stream__read_uint8(stream);
-    if (astore__set(store, "Rserved", _v) < 0) {
+    if (astore__set(store, "Reserved", _v) < 0) {
         return vba__projectstream__E_UNEXPECTED;
     }
 
@@ -24342,11 +24342,11 @@ __vba__vbaprojectstream__unpack_cachedreference( \
             _v = substr(_v, 2, 1);
             if (_v ~ /^..C/) {
                 _v = stream__read_uint16(stream);
-                if (astore__set(store, "*Unkown-3 Length::uint16", _v) < 0) {
+                if (astore__set(store, "*Unknown-3 Length::uint16", _v) < 0) {
                     return __vba__vbaprojectstream__E_UNEXPECTED;
                 }
                 _v = stream__read_hex_string(stream, _v);
-                if (astore__set(store, "*Unkown-3", _v) < 0) {
+                if (astore__set(store, "*Unknown-3", _v) < 0) {
                     return __vba__vbaprojectstream__E_UNEXPECTED;
                 }
             }
@@ -26400,7 +26400,7 @@ forms20__unpack_commandbuttondatablock( \
         # (Reserved1,Enabled,BackStyle,Reserved2).
         #
         # '}'
-        astore__fork(store, "VariousPropertyBits::VariousPropertyBitfiled", _store);
+        astore__fork(store, "VariousPropertyBits::VariousPropertiesBitfield", _store);
         _r = forms20__unpack_variouspropertybits(stream, _store);
         if (_r < 0) {
             return forms20__E_UNEXPECTED;
@@ -26992,7 +26992,7 @@ forms20__unpack_labeldatablock( \
         # (Reserved1,Enabled,BackStyle,Reserved2,WordWrap).
         #
         # '}'
-        astore__fork(store, "VariousPropertyBits::VariousPropertyBitfiled", _store);
+        astore__fork(store, "VariousPropertyBits::VariousPropertiesBitfield", _store);
         _r = forms20__unpack_variouspropertybits(stream, _store);
         if (_r < 0) {
             return forms20__E_UNEXPECTED;
