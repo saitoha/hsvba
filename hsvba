@@ -4552,7 +4552,7 @@ __atom__parse( \
                     if (_n > 1) {
                         _atomname = _atomname ",";
                     }
-                    _s = _atomparams[_n];
+                    _s = _params[_n];
                     if (index(_s, "%") == 1) {
                         _atomname = _atomname "%" _n;
                     } else {
@@ -18080,7 +18080,7 @@ pcode__disasm_function( \
         }
         if (num__and(_new_flags, 4)) {
             astore__set(store, "fFriend::bool", 1);
-            _freand = "Friend ";
+            _friend = "Friend ";
         }
     } else {
         if (num__and(_flags, 8) == 0) {
@@ -18380,7 +18380,7 @@ ooxml__parse( \
     if (_ev != xmlp__C_event_END_DOCUMENT) {
         E__message = sprintf( \
             "xml parse error, position: %d.", \
-            _steram[__stream__M_iit]);
+            _stream[__stream__M_iit]);
         return ooxml__E_UNEXPECTED;
     }
 
@@ -28877,7 +28877,7 @@ forms20__unpack_clstableflags( \
     }
 
     # align the seek position to a byte boundary
-    stream__skip_to_align(steram, 1);
+    stream__skip_to_align(stream, 1);
 
     return forms20__S_OK;
 }
