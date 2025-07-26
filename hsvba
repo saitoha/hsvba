@@ -4552,7 +4552,7 @@ __atom__parse( \
                     if (_n > 1) {
                         _atomname = _atomname ",";
                     }
-                    _s = _atomparams[_n];
+                    _s = _params[_n];
                     if (index(_s, "%") == 1) {
                         _atomname = _atomname "%" _n;
                     } else {
@@ -17479,7 +17479,7 @@ function pcode__class_init(    _v, _store) {
     __pcode__C_keywords[214] = "VB_Invoke_PropertyPutRef";
     __pcode__C_keywords[215] = "VB_MemberFlags";
     __pcode__C_keywords[216] = "VB_Name";
-    __pcode__C_keywords[217] = "VB_PredecraredID";
+    __pcode__C_keywords[217] = "VB_PredeclaredID";
     __pcode__C_keywords[218] = "VB_ProcData";
     __pcode__C_keywords[219] = "VB_TemplateDerived";
     __pcode__C_keywords[220] = "VB_VarDescription";
@@ -17682,9 +17682,9 @@ function pcode__unpack_headers( \
         _v = stream__read_uint16(stream);
         astore__set(store, _n "/*ReferenceCount::uint16", _v);
         _v = stream__read_hex_string(stream, 2);
-        astore__set(store, _n "/*Unkonwn2", _v);
+        astore__set(store, _n "/*Unknown2", _v);
         _v = stream__read_hex_string(stream, 2);
-        astore__set(store, _n "/*Unkonwn3", _v);
+        astore__set(store, _n "/*Unknown3", _v);
         _v = stream__read_uint16(stream);
         astore__set(store, _n "/*ObjectID/@ModifiedValue::hexint16", _v);
         _v = pcode__getid(pcode, store, _v);
@@ -18080,7 +18080,7 @@ pcode__disasm_function( \
         }
         if (num__and(_new_flags, 4)) {
             astore__set(store, "fFriend::bool", 1);
-            _freand = "Friend ";
+            _friend = "Friend ";
         }
     } else {
         if (num__and(_flags, 8) == 0) {
@@ -18380,7 +18380,7 @@ ooxml__parse( \
     if (_ev != xmlp__C_event_END_DOCUMENT) {
         E__message = sprintf( \
             "xml parse error, position: %d.", \
-            _steram[__stream__M_iit]);
+            _stream[__stream__M_iit]);
         return ooxml__E_UNEXPECTED;
     }
 
@@ -23612,7 +23612,7 @@ vba__projectstream__unpack_passwordhashdata( \
 ) {
     # Reserved (1 byte)
     _v = stream__read_uint8(stream);
-    if (astore__set(store, "Rserved", _v) < 0) {
+    if (astore__set(store, "Reserved", _v) < 0) {
         return vba__projectstream__E_UNEXPECTED;
     }
 
@@ -24342,11 +24342,11 @@ __vba__vbaprojectstream__unpack_cachedreference( \
             _v = substr(_v, 2, 1);
             if (_v ~ /^..C/) {
                 _v = stream__read_uint16(stream);
-                if (astore__set(store, "*Unkown-3 Length::uint16", _v) < 0) {
+                if (astore__set(store, "*Unknown-3 Length::uint16", _v) < 0) {
                     return __vba__vbaprojectstream__E_UNEXPECTED;
                 }
                 _v = stream__read_hex_string(stream, _v);
-                if (astore__set(store, "*Unkown-3", _v) < 0) {
+                if (astore__set(store, "*Unknown-3", _v) < 0) {
                     return __vba__vbaprojectstream__E_UNEXPECTED;
                 }
             }
@@ -26400,7 +26400,7 @@ forms20__unpack_commandbuttondatablock( \
         # (Reserved1,Enabled,BackStyle,Reserved2).
         #
         # '}'
-        astore__fork(store, "VariousPropertyBits::VariousPropertyBitfiled", _store);
+        astore__fork(store, "VariousPropertyBits::VariousPropertiesBitfield", _store);
         _r = forms20__unpack_variouspropertybits(stream, _store);
         if (_r < 0) {
             return forms20__E_UNEXPECTED;
@@ -26992,7 +26992,7 @@ forms20__unpack_labeldatablock( \
         # (Reserved1,Enabled,BackStyle,Reserved2,WordWrap).
         #
         # '}'
-        astore__fork(store, "VariousPropertyBits::VariousPropertyBitfiled", _store);
+        astore__fork(store, "VariousPropertyBits::VariousPropertiesBitfield", _store);
         _r = forms20__unpack_variouspropertybits(stream, _store);
         if (_r < 0) {
             return forms20__E_UNEXPECTED;
@@ -28877,7 +28877,7 @@ forms20__unpack_clstableflags( \
     }
 
     # align the seek position to a byte boundary
-    stream__skip_to_align(steram, 1);
+    stream__skip_to_align(stream, 1);
 
     return forms20__S_OK;
 }
@@ -31748,7 +31748,6 @@ cli__usage() {
           "\n" \
           "-p <switch1,switch2,...>\n" \
           "--print=<switches>\n" \
-          "HAVBA_PRINT=<switches>\n" \
           "    specify the types of content to be output, separated by commas.\n" \
           "        zip: parameters stored in zip header (default: off)\n" \
           "        oox: parameters stored in ooxml (default: off)\n" \
