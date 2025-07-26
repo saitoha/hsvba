@@ -610,7 +610,7 @@ num__lossless_mul( \
 #   (str__binary_join, str__binary_join_with_chr)
 # {{{ str__init
 function \
-str__init(    _c) {
+str__init(    _c, _i) {
 
     if (__c__init_guard) {
         return (1);
@@ -4474,7 +4474,7 @@ __atom__scan( \
     src, tokens, \
     \
     _chars, _count, _scanner_state, _c, _stack, \
-    _i, _s, _tn, _pos, _addr, _id \
+    _v, _i, _s, _tn, _pos, _addr, _id \
 ) {
     _tn = 0;  # token counter
 
@@ -5614,7 +5614,7 @@ __atom__instantiate( \
     \
     _type, _pos, _next, \
     _lhs, _rhs, _v, _params, \
-    _size, _sizeunit, _encoding, _base \
+    _size, _sizeunit, _encoding, _base, _status \
 ) {
     # test if atomname is a concrete type
     if (atomname ".base" in __atom__S_type) {
@@ -6970,7 +6970,7 @@ astore__set( \
     _base, _path, \
     _leaf, _dir, _type, _target, \
     _ret, _dir_index_path, _branch_index_path, \
-    _pos, _t \
+    _pos, _t, _status \
 ) {
     _base = store[__astore__M_workdir];
 
@@ -7339,7 +7339,7 @@ __struct__scan( \
     src, tokens, \
     \
     _chars, _count, _scanner_state, _c, _stack, \
-    _i, _s, _pos, _addr, _id \
+    _v, _i, _s, _pos, _addr, _id \
 ) {
     _scanner_state = __struct__C_lst_neutral;
 
@@ -7663,7 +7663,7 @@ function \
 __struct__parse( \
     src, tokens, \
     \
-    _stack, _count, _i, _token, _pos, _key, _map, _list, \
+    _v, _stack, _count, _i, _token, _pos, _key, _map, _list, \
     _tokid, _position, _tail, _typename, _type, _type_m, \
     _stem, _n, _struct_name, _params, _rmap, _index, _x, \
     _status, _member, _pos1, _pos2 \
@@ -9169,7 +9169,7 @@ struct__ut(    _status) {
 # }}}
 # {{{ @module xmlp, a tiny event driven xml parser
 # {{{ xmlp::init
-function xmlp__init() {
+function xmlp__init(    _status) {
     if (__xmlp__init_guard) {
         return (1);
     }
@@ -9480,7 +9480,7 @@ __acp__decode_charmap( \
     map, base64str, \
     \
     _iit, _oit, _size, \
-    _o, _c, _i, _cl, _cr, _tmp \
+    _o, _c, _i, _cl, _cr, _tmp, _buf \
 ) {
     split(base64str, _buf, "");
     _size = length(base64str);
@@ -15217,7 +15217,7 @@ __acp__build_map_1258_to_u8char() {
 
 # {{{ zlib__init
 function \
-zlib__init() {
+zlib__init(    _i, _status) {
     if (__zlib__init_guard) {
         return (1);
     }
@@ -17922,7 +17922,7 @@ function pcode__new(pcode) {
 function pcode__unpack_headers( \
     pcode, stream, store, \
     \
-    _v, _n \
+    _v, _n, _i \
 ) {
     _v = astore__get(store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
     pcode[__pcode_M_is_64bit] = _v == 3;
@@ -18379,7 +18379,7 @@ pcode__disasm_function( \
     _arg_offset, _arg_opts, _arg_type, _arg_type_name, _as, \
     _c_options, _calltype, _decl, _decl_offset, _flags, _friend, \
     _funcname, _has_declare, _is_64bit, _new_flags, _optional, \
-    _passingtype, _private, _public, _static, _vba_version \
+    _passingtype, _private, _public, _static, _text, _vba_version \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
     _vba_version = pcode__vba_version(pcode);
@@ -19758,7 +19758,7 @@ function \
 vba__lz77__unpack( \
     istream, store, ostream, \
     \
-    _v, _store, _i \
+    _v, _store, _i, _r \
 ) {
     # SignatureByte (1 byte)
     _v = stream__read_uint8(istream);
@@ -20888,7 +20888,7 @@ function \
 __vba__dirstream__unpack_project_information_libflags( \
     stream, store, \
     \
-    _v, _store \
+    _v, _r, _store \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -21191,7 +21191,7 @@ function \
 __vba__dirstream__unpack_project_references_reference_name( \
     stream, store, \
     \
-    _maxsize \
+    _v, _maxsize \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -21799,7 +21799,7 @@ function \
 __vba__dirstream__unpack_project_modules_module( \
     stream, store, \
     \
-    _r, _store \
+    _v, _r, _store \
 ) {
     # NameRecord (variable)
     astore__fork(store, "NameRecord", _store);
@@ -22430,7 +22430,7 @@ function \
 __vba__projectstream__unpack_projecttext( \
     stream, store, \
     \
-    _r \
+    _v, _r \
 ) {
     # ProjectProperties
     astore__fork(_store, "ProjectProperties", _store);
@@ -22625,7 +22625,7 @@ function \
 __vba__projectstream__unpack_projectitem( \
     stream, store, \
     \
-    \
+    _r \
 ) {
     _r = __vba__projectstream__unpack_projectmodule(stream, store);
     if (_r != vba__projectstream__S_FALSE) {
@@ -22695,7 +22695,7 @@ function \
 __vba__projectstream__unpack_projectmodule( \
     stream, store, \
     \
-    \
+    _r \
 ) {
     # ProjectDocModule
     _r = __vba__projectstream__unpack_projectdocmodule(stream, store);
@@ -23213,7 +23213,7 @@ function \
 __vba__projectstream__unpack_projectprotectionstate( \
     stream, store, \
     \
-    _v, _stream, _size, _store, _decrypted_stream \
+    _v, _i, _r, _stream, _size, _store, _decrypted_stream \
 ) {
     _v = stream__currentline(stream);
     if (_v !~ /^CMG=/) {
@@ -23297,7 +23297,7 @@ function \
 __vba__projectstream__unpack_projectpassword( \
     stream, store, \
     \
-    _v, _size, _stream, _r, _decrypted_stream, _decrypted_data \
+    _v, _i, _size, _stream, _r, _decrypted_stream, _decrypted_data \
 ) {
     _v = stream__currentline(stream);
     if (index(_v, "DPB=\"") != 1) {
@@ -23379,7 +23379,7 @@ function \
 __vba__projectstream__unpack_projectvisibilitystate( \
     stream, store, \
     \
-    _v, _stream, _r, _size, _decrypted_stream, _decrypted_data \
+    _v, _i, _stream, _r, _size, _decrypted_stream, _decrypted_data \
 ) {
     _v = stream__currentline(stream);
     if (index(_v, "GC=\"") != 1) {
@@ -23546,7 +23546,7 @@ function \
 __vba__projectstream__unpack_projectworkspace( \
     stream, store, \
     \
-    _v, _r, _store \
+    _v, _r, _i, _store \
 ) {
     if (stream__read_ansi_string(stream, (-1), stream__C_NWLN) == (-1)) {
         return vba__projectstream__S_FALSE;
@@ -23759,7 +23759,7 @@ function \
 vba__projectstream__unpack_encrypteddata( \
     stream, store, decrypted_stream, \
     \
-    _v, _seed, _versionenc, _projkeyenc, _projkey, \
+    _v, _i, _seed, _versionenc, _projkeyenc, _projkey, \
     _unencrypted_byte1, _encrypted_byte1, _encrypted_byte2, \
     _byte_index, _temp_value, _byte, _byte_enc, \
     _length, _ignored_length \
@@ -24837,7 +24837,7 @@ function \
 __vba__vbaprojectstream__unpack_cachedmodule( \
     stream, store, \
     \
-    _v, _store \
+    _v, _r, _store \
 ) {
     # *ModuleNameLength
     _v = stream__read_uint16(stream);
@@ -25299,8 +25299,8 @@ vba__modulestream__unpack_pcode( \
     \
     _v, _i, _length, _opcount, _offset, _num_lines, _store, \
     _store_op, _jmp_buf_line, _pos, _arg, _args, _dword, _k, \
-    _mnemonic, _opcode, _optype, _pcode, _store_args, _visibility, \
-    _word \
+    _mnemonic, _opcode, _optype, _pcode, _store_args, _text, \
+    _visibility, _word \
 ) {
     # Magic (2 bytes)
     _v = stream__read_uint16(stream);
@@ -26282,7 +26282,7 @@ function \
 forms20__unpack_formembeddedactivexcontrol( \
     stream, store, size, cache_index, \
     \
-    _r \
+    _v, _r \
 ) {
     if (astore__set(store, "@CacheIndex", cache_index) < 0) {
         return forms20__E_UNEXPECTED;
@@ -28887,7 +28887,7 @@ function \
 forms20__unpack_siteclassinfo( \
     stream, store, \
     \
-    _v, _store \
+    _v, _r, _store \
 ) {
     # Version (2 bytes)
     _v = stream__read_uint16(stream);
@@ -29081,7 +29081,7 @@ function \
 forms20__unpack_classinfodatablock( \
     stream, store, \
     \
-    _v, _store \
+    _v, _r, _store \
 ) {
     stream__set_align_base(stream);
 
@@ -29833,7 +29833,7 @@ function \
 forms20__unpack_sitedatablock( \
     stream, store, \
     \
-    _v, _store \
+    _v, _r, _store \
 ) {
     stream__set_align_base(stream);
 
@@ -30020,7 +30020,7 @@ function \
 forms20__unpack_siteextradatablock( \
     stream, store, \
     \
-    _store, _size, _compressed \
+    _r, _store, _size, _compressed \
 ) {
     stream__set_align_base(stream);
 
@@ -31974,7 +31974,7 @@ forms20__unpack_vbframestream( \
 # {{{ @module cli, hsvba CLI implementation
 # {{{ cli::init
 function \
-cli__init(    _i, _status) {
+cli__init(    _i, _status, _buf) {
 
     if (__cli__init_guard) {
         return (1);
