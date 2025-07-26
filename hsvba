@@ -557,7 +557,7 @@ function \
 num__lossless_add( \
     x, y, \
     \
-    _i, _carry, _r, _sum, _digits_x, _digits_y \
+    _i, _carry, _r, _sum, _digits_x, _digits_y, _max_digits \
 ) {
     _digits_x = length(x)
     _digits_y = length(y)
@@ -610,7 +610,7 @@ num__lossless_mul( \
 #   (str__binary_join, str__binary_join_with_chr)
 # {{{ str__init
 function \
-str__init() {
+str__init(    _c) {
 
     if (__c__init_guard) {
         return (1);
@@ -2484,7 +2484,7 @@ function list__append(p, v,    _p, _v, _cell, _tail) {
 
 # }}}
 # {{{ list::at
-function list__at(p, idx,    _p, _v, _cell) {
+function list__at(p, idx,    _p, _v, _cell, _tail) {
     list__errno = list__C_err_success;
 
     _p = p;
@@ -4718,7 +4718,9 @@ __atom__parse( \
     _token, _parser_status, _stack, \
     _atomname, _params, _params_map, _baseparams, \
     _n_params, _v, _type, _attrid, _tag, _lhs, _rhs, \
-    _priority_lhs, _priority_rhs, _nested, _n \
+    _priority_lhs, _priority_rhs, _nested, _n, _basename, \
+    _has_baseimmediate, _has_immediate, _key, _op, _lparen, _rparen, \
+    _s, _tokid \
 ) {
     __atom__S_pst_sp = 0;
 
@@ -7664,7 +7666,7 @@ __struct__parse( \
     _stack, _count, _i, _token, _pos, _key, _map, _list, \
     _tokid, _position, _tail, _typename, _type, _type_m, \
     _stem, _n, _struct_name, _params, _rmap, _index, _x, \
-    _status, _member \
+    _status, _member, _pos1, _pos2 \
 ) {
     # current parser state
     __struct__S_pst = __struct__C_pst_neutral;
@@ -9478,7 +9480,7 @@ __acp__decode_charmap( \
     map, base64str, \
     \
     _iit, _oit, _size, \
-    _o, _c, _i \
+    _o, _c, _i, _cl, _cr, _tmp \
 ) {
     split(base64str, _buf, "");
     _size = length(base64str);
@@ -17920,7 +17922,7 @@ function pcode__new(pcode) {
 function pcode__unpack_headers( \
     pcode, stream, store, \
     \
-    _v \
+    _v, _n \
 ) {
     _v = astore__get(store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
     pcode[__pcode_M_is_64bit] = _v == 3;
@@ -18244,7 +18246,7 @@ pcode__disasm_name( \
     pcode, stream, store, offset, optype, opcode, \
     \
     _v, _op_type, _idt_offset, \
-   _jmp_buf_op \
+   _jmp_buf_op, _str_type, _var_name, _var_types \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
 
@@ -18292,7 +18294,8 @@ function \
 pcode__disasm_var( \
     pcode, stream, store, dword, optype, opcode, \
     \
-    _v, _jmp_buf_op, _text \
+    _v, _jmp_buf_op, _text, _flag1, _flag2, _has_as, _has_new, \
+    _offset, _typename, _varname \
 ) {
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, pcode__get_idt_offset(pcode) + 4 + dword);
@@ -18372,7 +18375,11 @@ function \
 pcode__disasm_function( \
     pcode, stream, store, offset, optype, opcode, \
     \
-    _v, _i, _store, _idt_offset, _jmp_buf_op \
+    _v, _i, _store, _idt_offset, _jmp_buf_op, _arg_flags, _arg_name, \
+    _arg_offset, _arg_opts, _arg_type, _arg_type_name, _as, \
+    _c_options, _calltype, _decl, _decl_offset, _flags, _friend, \
+    _funcname, _has_declare, _is_64bit, _new_flags, _optional, \
+    _passingtype, _private, _public, _static, _vba_version \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
     _vba_version = pcode__vba_version(pcode);
@@ -18757,7 +18764,7 @@ cli__extract_vba( \
     stream, store, \
     \
     _status, _stream, _key, _type, _path, \
-    _basedir, _relpath, _vbapath \
+    _basedir, _relpath, _vbapath, _target \
 ) {
     astore__chdir(store, "/Zip");
 
@@ -19464,7 +19471,8 @@ __cfb__build_minifat_chain( \
     stream, store, \
     \
     _sector_size, _sector_no, \
-    _i, _j, _minifat_sectno, _v, _n, _minifat_per_fat \
+    _i, _j, _minifat_sectno, _v, _n, _minifat_per_fat, \
+    _mini_sector_size, _minifat_start, _sizeof_sector_no \
 ) {
     _sector_size = num__lshift(1, astore__get(store, "Header/Sector Shift"));
     _minifat_start = astore__get(store, "Header/First Mini FAT Sector Location");
@@ -21385,7 +21393,7 @@ function \
 __vba__dirstream__unpack_project_references_reference_original( \
     stream, store, \
     \
-    _v, _size, _r, _store \
+    _v, _size, _r, _store, _left \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -23754,7 +23762,7 @@ vba__projectstream__unpack_encrypteddata( \
     _v, _seed, _versionenc, _projkeyenc, _projkey, \
     _unencrypted_byte1, _encrypted_byte1, _encrypted_byte2, \
     _byte_index, _temp_value, _byte, _byte_enc, \
-    _length \
+    _length, _ignored_length \
 ) {
     # Seed (1 byte)
     _v = _seed = stream__read_uint8(stream);
@@ -24286,7 +24294,7 @@ __vba__vbaprojectstream__unpack_cache( \
     \
     _r, _v, _i, _store, \
     _base_id, _count_of_all_ids, \
-    _count_of_junk_ids, _count_of_ids \
+    _count_of_junk_ids, _count_of_ids, _max_id \
 ) {
     # Reserved1 (2 bytes)
     _v = stream__read_uint16(stream);
@@ -25289,10 +25297,10 @@ function \
 vba__modulestream__unpack_pcode( \
     stream, store, \
     \
-    _v, _i, _length, \
-    _opcount, \
-    _offset, _num_lines, _store, \
-    _store_op, _jmp_buf_line, _pos \
+    _v, _i, _length, _opcount, _offset, _num_lines, _store, \
+    _store_op, _jmp_buf_line, _pos, _arg, _args, _dword, _k, \
+    _mnemonic, _opcode, _optype, _pcode, _store_args, _visibility, \
+    _word \
 ) {
     # Magic (2 bytes)
     _v = stream__read_uint16(stream);
@@ -25713,7 +25721,7 @@ function \
 __forms20__unpack_formparts( \
     stream, store, path, \
     \
-    _v, _r, _path, _store, _title, _store_c \
+    _v, _r, _path, _store, _title, _store_c, _entry \
 ) {
     astore__new(_store_c, "/CFB/@FileID" path);
 
@@ -25845,7 +25853,7 @@ function \
 __forms20__unpack_compobjstream( \
     stream, store, path, \
     \
-    _store, _v, _r \
+    _store, _v, _r, _stream \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
@@ -31940,7 +31948,7 @@ function \
 forms20__unpack_vbframestream( \
     stream, store, path, \
     \
-    _size, _src, _r, _stream \
+    _size, _src, _r, _stream, _title \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
@@ -32041,7 +32049,7 @@ cli__init(    _i, _status) {
 function \
 cli__main( \
     \
-    _i, _stream, _arr, _r \
+    _i, _stream, _arr, _r, _test \
 ) {
     # class initialization
     if (struct__init() < 0) {
