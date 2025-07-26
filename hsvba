@@ -17479,7 +17479,7 @@ function pcode__class_init(    _v, _store) {
     __pcode__C_keywords[214] = "VB_Invoke_PropertyPutRef";
     __pcode__C_keywords[215] = "VB_MemberFlags";
     __pcode__C_keywords[216] = "VB_Name";
-    __pcode__C_keywords[217] = "VB_PredecraredID";
+    __pcode__C_keywords[217] = "VB_PredeclaredID";
     __pcode__C_keywords[218] = "VB_ProcData";
     __pcode__C_keywords[219] = "VB_TemplateDerived";
     __pcode__C_keywords[220] = "VB_VarDescription";
