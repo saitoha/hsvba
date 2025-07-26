@@ -7434,7 +7434,7 @@ __struct__parse( \
     # +-|-+---+   +-|-+---+   +-|-+---+   +-|-+---+       +---+---+
     #   v           v           v           v
     #  <integer>  <map>       <map>       <map>
-    #  n_params   binded      rmap      attribute
+    #  n_params   bounded     rmap      attribute
     #
     #
     # layout of struct
@@ -7445,8 +7445,8 @@ __struct__parse( \
     #    |      <int>      |  count of parameters
     #    |     n_params    |  3
     #    +-----------------+
-    #    |      <map>      |  binded arguments
-    #    |      binded     |  {1:5, 2:3}
+    #    |      <map>      |  bounded arguments
+    #    |      bounded    |  {1:5, 2:3}
     #    +-----------------+
     #    |      <map>      |  reverse index
     #    |      rmap       |  {arg1:1, arg2:2, arg3:3}
@@ -8215,8 +8215,8 @@ __struct__parse( \
 #    |      <int>      |  count of parameters
 #    |     n_params    |  3
 #    +-----------------+
-#    |      <map>      |  binded arguments
-#    |      binded     |  {1:5, 2:3}
+#    |      <map>      |  bounded arguments
+#    |      bounded    |  {1:5, 2:3}
 #    +-----------------+
 #    |      <map>      |  reverse parameter map
 #    |      rmap       |  {arg1:1, arg2:2, arg3:3}
@@ -8281,8 +8281,8 @@ struct__type__init( \
     }
 
     __struct__type__M_n_params      = 0;
-    __struct__type__M_binded_num    = 1;
-    __struct__type__M_binded_path   = 2;
+    __struct__type__M_bounded_num   = 1;
+    __struct__type__M_bounded_path  = 2;
     __struct__type__M_rmap          = 3;
     __struct__type__M_members       = 4;
 
@@ -8305,11 +8305,11 @@ struct__type__init( \
 #    |      <int>      |  count of parameters
 #    |     n_params    |  3
 #    +-----------------+
-#    |      <map>      |  binded number arguments
-#    |    binded_num   |  {1:5, 2:3}
+#    |      <map>      |  bounded number arguments
+#    |    bounded_num  |  {1:5, 2:3}
 #    +-----------------+
-#    |      <map>      |  binded path arguments
-#    |    binded_path  |  {4:./a/b/c}
+#    |      <map>      |  bounded path arguments
+#    |    bounded_path |  {4:./a/b/c}
 #    +-----------------+
 #    |      <map>      |  reverse index
 #    |      rmap       |  {arg1:1, arg2:2, arg3:3, arg4:4}
@@ -8332,24 +8332,24 @@ struct__type__new(    _p, _type, _v) {
         return addr__C_NIL;
     }
 
-    # binded_num
+    # bounded_num
     _v = map__new();
     if (_v == addr__C_NIL) {
         return (-1);
     }
 
-    addr__set(_type + __struct__type__M_binded_num, _v);
+    addr__set(_type + __struct__type__M_bounded_num, _v);
     if (addr__errno < 0) {
         return addr__C_NIL;
     }
 
-    # binded_path
+    # bounded_path
     _v = map__new();
     if (_v == addr__C_NIL) {
         return (-1);
     }
 
-    addr__set(_type + __struct__type__M_binded_path, _v);
+    addr__set(_type + __struct__type__M_bounded_path, _v);
     if (addr__errno < 0) {
         return addr__C_NIL;
     }
@@ -8411,7 +8411,7 @@ function \
 struct__type__bind_num( \
     type, v, \
     \
-    _n, _binded, _status \
+    _n, _bounded, _status \
 ) {
     _n = addr__deref(type + __struct__type__M_n_params) + 1;
     if (addr__errno < 0) {
@@ -8423,12 +8423,12 @@ struct__type__bind_num( \
         return _status;
     }
 
-    _binded = addr__deref(type + __struct__type__M_binded_num);
+    _bounded = addr__deref(type + __struct__type__M_bounded_num);
     if (addr__errno < 0) {
         return addr__errno;
     }
 
-    _status = map__insert(_binded, _n, v);
+    _status = map__insert(_bounded, _n, v);
     if (_status < 0) {
         return (-1);
     }
@@ -8442,7 +8442,7 @@ function \
 struct__type__bind_path( \
     type, v, \
     \
-    _n, _binded, _status \
+    _n, _bounded, _status \
 ) {
     _n = addr__deref(type + __struct__type__M_n_params) + 1;
     if (addr__errno < 0) {
@@ -8454,12 +8454,12 @@ struct__type__bind_path( \
         return _status;
     }
 
-    _binded = addr__deref(type + __struct__type__M_binded_path);
+    _bounded = addr__deref(type + __struct__type__M_bounded_path);
     if (addr__errno < 0) {
         return addr__errno;
     }
 
-    _status = map__insert(_binded, _n, v);
+    _status = map__insert(_bounded, _n, v);
     if (_status < 0) {
         return (-1);
     }
