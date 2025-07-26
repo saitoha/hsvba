@@ -159,7 +159,7 @@
 #    so the external command "base64" is required.
 #
 #    +=====================================================================+
-#    | AWK implementation       | base64 requeirement | result             |
+#    | AWK implementation       | base64 requirement  | result             |
 #    +=====================================================================+
 #    | bwk(nawk,onetrueawk)     | requires            | works(slow)        |
 #    +--------------------------+---------------------+--------------------+
@@ -279,11 +279,11 @@
 #
 #    [ECMA-376 Part1]
 #        ECMA-376, 5th Edition Office Open XML File Formats - Fundamentals And Markup Language Reference
-#        https://ecma-addrational.org/publications-and-standards/standards/ecma-376/
+#        https://ecma-international.org/publications-and-standards/standards/ecma-376/
 #
 #    [ECMA-376 Part2]
 #        ECMA-376, 5th Edition Office Open XML File Formats - Open Packaging Conventions
-#        https://ecma-addrational.org/publications-and-standards/standards/ecma-376/
+#        https://ecma-international.org/publications-and-standards/standards/ecma-376/
 #
 #    [pcodedump]
 #        Vesselin Bontchev, A VBA p-code disassembler.
@@ -606,7 +606,7 @@ str__init() {
     # quick & dirty latin1 -> utf-8 conversion (printable only)
     for (_i = 0; _i <= 255; ++_i) {
         if (_i < 32) {
-            # C1 charactors
+            # C1 characters
             str__debug_chr[_i] = sprintf("<%02X>", _i);
         } else if (_i < 127) {
             # ASCII
@@ -882,7 +882,7 @@ stream__longjmp(stream, jmp_buf) {
     stream[__stream__M_iit] = jmp_buf[1];
 }
 # }}}
-# {{{ steram::rsearch
+# {{{ stream::rsearch
 function \
 stream__rsearch( \
     stream, word, \
@@ -1045,7 +1045,7 @@ stream__read_uint64(stream,    _n, _i, _o, _iit) {
     return _o;
 }
 # }}}
-# {{{ steram::read_raw_string
+# {{{ stream::read_raw_string
 function \
 stream__read_raw_string(stream, size,    _iit, _it_end, _o) {
 
@@ -1188,7 +1188,7 @@ stream__read_timestamp( \
 }
 # }}}
 # {{{ stream::read_ansi_string
-# OEM/DBCS bytearry -> UTF-8 string conversion
+# OEM/DBCS bytearray -> UTF-8 string conversion
 function \
 stream__read_ansi_string( \
     stream, size, terminator, \
@@ -2588,7 +2588,7 @@ function __map__fixup( \
                     #           /   \    /   \                      /   \
                     #
 
-                    # rotation patern LL
+                    # rotation pattern LL
                     # get p3
 
                     # change the color of node to black
@@ -2736,7 +2736,7 @@ function __map__fixup( \
                     #          /   \   /   \
                     #
 
-                    # rotation patern LR
+                    # rotation pattern LR
                     # get p3
                     # change the color of p1 to black
                     _status = addr__set(_p1 + map__M_color, map__C_color_black);
@@ -2927,7 +2927,7 @@ function __map__fixup( \
                     #
                     #
 
-                    # rotation patern RL
+                    # rotation pattern RL
                     # get p3
                     # {{{
 
@@ -3111,7 +3111,7 @@ function __map__fixup( \
                     #            /   \    /   \                     /   \
                     #
 
-                    # rotation patern RR
+                    # rotation pattern RR
                     # get p3
                     # {{{
 
@@ -5023,7 +5023,7 @@ __atom__cell_pretty_print( \
                indent "    " _rhs " -> " addr__deref(_rhs) "\n" \
         ;
     }
-    return "unkonwn, tag: " _tag ", " cell;
+    return "unknown, tag: " _tag ", " cell;
 }
 # }}}
 # {{{ (private)::atom::type::new
@@ -5072,14 +5072,14 @@ __atom__type_new( \
 #
 # Size:
 #   An integer size if D(SizeIsParameterized) is 0.
-#   Otherwize, this is a GOT address of ParameterizedFormat.
+#   Otherwise, this is a GOT address of ParameterizedFormat.
 #       Integer: byte or bit size
 #       Float: must be 4
 #       String: byte size of a string
 #
 # FormatID:
 #   Reference index of format string if D(SizeIsParameterized) is 0.
-#   Otherwize, this is a GOT address of ParameterizedFormat.
+#   Otherwise, this is a GOT address of ParameterizedFormat.
 #
 # Encoding:
 #
@@ -5348,7 +5348,7 @@ __atom__instantiate( \
     _lhs, _rhs, _v, _params, \
     _size, _sizeunit, _encoding, _base \
 ) {
-    # test if atomname is a concreate type
+    # test if atomname is a concrete type
     if (atomname ".base" in __atom__S_type) {
         return (1);
     }
@@ -5616,7 +5616,7 @@ __atom__eval( \
 #    token ID
 #
 # Position (16 bits):
-#    poistion in source
+#    position in source
 #
 # Piece ID (16 bits):
 #    reference of a piece string
@@ -5738,7 +5738,7 @@ astore__init(    _i, _status) {
     #
     # This protocol references commonly used data types as defined in [MS-DTYP].
     # An LCID is a 4-byte value. The value supplied in an LCID is a standard
-    # numeric substitution for the addrational [RFC5646] string.
+    # numeric substitution for the international [RFC5646] string.
     # The following diagram is shown in host byte order.
     #
     # +===============================================================+
@@ -7061,7 +7061,7 @@ struct__declare( \
 #    token ID
 #
 # Position (22 bits):
-#    the poistion in source
+#    the position in source
 #
 # Piece ID (22 bits):
 #    a GOT reference of a piece string
@@ -7466,7 +7466,7 @@ __struct__parse( \
     #
     # member = <identifier> "::" <type> [ <options> ] ;
     #
-    # options = <option> | <optioins> ;
+    # options = <option> | <options> ;
     #
     # options = "exists" , "only", "if", <expression>
     #         | "aligned", "on", <digits>
@@ -7500,12 +7500,12 @@ __struct__parse( \
     #                    , { ( "+" | "-" ) , <multiplicativeExpression> }
     #                    ;
     #
-    # multiplicativeExpression := <uneryExpression>
-    #                          , { ( "*" | "/" | "%" ) , <uneryExpression> }
+    # multiplicativeExpression := <unaryExpression>
+    #                          , { ( "*" | "/" | "%" ) , <unaryExpression> }
     #                          ;
     #
-    # uneryExpression := <primaryExpression>
-    #                  | { ( "+" | "-" | "not" ) , <uneryExpression> } ;
+    # unaryExpression := <primaryExpression>
+    #                  | { ( "+" | "-" | "not" ) , <unaryExpression> } ;
     #
     # primaryExpression := <variable>
     #                   |  <path>
@@ -8242,7 +8242,7 @@ __struct__parse( \
 #    |   type_params   |
 #    +-----------------+
 #    |     <list>      |
-#    |   varidators    |
+#    |   validators    |
 #    +-----------------+
 #
 # layout of header
@@ -9287,7 +9287,7 @@ __acp__decode_charmap( \
 # '}'
 function \
 __acp__build_map_874_to_u8char() {
-    # cp873 charactor mappings
+    # cp873 character mappings
     split( \
         "\342\202\254 ? ? ? ? \342\200\246 ? ? ? ? ? ? ? ? ? ? ? \342\200\230 \342\200\231 \342\200\234 " \
         "\342\200\235 \342\200\242 \342\200\223 \342\200\224 ? ? ? ? ? ? ? ? \302\240 " \
@@ -9351,7 +9351,7 @@ __acp__build_map_874_to_u8char() {
 # '}'
 function \
 __acp__build_map_932_to_u8char() {
-    # cp932 charactor mappings
+    # cp932 character mappings
     # '${__pp__enable_multibyte:+'
     __acp__decode_charmap(acp__S_charmap, \
         "44CALOOAgSzjgIIs77yMLO+8jizjg7ss77yaLO+8myzvvJ8s77yBLOOCmyzjgpwswrQ" \
@@ -10182,7 +10182,7 @@ __acp__build_map_932_to_u8char() {
 # '}'
 function \
 __acp__build_map_936_to_u8char() {
-    # cp936 charactor mappings
+    # cp936 character mappings
     # '${__pp__enable_multibyte:+'
     __acp__decode_charmap(acp__S_charmap, \
         "5LiCLOS4hCzkuIUs5LiGLOS4jyzkuJIs5LiXLOS4nyzkuKAs5LihLOS4oyzkuKYs5Li" \
@@ -20584,7 +20584,7 @@ __vba__dirstream__unpack_project_information_version( \
     #   In versions up to Office2000, this timestamp is the number of
     #   seconds since January 1, 1970, 00:00:00, i.e. the UNIX epoch.
     #
-    #   However, in Office XP (2001) and later, the begginning of this
+    #   However, in Office XP (2001) and later, the beginning of this
     #   epoch seems to have changed to November 21, 1968, 00:00:00.
     #
     # * Why "November 21, 1968"?
@@ -21272,7 +21272,7 @@ __vba__dirstream__unpack_project_references_reference_project( \
 # +---------------------------------------------------------------+
 # |                              ...                              |
 # +---------------------------------------------------------------+
-# |                      Moducles (variable)                      |
+# |                      Modules (variable)                       |
 # +---------------------------------------------------------------+
 # |                              ...                              |
 # +---------------------------------------------------------------+
@@ -21411,7 +21411,7 @@ __vba__dirstream__unpack_project_modules_cookie( \
 # +-------------------------------+-------------------------------+
 # |                              ...                              |
 # +---------------------------------------------------------------+
-# |                    PrivateRecord (optinal)                    |
+# |                    PrivateRecord (optional)                   |
 # +-------------------------------+-------------------------------+
 # |             ...               |     Terminator (2 bytes)      |
 # +-------------------------------+-------------------------------+
@@ -23586,7 +23586,7 @@ vba__projectstream__unpack_encrypteddata( \
 # |                    1                   2                   3  |
 # |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
 # +===============================================================+
-# |   Reserved    |GrbitKe|             GrbithashNull             |
+# |   Reserved    |GrbitKe|             GrbitHashNull             |
 # +---------------+-------+---------------------------------------+
 # |                          KeyNoNulls                           |
 # +---------------------------------------------------------------+
@@ -23991,7 +23991,7 @@ __vba__vbaprojectstream__unpack_cache( \
         return __vba__vbaprojectstream__E_UNEXPECTED;
     }
 
-    # *Unknonwn3 (2 bytes)
+    # *Unknown3 (2 bytes)
     _v = stream__read_uint16(stream);
     if (astore__set(store, "*Unknown3::hexint16", _v) < 0) {
         return __vba__vbaprojectstream__E_UNEXPECTED;
@@ -24022,13 +24022,13 @@ __vba__vbaprojectstream__unpack_cache( \
     }
     astore__chdir(store, "..");
 
-    # *Unknonwn5 DWORD Length (2 bytes)
+    # *Unknown5 DWORD Length (2 bytes)
     _v = _count = stream__read_uint16(stream);
     if (astore__set(store, "*Unknown5 DWORD Length", _v) < 0) {
         return __vba__vbaprojectstream__E_UNEXPECTED;
     }
 
-    # *Unknonwn5 (variable)
+    # *Unknown5 (variable)
     astore__chdir(store, "*Unknown5");
     for (_i = 1; _i <= _count; ++_i) {
         _v = stream__read_hex_string(stream, 4);
@@ -24038,7 +24038,7 @@ __vba__vbaprojectstream__unpack_cache( \
     }
     astore__chdir(store, "..");
 
-    # *Unknonwn5 (2 bytes)
+    # *Unknown5 (2 bytes)
     _v = stream__read_hex_string(stream, 2);
     if (astore__set(store, "*Unknown6", _v) < 0) {
         return __vba__vbaprojectstream__E_UNEXPECTED;
@@ -24269,7 +24269,7 @@ __vba__vbaprojectstream__unpack_cache( \
 # +---------------------------------------------------------------+
 # |                              ...                              |
 # +---------------------------------------------------------------+
-# |                  Unknwon1 (6bytes, optional)                  |
+# |                  Unknown1 (6bytes, optional)                  |
 # +-------------------------------+-------------------------------+
 # |              ...              |     *Unknown2 (10 bytes)      |
 # +-------------------------------+-------------------------------+
@@ -24707,7 +24707,7 @@ __vba__vbaprojectstream__unpack_cachedjunkidentifier( \
 # +---------------------------------------------------------------+
 # |                              ...                              |
 # +-------------------------------+-------------------------------+
-# |   *Hash (2 bytes, optional)   | *Unkonwn3 (4 bytes, optional) |
+# |   *Hash (2 bytes, optional)   | *Unknown3 (4 bytes, optional) |
 # +-------------------------------+-------------------------------+
 #
 # '}'
@@ -26362,7 +26362,7 @@ forms20__unpack_commandbuttondatablock( \
         #
         # [MS-OFORMS] 2.5.31 ForeColor
         #
-        # the defalut value(CommandButton) is COLOR_BTNTEXT (0x80000012)
+        # the default value(CommandButton) is COLOR_BTNTEXT (0x80000012)
         #
         # '}'
         astore__fork(store, "ForeColor::OLE_COLOR", _store);
@@ -26379,7 +26379,7 @@ forms20__unpack_commandbuttondatablock( \
         #
         # [MS-OFORMS] 2.5.3 BackColor
         #
-        # the defalut value(CommandButton) is COLOR_BTNFACE (0x8000000f)
+        # the default value(CommandButton) is COLOR_BTNFACE (0x8000000f)
         #
         # '}'
         astore__fork(store, "BackColor::OLE_COLOR", _store);
@@ -26954,7 +26954,7 @@ forms20__unpack_labeldatablock( \
         #
         # [MS-OFORMS] 2.5.31 ForeColor
         #
-        # the defalut value(Label) is COLOR_BTNTEXT (0x80000012)
+        # the default value(Label) is COLOR_BTNTEXT (0x80000012)
         #
         # '}'
         astore__fork(store, "ForeColor::OLE_COLOR", _store);
@@ -26971,7 +26971,7 @@ forms20__unpack_labeldatablock( \
         #
         # [MS-OFORMS] 2.5.3 BackColor
         #
-        # the defalut value of Label is COLOR_BTNFACE (0x8000000f)
+        # the default value of Label is COLOR_BTNFACE (0x8000000f)
         #
         # '}'
         astore__fork(store, "BackColor::OLE_COLOR", _store);
@@ -27705,7 +27705,7 @@ forms20__unpack_formdatablock( \
         #
         # [MS-OFORMS] 2.5.3 BackColor
         #
-        # the defalut value(user form) is COLOR_BTNFACE (0x8000000f)
+        # the default value(user form) is COLOR_BTNFACE (0x8000000f)
         #
         # '}'
         astore__fork(store, "BackColor::OLE_COLOR", _store);
@@ -27722,7 +27722,7 @@ forms20__unpack_formdatablock( \
         #
         # [MS-OFORMS] 2.5.31 ForeColor
         #
-        # the defalut value(user form) is COLOR_BTNTEXT (0x80000012)
+        # the default value(user form) is COLOR_BTNTEXT (0x80000012)
         #
         # '}'
         astore__fork(store, "ForeColor::OLE_COLOR", _store);
@@ -27914,7 +27914,7 @@ forms20__unpack_formdatablock( \
         #
         # [MS-OFORMS] 2.5.7 BorderColor
         #
-        # the defalut value(user form) is COLOR_BTNTEXT (0x80000012)
+        # the default value(user form) is COLOR_BTNTEXT (0x80000012)
         #
         astore__fork(store, "BorderColor::OLE_COLOR", _store);
         _r = forms20__unpack_olecolor(stream, _store);
@@ -30470,7 +30470,7 @@ forms20__unpack_olecolor( \
 # +---------------+---------------+---------------+---------------+
 # |            sWeight            |            ulHeight           |
 # +-------------------------------+---------------+---------------+
-# |              ...              |   bFaseLen    |   FontFace    |
+# |              ...              |   bFaceLen    |   FontFace    |
 # |                               |               |  (variable)   |
 # +-------------------------------+---------------+---------------+
 # |                              ...                              |
@@ -31154,7 +31154,7 @@ forms20__unpack_formscrollbarflags( \
 # |               |                      | AutoWordSelect         |
 # |               |                      | HideSelection          |
 # |---------------+----------------------+------------------------+
-# | CommandButtonn| 0x0000001B           | Reserved1              |
+# | CommandButton | 0x0000001B           | Reserved1              |
 # | Image         |                      | Enabled                |
 # | TabStrip      |                      | BackStyle              |
 # | ScrollBar     |                      | Reserved2              |
@@ -31697,7 +31697,7 @@ cli__main( \
     "printf \\\\0\\\\r\\\\n\\\\343\\\\201\\\\202" | getline _test;
     __feat__is_binary_safe = length(_test) == 6;
 
-    # flags for optimization and portabilty
+    # flags for optimization and portability
     if (split("123", _arr, "") == 3) {
         __feat__has_modern_nullsplit = 1;
     }
