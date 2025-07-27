@@ -5306,7 +5306,7 @@ function \
 __atom__constant_folding( \
     cell, \
     \
-    _tag, _result, _params, _v \
+    _tag, _params, _v \
 ) {
     atom__errno = 0;
     _tag = cell__tag(cell);
@@ -5316,7 +5316,7 @@ __atom__constant_folding( \
         _tag == __atom__C_tag_div || \
         _tag == __atom__C_tag_cat) {
         # constant folding
-        _v = __atom__eval(cell, _params, _result);
+        _v = __atom__eval(cell, _params);
         if (atom__errno == 0) {
             return _v;
         }
