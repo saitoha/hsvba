@@ -18943,14 +18943,14 @@ function \
 pcode__getid( \
     pcode, store, id, \
     \
-    _store, _v, _path, _version \
+    _v, _path, _version \
 ) {
     _version = pcode__vba_version(pcode);
     _v = num__rshift(id, 1);
     if (_v >= 256) {
         _v -= __pcode__S_base_id;
         _path = "/_VBA_PROJECT/*Identifiers/" _v "/*Name";
-        _v = astore__get(_store, _path);
+        _v = astore__get(store, _path);
     } else {
         if (_version >= 7) {
             if (_v >= 195) {
