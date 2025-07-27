@@ -2701,8 +2701,8 @@ function list__clone(p,    _p) {
 }
 # }}}
 # {{{ (private)::list::clone_impl
-function __list__clone_impl(p,    _p, _v) {
-    _v = addr__deref(p);
+function __list__clone_impl(p,    _p) {
+    _p = addr__deref(p);
     if (addr__errno < 0) {
         return addr__C_NIL;
     } else {
