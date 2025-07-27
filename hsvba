@@ -25174,7 +25174,7 @@ __vba__vbaprojectstream__unpack_cachedmodule( \
 
     # *StreamTime
     astore__fork(store, "*StreamTime::CachedStreamTime", _store);
-    _r = __vba__vbaprojectstream__unpack_cachedstreamtime(stream, store);
+    _r = __vba__vbaprojectstream__unpack_cachedstreamtime(stream, _store);
     if (_r < 0) {
         return _r;
     }
@@ -26026,7 +26026,7 @@ forms20__unpack( \
 
         if (astore__has(store, "/CFB/@FileID" _path "/\003VBFrame/id")) {  # VBFrame exists
             astore__new(_store_p, "/Forms");
-            _r = __forms20__unpack_formparts(stream, store_p, _path);
+            _r = __forms20__unpack_formparts(stream, _store_p, _path);
             if (_r < 0) {
                 return _r;
             }
