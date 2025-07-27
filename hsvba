@@ -17922,7 +17922,7 @@ function pcode__new(pcode) {
 function pcode__unpack_headers( \
     pcode, stream, store, \
     \
-    _v, _n, _i \
+    _v, _n, _i, _blocksize, _count, _size, _version \
 ) {
     _v = astore__get(store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
     pcode[__pcode_M_is_64bit] = _v == 3;
@@ -20453,7 +20453,7 @@ function \
 __vba__dirstream__unpack_project_information_lcid( \
     stream, store, \
     \
-    _v \
+    _v, _size \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -24294,7 +24294,7 @@ __vba__vbaprojectstream__unpack_cache( \
     \
     _r, _v, _i, _store, \
     _base_id, _count_of_all_ids, \
-    _count_of_junk_ids, _count_of_ids, _max_id \
+    _count, _count_of_junk_ids, _count_of_ids, _max_id, _size \
 ) {
     # Reserved1 (2 bytes)
     _v = stream__read_uint16(stream);
@@ -24837,7 +24837,7 @@ function \
 __vba__vbaprojectstream__unpack_cachedmodule( \
     stream, store, \
     \
-    _v, _r, _store \
+    _v, _r, _store, _version \
 ) {
     # *ModuleNameLength
     _v = stream__read_uint16(stream);
@@ -25298,9 +25298,9 @@ vba__modulestream__unpack_pcode( \
     stream, store, \
     \
     _v, _i, _length, _opcount, _offset, _num_lines, _store, \
-    _store_op, _jmp_buf_line, _pos, _arg, _args, _dword, _k, \
-    _mnemonic, _opcode, _optype, _pcode, _store_args, _text, \
-    _visibility, _word \
+    _store_op, _jmp_buf_line, _pos, _arg, _args, _blocksize, _dword, \
+    _k, _mnemonic, _opcode, _optype, _pcode, _store_args, _size, \
+    _text, _visibility, _word \
 ) {
     # Magic (2 bytes)
     _v = stream__read_uint16(stream);
