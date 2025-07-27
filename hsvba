@@ -4045,8 +4045,8 @@ function __map__walk_impl( \
     _left = addr__deref(p + map__M_left);
     _right = addr__deref(p + map__M_right);
     _parent = addr__deref(p + map__M_parent);
-    printf "%sp: %d, color: %d, key: %s, parent: %d, left: %d, right: %d\n", \
-        indent, p, _color, _key, _parent, _left, _right > E__file;
+    printf "%sp: %d, color: %d, key: %s, value: %s, parent: %d, left: %d, right: %d\n", \
+        indent, p, _color, _key, _value, _parent, _left, _right > E__file;
     if (_left > 0) {
         if (_left in arr) {
             print indent "    duplicated(_left): " _left > E__file;
