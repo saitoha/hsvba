@@ -5564,7 +5564,7 @@ __atom__type_apply( \
                     type[__atom__type__M_base] = 1;  # 1:signed integer
                 }
             } else {
-                E__message = "unexpected base type: " piece[_word];
+                E__message = "unexpected base type: " addr__deref(_word);
             }
         } else {
             E__message = "unexpected token: " _tokid;
@@ -5580,7 +5580,7 @@ __atom__type_apply( \
             } else if (_word == __atom__C_kwd_bits) {
                 type[__atom__type__M_sizeunit] = 1;  # 1:bits
             } else {
-                E__message = "unexpected size unit: " piece[_word];
+                E__message = "unexpected size unit: " addr__deref(_word);
                 return (-1);
             }
         } else {
