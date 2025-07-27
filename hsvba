@@ -18352,7 +18352,7 @@ pcode__disasm_vararg( \
         opcode == __pcode__C_op_OnGoto || \
         opcode == __pcode__C_op_LineCont) {
         _v = stream__available_size(stream);
-        if (_word < _v / 2) {
+        if (word < _v / 2) {
             for (_i = 1; _i <= word / 2; ++_i) {
                 _v = pcode__getname(pcode, stream, store);
                 _text = _text (_i == 1 ? "": ",") _v;
@@ -18380,7 +18380,7 @@ pcode__disasm_function( \
     _is_64bit = pcode__is_64bit(pcode);
     _text = "";
 
-    astore__set(_store_args, "@*IDT Offset", offset);
+    astore__set(store, "@*IDT Offset", offset);
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, _idt_offset + 4 + offset);
 
@@ -18453,11 +18453,11 @@ pcode__disasm_function( \
             _private = "Private ";
         }
     }
-    if (num__and(_optype, 4)) {
+    if (num__and(optype, 4)) {
         astore__set(store, "fPublic::bool", 1);
         _public = "Public ";
     }
-    if (num__and(_optype, 128)) {
+    if (num__and(optype, 128)) {
         astore__set(store, "fStatic::bool", 1);
         _static = "Public ";
     }
