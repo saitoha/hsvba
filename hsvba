@@ -27,31 +27,31 @@
 #  usage
 #  =====
 #
-#  basic usage:
+#  Basic usage:
 #
 #    $ hsvba [awk options] -- [-p <switches>] <file1> <file2> ...
 #    $ hsvba [awk options] <file1> <file2> ... [-p <switches>]
 #
-#  or input via stdin,
+#  Or input via stdin,
 #
 #    $ hsvba [awk options] -- [-p <switches>] < <file>
 #
-#  options:
+#  Options:
 #    -p <switch1,switch2,...>
 #    --print=<switches>
-#        specify the types of content to be output, separated by commas.
-#            zip: stored in Zip headers (default: off)
-#            cfb: stored in Compound File Binary Format (default: off)
-#            dir: stored in dir stream (default: off)
-#            prj: stored in PROJECT stream (default: off)
+#        Specifies the types of content to be output, separated by commas.
+#            zip: content stored in Zip headers (default: off)
+#            cfb: content stored in Compound File Binary Format (default: off)
+#            dir: content stored in dir stream (default: off)
+#            prj: content stored in PROJECT stream (default: off)
 #            src: VBA cls/bas/frm module source files (default: on)
-#            frm: VBA Forms and Controls (default: off)
-#            all: turn on all the above switch option (default: off)
-#            ids: _VBA_PROJECT stream (default: off, experimental)
-#            pcd: P-CODE section (default: off, experimental)
+#            frm: VBA Forms and controls (default: off)
+#            all: enables all of the above switch options (default: off)
+#            ids: content stored in _VBA_PROJECT stream (default: off, experimental)
+#            pcd: P-CODE section in VBA modules (default: off, experimental)
 #    -h
 #    --help
-#        show help
+#        Show help
 #
 #  This awk script can be interpreted as Bash or Awk.
 #  Some enviromemnt variables are available in bash mode.
@@ -73,7 +73,7 @@
 #
 #    ex.)
 #      $ git clone https://github.com/saitoha/hsvba.git
-#      $ sudo cp .hsvba/hsvba /usr/local/bin/
+#      $ sudo cp ./hsvba/hsvba /usr/local/bin/
 #
 #  supported formats
 #  ==================
