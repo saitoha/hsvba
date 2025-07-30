@@ -750,12 +750,13 @@ stream__init(    _status) {
 # - new
 # - skip
 # - rewind
-# - seek
+# - iseek
 # - pos
 # - rsearch
 # - available_size
 # - is_end
 # - read_bits
+# - write_bits
 # - skip_to_align
 # - setjmp
 # - longjmp
@@ -777,19 +778,20 @@ stream__init(    _status) {
 # private members
 # - __stream__M_iit:     an input byte iterator
 # - __stream__M_oit:     an output byte iterator
-# - __stream__M_bits:    a bit iterator
+# - __stream__M_ibit:    an input bit iterator
+# - __stream__M_obit:    an output bit iterator
 # - __stream__M_line:    current line buffer
 # - __stream__M_base:    base address of padding calculation
 #
 # This object is just an array. The first few elements of the array are
 # reserved for member variables with integer keys.
 #
-#      |         members        |             stream data             |
-#      +----+----+----+----+----+---+---+---+---+---+---+- ... ---+---+
-# pos. |iit |oit |bits|line|base|(1)|(2)|(3)|(4)|(5)|(6)|         |   |
-#      +----+----+----+----+----+---+---+---+---+---+---+- ... ---+---+
-# idx  | 1  | 2  | 3  | 4  | 5  | 6 | 7 | 8 | 9 |10 |11 |         |   |
-#      +----+----+----+----+----+---+---+---+---+---+---+- ... ---+---+
+#      |          members            |          stream data           |
+#      +----+----+----+----+----+----+---+---+---+---+---- ... ---+---+
+# pos. |iit |oit |ibit|obit|line|base|(1)|(2)|(3)|(4)|(5)         |   |
+#      +----+----+----+----+----+----+---+---+---+---+---- ... ---+---+
+# idx  | 1  | 2  | 3  | 4  | 5  | 6  | 7 | 8 | 9 |10 |11          |   |
+#      +----+----+----+----+----+----+---+---+---+---+---- ... ---+---+
 #        |    |              ^                    ^                 ^
 #        |    |            offset              current             end
 #        |    |                                   |                 |
@@ -807,6 +809,7 @@ stream__init(    _status) {
 # this optimization!
 #
 # '}'
+# '${__pp_ut__stream__:+$'\n'"BEGIN { stream__ut(); }"}'
 # {{{ stream::class_init
 function \
 __stream__class_init() {
@@ -821,10 +824,11 @@ __stream__class_init() {
     # member functions
     __stream__M_iit           = 1;
     __stream__M_oit           = 2;
-    __stream__M_bits          = 3;
-    __stream__M_line          = 4;
-    __stream__M_base          = 5;
-    __stream__C_header_offset = 5;
+    __stream__M_ibit          = 3;
+    __stream__M_obit          = 4;
+    __stream__M_line          = 5;
+    __stream__M_base          = 6;
+    __stream__C_header_offset = 6;
 
     # for stream__read_timestamp
     __stream__C_month_days[1]  = 31;
@@ -857,7 +861,8 @@ stream__new(stream, forecast_size) {
     }
     stream[__stream__M_iit]   = __stream__C_header_offset;
     stream[__stream__M_oit]   = __stream__C_header_offset;
-    stream[__stream__M_bits]  = 0;
+    stream[__stream__M_ibit]  = 0;
+    stream[__stream__M_obit]  = 0;
     stream[__stream__M_line]  = 0;
     stream[__stream__M_base]  = 0;
 }
@@ -872,7 +877,7 @@ stream__new_from_string( \
     # strategic branching:
     # using mawk`s CY_SPLIT optimization
     if (__feat__has_cy_split_array) {
-        split("00000" str, stream, "");
+        split("000000" str, stream, "");
         # '${__pp_comment:+'
         # Avoid using length(array), whose behavior is undefined under POSIX.
         # In some non-modern AWK systems, strlen is called at this point,
@@ -903,16 +908,13 @@ stream__rewind(stream, n) {
     stream[__stream__M_iit] -= n;
 }
 # }}}
-# {{{ stream::seek
+# {{{ stream::iseek
 function \
-stream__seek(stream, n,    _pos) {
+stream__iseek(stream, n,    _pos) {
     # '${__pp_debug_assert:+$'\nASSERT(n > 0)'}'
-    _pos = __stream__C_header_offset + n;
-    if (_pos > stream[__stream__M_oit]) {
-        return (-1);
-    }
-    stream[__stream__M_iit] = _pos;
-    return 0;
+    stream[__stream__M_iit] = __stream__C_header_offset + n;
+
+    return (0);
 }
 # }}}
 # {{{ stream::pos
@@ -974,11 +976,26 @@ stream__is_end(stream) {
     return stream[__stream__M_iit] >= stream[__stream__M_oit];
 }
 # }}}
+function stream__ut(    _status) {
+    stream__init();
+
+    _status = __stream__ut__read_bits__00();
+    print (_status == 0 ? "OK": "NG") > E__file;
+
+    _status = __stream__ut__write_bits__00();
+    print (_status == 0 ? "OK": "NG") > E__file;
+
+    exit;
+}
 # {{{ stream::read_bits
 function \
-stream__read_bits(stream, n,    _it, _it_bits, _bytes, _bits, _p, _bitsbuf) {
+stream__read_bits( \
+    stream, n, \
+    \
+    _it, _it_bits, _bytes, _bits, _p, _bitsbuf \
+) {
     _it = stream[__stream__M_iit];
-    _it_bits = _bits = stream[__stream__M_bits];
+    _it_bits = _bits = stream[__stream__M_ibit];
     _bitsbuf = stream[_it + 1];   # current byte
     _bits += n;
     if (_bits >= 8) {
@@ -990,11 +1007,208 @@ stream__read_bits(stream, n,    _it, _it_bits, _bytes, _bits, _p, _bitsbuf) {
         } while (_bits >= 8);
         stream[__stream__M_iit] = _it;
     }
-    stream[__stream__M_bits] = _bits;
+    stream[__stream__M_ibit] = _bits;
     return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
 }
+function \
+__stream__ut__read_bits__00(    _stream) {
+
+    # iit
+    # oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  | | | | | | | | | | | | | | | | |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |lsb         msb|lsb         msb|
+    #
+    stream__new(_stream);
+
+    #
+    # stream[iit + 1] -> b01011010 = 90
+    # stream[iit + 2] -> b10100000 = 5
+    #
+    # iit                          -> oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |0|1|0|1|1|0|1|0|1|0|1|0|0|0|0|0|
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |lsb         msb|lsb         msb|
+    #
+    stream__write_uint8(_stream, 91);
+    stream__write_uint8(_stream, 5);
+
+    #
+    # read_bits(stream, 3);
+    #
+    # iit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |1|1|0|1|1|0|1|0|1|0|1|0|0|0|0|0|
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  ^ ->  ^
+    #    n=3
+    #
+    # bitsbuf = 90
+    # result -> (90 >> 0) % (1 << 3) = 3
+    #
+    if (stream__read_bits(_stream, 3) != 3) {
+        return (-1);
+    }
+
+    #
+    # read_bits(stream, 7);
+    #
+    #              -> iit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |0|1|0|1|1|0|1|0|1|0|1|0|0|0|0|0|
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #        ^     ->      ^
+    #              n=7
+    #
+    # bitsbuf = 90 + 5 * 256 = 1370
+    # result -> (1370 >> 3) % (1 << 7) = 43
+    #
+    if (stream__read_bits(_stream, 7) != 43) {
+        return (-1);
+    }
+
+    return (0);
+}
 # }}}
-# {{{ stream::set_slign_base
+# {{{ stream::write_bits
+function \
+stream__write_bits( \
+    stream, n, data, \
+    \
+    _it, _it_bits, _bytes, _bits, _p, _bitsbuf \
+) {
+    _it = stream[__stream__M_oit];
+    _it_bits = _bits = stream[__stream__M_obit];
+    _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
+    _bits += n;
+    if (_bits >= 8) {
+        do {
+            stream[++_it] = _bitsbuf % 256;
+            _bitsbuf = int(_bitsbuf / 256);
+            _bits -= 8;
+        } while (_bits >= 8);
+        stream[__stream__M_oit] = _it;
+    }
+    stream[_it + 1] = _bitsbuf;
+    stream[__stream__M_obit] = _bits;
+    return (0);
+}
+function \
+__stream__ut__write_bits__00(    _stream) {
+
+    #
+    # oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  | | | | | | | | | | | | | | | | |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |lsb         msb|lsb         msb|
+    #
+    stream__new(_stream);
+
+    #
+    # write_bits(stream, 3, 3);
+    #
+    # oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |1|1|0| | | | | | | | | | | | | |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  ^ ->  ^
+    #    n=3
+    #
+    if (stream__write_bits(_stream, 3, 3) < 0) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_oit] - __stream__C_header_offset != 0) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_obit] != 3) {
+        return (-1);
+    }
+
+    if (_stream[__stream__C_header_offset + 1] != 3) {
+        return (-1);
+    }
+
+    #
+    # write_bits(stream, 4, 10);
+    #
+    # oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |1|1|0|0|1|0|1| | | | | | | | | |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #        ^  ->   ^
+    #           n=4
+    #
+    if (stream__write_bits(_stream, 4, 10) < 0) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_oit] - __stream__C_header_offset != 0) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_obit] != 7) {
+        return (-1);
+    }
+
+    if (_stream[__stream__C_header_offset + 1] != 83) {
+        return (-1);
+    }
+
+    #
+    # write_bits(stream, 5, 19);
+    #
+    #              -> oit
+    # -+---------------+---------------+-
+    #  |       0       |       1       |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #  |1|1|0|0|1|0|1|1|1|0|0|1| | | | |
+    # -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+    #                ^   ->    ^
+    #                    n=5
+    #
+    if (stream__write_bits(_stream, 5, 19) < 0) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_oit] - __stream__C_header_offset != 1) {
+        return (-1);
+    }
+
+    if (_stream[__stream__M_obit] != 4) {
+        return (-1);
+    }
+
+    if (_stream[__stream__C_header_offset + 1] != 211) {
+        return (-1);
+    }
+
+    if (_stream[__stream__C_header_offset + 2] != 9) {
+        return (-1);
+    }
+
+    return (0);
+}
+# }}}
+# {{{ stream::set_align_base
 function \
 stream__set_align_base(stream) {
     stream[__stream__M_base] = stream[__stream__M_iit];
@@ -1003,9 +1217,9 @@ stream__set_align_base(stream) {
 # {{{ stream::skip_to_align
 function \
 stream__skip_to_align(stream, n,   _base) {
-    if (stream[__stream__M_bits] > 0) {
+    if (stream[__stream__M_ibit] > 0) {
         ++stream[__stream__M_iit];
-        stream[__stream__M_bits] = 0;
+        stream[__stream__M_ibit] = 0;
     }
     if (__stream__M_base in stream) {
         _base = stream[__stream__M_base];
@@ -1823,7 +2037,7 @@ stream__decode_huffman(stream, huffman_table,    _p, _c, _l) {
             #=#     length(_p), \
             #=#     _p, \
             #=#     stream[__stream__M_iit] + 1,
-            #=#     stream[__stream__M_bits]);
+            #=#     stream[__stream__M_ibit]);
             #=# ')"}'
             return (-1);
         }
@@ -15968,7 +16182,7 @@ zip__unpack_directories( \
         store, \
         "End of central directory header/offset of " \
         "start of central directory");
-    stream__seek(stream, _offset);
+    stream__iseek(stream, _offset);
 
     _count = astore__get( \
         store, \
@@ -16011,7 +16225,7 @@ zip__unpack_file( \
     }
 
     # seek to the start of local header of "xl/vbaProject.bin"
-    stream__seek(stream, astore__get(_store, _path));
+    stream__iseek(stream, astore__get(_store, _path));
 
     # [APPNOTE.TXT] 4.3.7  Local file header
     _status = __zip__unpack_local_file_header(stream, _store);
@@ -17915,7 +18129,7 @@ pcode__disasm_imp( \
     } else {
         if (__pcode__C_op_args[opcode] == AT_IMP) {
             stream__setjmp(stream, _jmp_buf_op);
-            stream__seek(stream, pcode__get_obt_offset(pcode) + 4 + word);
+            stream__iseek(stream, pcode__get_obt_offset(pcode) + 4 + word);
             _v = pcode__getname(pcode, stream, store);
             stream__longjmp(stream, _jmp_buf_op);
         } else {
@@ -17941,7 +18155,7 @@ pcode__disasm_name( \
     astore__set(store, "Offset", offset);
 
     stream__setjmp(stream, _jmp_buf_op);
-    stream__seek(stream, _idt_offset + 4 + offset);
+    stream__iseek(stream, _idt_offset + 4 + offset);
 
     _v = _var_name = pcode__getid(pcode, store, offset);
     stream__longjmp(stream, _jmp_buf_op);
@@ -17982,7 +18196,7 @@ pcode__disasm_var( \
     _v, _i, _store, _jmp_buf_op, _text \
 ) {
     stream__setjmp(stream, _jmp_buf_op);
-    stream__seek(stream, pcode__get_idt_offset(pcode) + 4 + dword);
+    stream__iseek(stream, pcode__get_idt_offset(pcode) + 4 + dword);
 
     _v = _flag1 = stream__read_uint8(stream);
     astore__set(store, "Flag1::hexint8", _v);
@@ -18068,7 +18282,7 @@ pcode__disasm_function( \
 
     astore__set(_store_args, "@*IDT Offset", offset);
     stream__setjmp(stream, _jmp_buf_op);
-    stream__seek(stream, _idt_offset + 4 + offset);
+    stream__iseek(stream, _idt_offset + 4 + offset);
 
     # *Flags (2 bytes)
     _v = _flags = stream__read_uint16(stream);
@@ -18206,7 +18420,7 @@ pcode__disasm_function( \
     _i = 0;
     while (_arg_offset != 4294967295 && _arg_offset != 0) {
         ++_i;
-        stream__seek(stream, _idt_offset + 4 + _arg_offset);
+        stream__iseek(stream, _idt_offset + 4 + _arg_offset);
 
         astore__fork(store, "Args/" _i, _store);
 
@@ -18276,7 +18490,7 @@ pcode__disasm_function( \
                     _arg_type_name = __pcode__C_keywords[_v] " " _arg_type " " _v;
                 } else {
                     stream__setjmp(stream, _jmp_buf_arg);
-                    #stream__seek(stream, pcode[__pcode_M_OBT_offset] + 4 + (_arg_type - 680) / 4 + 6);
+                    #stream__iseek(stream, pcode[__pcode_M_OBT_offset] + 4 + (_arg_type - 680) / 4 + 6);
                     #_v = stream__read_uint16(stream);
 #                    _v = pcode__getname(pcode, stream, _store);
 #                    astore__set(_store, "Value", _v);
@@ -18696,7 +18910,7 @@ cfb__unpack_stream( \
             _sector_no = astore__get(store, "/CFB/MiniFAT/M2F/" _mini_secno);
             _body_offset = (1 + _sector_no) * _sector_size \
                          + _mini_secno % _minifat_per_fat * _mini_secsize;
-            stream__seek(istream, _body_offset);
+            stream__iseek(istream, _body_offset);
             stream__copy(istream, ostream, \
                          _stream_size > _mini_secsize ? _mini_secsize: _stream_size);
             # search next Mini FAT chain
@@ -18706,7 +18920,7 @@ cfb__unpack_stream( \
         # if stream size >= 4096, stored in FAT sectors
         for (_sector_no = _start_secno; _stream_size > 0; _stream_size -= _sector_size) {
             _body_offset = (1 + _sector_no) * _sector_size;
-            stream__seek(istream, _body_offset);
+            stream__iseek(istream, _body_offset);
             stream__copy(istream, ostream, \
                          _stream_size >= _sector_size ? _sector_size: _stream_size);
             # search next FAT chain
@@ -19050,7 +19264,7 @@ __cfb__build_fat_chain( \
         _difat = astore__get(store, "Header/DIFATS/" _i);
         if (_difat < __cfb__C_sector_magic_MAXREGSECT) { # != __cfb__C_sector_magic_ENDOFCHAIN
             # (sector number + 1) x Sector Size
-            stream__seek(stream, (_difat + 1) * _sector_size);
+            stream__iseek(stream, (_difat + 1) * _sector_size);
             for (_j = 0; _j < _sector_size / _sizeof_sector_no; ++_j) {
                 # Next Sector in Chain (variable)
                 _v = stream__read_uint32(stream);
@@ -19160,7 +19374,7 @@ __cfb__build_minifat_chain( \
 
     _n = 0;
     for (_minifat_sectno = _minifat_start; _minifat_sectno < __cfb__C_sector_magic_MAXREGSECT; ) {
-        stream__seek(stream, (_minifat_sectno + 1) * _sector_size);
+        stream__iseek(stream, (_minifat_sectno + 1) * _sector_size);
         for (_i = 0; _i < _sector_size / _sizeof_sector_no; ++_i) {
             _v = stream__read_uint32(stream);
             if (astore__set(store, "MiniFAT/Chain/" _n, _v) < 0) {
@@ -19254,7 +19468,7 @@ __cfb__unpack_directorysectors( \
     astore__fork(_store, id, _store);
 
     _v = (_sector_no + 1) * _sector_size + _directory_entry_size * _i;
-    stream__seek(stream, _v);
+    stream__iseek(stream, _v);
 
     # Directory Entry Name (64 bytes)
     _v = stream__read_utf16le_string(stream, 64);
@@ -23006,7 +23220,7 @@ __vba__projectstream__unpack_projectpassword( \
 
     _v = stream__available_size(_decrypted_stream);
     _decrypted_data = stream__read_hex_string(_decrypted_stream, _v);
-    stream__seek(_decrypted_stream, 0);
+    stream__iseek(_decrypted_stream, 0);
 
     if (astore__set(store, "DecryptedPasswordHash", _decrypted_data) < 0) {
         return vba__projectstream__E_UNEXPECTED;
@@ -24948,7 +25162,7 @@ vba__modulestream__unpack( \
         }
 
         if (num__and(__cli__S_opt_print, OPT_PRINT_SRC)) {
-            stream__seek(_istream, _offset);
+            stream__iseek(_istream, _offset);
 
             astore__new(_store_p, "/VBA/@LZ77CompressedStream" _path);
             _r = vba__lz77__unpack(_istream, _store_p, _ostream);
@@ -24993,7 +25207,7 @@ vba__modulestream__unpack_pcode( \
         return vba__modulestream__E_UNEXPECTED
     }
 
-    stream__seek(stream, pcode__get_code_offset(_pcode));
+    stream__iseek(stream, pcode__get_code_offset(_pcode));
 
     # Unknown4
     _v = stream__read_hex_string(stream, 60);
@@ -25110,7 +25324,7 @@ vba__modulestream__unpack_pcode( \
 
                             astore__set(_store_args, "Arg/Offset::hexint32", pcode__get_idt_offset(_pcode) + 4 + _dword)
                             stream__setjmp(stream, _jmp_buf_arg);
-                            stream__seek(stream, pcode__get_idt_offset(_pcode) + 4 + _dword);
+                            stream__iseek(stream, pcode__get_idt_offset(_pcode) + 4 + _dword);
 
                             _v = stream__read_uint16(stream);
                             astore__set(_store_args, "Arg/IDT/magic::hexint16", _v);
@@ -32016,7 +32230,7 @@ cli__process_stream( \
     _v = stream__read_hex_string(stream, 8);
     if (_v == __cfb__C_magic_CFB_STORAGE) {
         # input may be raw vbaProject.bin
-        stream__seek(stream, 0);
+        stream__iseek(stream, 0);
         return cli__process_vbaproject_binary(stream);
     } else {
         stream__rewind(stream, 8);
