@@ -359,7 +359,7 @@
 # {{{ bash preprocessing
 true && echo "$( \
 HSVBA_TRACE_LEVEL=${HSVBA_TRACE_LEVEL-error}; \
-HSVBA_TRACE_TOPIC=${HSVBA_TRACE_TOPIC-zip,cfb,dir,prj,frm,prf}; \
+HSVBA_TRACE_TOPIC=${HSVBA_TRACE_TOPIC-zip,cfb,vbalz,dir,prj,frm,prf}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
 : ${AWK:=$(which mawk 2>/dev/null)} \
   ${AWK:=$(which gawk 2>/dev/null)} \
@@ -32196,9 +32196,6 @@ cli__process_vbaproject_binary( \
 #     -> "Macros"
 #
 # Microsoft Outlook (*.otm)
-#     -> "OutlookVbaData"
-#
-# Microsoft Outlook (*.)
 #     -> "OutlookVbaData"
 #
 function \
