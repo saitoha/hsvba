@@ -32551,7 +32551,7 @@ __cli__detect_vbaroot( \
 # {{{ entry point
 BEGIN {
     RS = "^$";       # multicharacter value of RS is a gawk extension
-    BINMODE = "rw";  # gawk/mawk extension, for Windows
+    BINMODE = "r";   # gawk/mawk extension, for Windows
     FS = "^$";
     FIELDWIDTH="*";
 
