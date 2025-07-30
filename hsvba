@@ -1,5 +1,7 @@
 #!/usr/bin/env LANG=C awk -f
 #
+# SPDX-License-Identifier: GPL-3.0-only
+#
 #   ██╗  ██╗███████╗██╗   ██╗██████╗  █████╗
 #   ██║  ██║██╔════╝██║   ██║██╔══██╗██╔══██╗
 #   ███████║███████╗██║   ██║██████╔╝███████║
@@ -27,17 +29,12 @@
 #
 #  basic usage:
 #
-#    $ hsvba -- [-p <switches>] <file1> <file2> ...
-#    $ hsvba <file1> <file2> ... [-p <switches>]
+#    $ hsvba [awk options] -- [-p <switches>] <file1> <file2> ...
+#    $ hsvba [awk options] <file1> <file2> ... [-p <switches>]
 #
 #  or input via stdin,
 #
-#    $ hsvba -- [-p <switches>] < <file>
-#
-#  This file can be interpreted as Bash or Awk. The following form of the
-#  command is useful when you want to use the gawk debugger option (-D).
-#
-#    $ awk -f $(which hsvba) [options] <files> ...
+#    $ hsvba [awk options] -- [-p <switches>] < <file>
 #
 #  options:
 #    -p <switch1,switch2,...>
@@ -50,11 +47,33 @@
 #            src: VBA cls/bas/frm module source files (default: on)
 #            frm: VBA Forms and Controls (default: off)
 #            all: turn on all the above switch option (default: off)
-#            ids(experimental): _VBA_PROJECT stream
-#            pcd(experimental): P-CODE section
+#            ids: _VBA_PROJECT stream (default: off, experimental)
+#            pcd: P-CODE section (default: off, experimental)
 #    -h
 #    --help
 #        show help
+#
+#  This awk script can be interpreted as Bash or Awk.
+#  Some enviromemnt variables are available in bash mode.
+#
+#    ex. 1) use gawk's --trace option
+#    $ AWK=gawk AWKOPT=--trace bash test.xlsm
+#
+#    ex. 2) use mawk's "-W dump" option
+#    $ AWK=mawk AWKOPT="-W dump" bash test.xlsm
+#
+#    ex. 3) enable debugging log
+#    $ HSVBA_TRACE_LEVEL=debug3 HSVBA_TRACE_TOPIC=zip,cfb,vbalz bash ./hsvba test.xlsm -p
+#
+#    ex. 4) module unit testing
+#    $ __pp_ut__map__=1 bash ./hsvba
+#
+#  install
+#  =======
+#
+#    ex.)
+#      $ git clone https://github.com/saitoha/hsvba.git
+#      $ sudo cp .hsvba/hsvba /usr/local/bin/
 #
 #  supported formats
 #  ==================
@@ -75,27 +94,37 @@
 #      *.dot Word 97-2003 template
 #
 #    - PowerPoint
-#      *.pptm Macro-enabled presentation (Open XML format)
-#      *.potm Macro-enabled template
-#      *.ppsm Macro-enabled slideshow
+#      *.pptm Microsoft PowerPoint Macro-enabled Presentation (Open XML format)
+#      *.potm Microsoft PowerPoint Macro-enabled Template
+#      *.ppsm Microsoft PowerPoint Macro-enabled Slideshow
 #      *.ppam add-in
-#      *.ppa legacy format add-in
+#      *.ppa Microsoft PowerPoint Add-in
 #
 #      Some legacy formats(*.ppt, *.pot, *.pps) are not supported yet.
+#      TODO: implement [MS-PPT], PowerPoint (.ppt) Binary File Format
+#      https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-PPT/%5bMS-PPT%5d.pdf
 #
 #    - Access(*.accdb, *.mdb, *.accde)
 #      Unsupported.
 #
+#    - Outlook
+#      *.otm Microsoft Outlook VBA Project File
+#
+#    - Publisher
+#      *.pub Microsoft Office Publisher Document
+#
 #    - Visio
-#      *.vsdm Macro-enabled drawing (Open XML format)
-#      *.vstm Macro-enabled template
-#      *.vssm Macro-enabled stencil
+#      *.vsdm Microsoft Visio Macro-enabled Drawing (Open XML format)
+#      *.vstm Microsoft Visio Macro-enabled Template
+#      *.vssm Microsoft Visio Macro-enabled Stencil
 #
 #      Legacy formats(*.vsd, *.vst, *.vss) are not supported yet.
+#      TODO: Implement a VSD parser by referencing `libvisio`.
+#      https://github.com/LibreOffice/libvisio (licensed under MPL-2.0)
 #
 #    - Project
-#      *.mpp Macro-enabled project file
-#      *.mpt Project template (macro-capable)
+#      *.mpp Microsoft Project Document
+#      *.mpt Microsoft Project Template
 #
 #    - Raw vbaProject.bin file (vbaProject.bin)
 #
@@ -155,8 +184,11 @@
 #    We have tested this script on several AWK environments, and the
 #    results are shown below.
 #
-#    In some environments, binary-safe input processing cannot be achieved,
-#    so the external command "base64" is required.
+#    In some environments, binary-safe input processing is not possible.
+#    Traditional AWK implementations internally use null-terminated string
+#    functions (e.g., strlen(3)), which do not handle binary data correctly.
+#    If hsvba detects a binary-unsafe environment, it invokes the external
+#    command `base64`.
 #
 #    +=====================================================================+
 #    | AWK implementation       | base64 requirement  | result             |
@@ -191,6 +223,25 @@
 #    *1 integer overflow
 #    *2 parse error
 #    *3 segmentation error
+#
+#  integration
+#  ===========
+#
+#    You can view VBA source code differences using the output of `git show` or `git diff`.
+#    To enable diff display for Excel (*.xlsm) files, refer to the following documentation:
+#
+#      8.2 Customizing Git - Git Attributes
+#      https://git-scm.com/book/ms/v2/Customizing-Git-Git-Attributes
+#
+#      (1) Add a .gitattributes file in the data/excel directory:
+#
+#          $ echo "*.xlsm diff=hsvba" >> data/excel/.gitattributes
+#
+#      (2) Configure Git to use `hsvba` as a text conversion filter for diffs:
+#
+#          $ git config diff.hsvba.textconv "hsvba -- -pprj,src,dir,frm"
+#
+#    A sample .gitattributes file is present in the testdata/ directory.
 #
 #  references
 #  ==========
@@ -18446,14 +18497,16 @@ cli__extract_vba( \
         return cli__E_UNEXPECTED;
     }
 
-    # walk the tree on astore, and find the document which has the following type:
+    # walk the tree on astore, and find the document which has the following types:
     # "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+    # "http://schemas.microsoft.com/visio/2010/relationships/document"
     astore__chdir(store, "@1/Relationships");
     astore__enum_reset(store);
     while (! astore__enum_end(store)) {
          _key = astore__enum_next(store);
          _type = astore__get(store, _key "/Relationship/Type");
-         if (_type == ooxml__C_schema_OFFICEDOCUMENT || _type == ooxml__C_schema_VISIODOCUMENT) {
+         if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
+             _type == ooxml__C_schema_VISIODOCUMENT) {
              _target = astore__get(store, _key "/Relationship/Target");
              if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
@@ -18465,7 +18518,8 @@ cli__extract_vba( \
     if (! _relpath) {
         E__message = sprintf( \
             "Office document file (type: %s or %s) is not found.", \
-            ooxml__C_schema_OFFICEDOCUMENT, ooxml__C_schema_VISIODOCUMENT);
+            ooxml__C_schema_OFFICEDOCUMENT, \
+            ooxml__C_schema_VISIODOCUMENT);
         return cli__E_ACCESSDENIED;
     }
 
@@ -19683,16 +19737,18 @@ function \
 vba__dirstream__unpack( \
     stream, store, \
     \
-    _store, _path, _r, _istream, _ostream \
+    _store, _path, _r, _istream, _ostream, _vbaroot, _vba \
 ) {
-    _path = astore__get(store, "/@VBA Root Directory") "/VBA/dir";
+    _vbaroot = astore__get(store, "/@VBA Root Directory");
+    _vba = astore__get(store, "/@VBA Directory");
+    _path = _vbaroot "/" _vba "/dir";
 
     _r = cfb__unpack_stream(stream, store, _path, _istream);
     if (_r < 0) {
         return _r;
     }
 
-    astore__fork(store, "@LZ77CompressedStream/Root Entry/VBA/dir", _store);
+    astore__fork(store, "@LZ77CompressedStream" _path, _store);
     _r = vba__lz77__unpack(_istream, _store, _ostream);
     if (_r < 0) {
         return _r;
@@ -23751,7 +23807,8 @@ vba__vbaprojectstream__unpack( \
     \
     _r, _v, _stream, _path \
 ) {
-    _path = astore__get(store, "/@VBA Root Directory") "/VBA/_VBA_PROJECT";
+    _path = astore__get(store, "/@VBA Root Directory") "/" \
+            astore__get(store, "/@VBA Directory") "/_VBA_PROJECT";
 
     _r = cfb__unpack_stream(stream, store, _path, _stream);
     if (_r < 0) {
@@ -24846,7 +24903,7 @@ vba__modulestream__unpack( \
     _stream_name, _offset, \
     _entry_no, _content, \
     _store, _path, _r, _src, \
-    _istream, _ostream, _store_p, _vbaroot \
+    _istream, _ostream, _store_p, _vbaroot, _vba \
 ) {
     astore__new(_store, "/VBA/Project/ModulesRecord/Modules");
 
@@ -24855,6 +24912,7 @@ vba__modulestream__unpack( \
     }
 
     _vbaroot = astore__get(store, "/@VBA Root Directory");
+    _vba = astore__get(store, "/@VBA Directory");
 
     while (! astore__enum_end(_store)) {
         _entry_no = astore__enum_next(_store);
@@ -24863,7 +24921,7 @@ vba__modulestream__unpack( \
         # offset for skipping performance cache (P-CODE)
         _offset = astore__get(_store, _entry_no "/OffsetRecord/TextOffset");
 
-        _path = _vbaroot "/VBA/" _stream_name;
+        _path = _vbaroot "/" _vba "/" _stream_name;
 
         _r = cfb__unpack_stream(stream, _store, _path, _istream);
         if (_r < 0) {
@@ -25315,14 +25373,16 @@ function \
 forms20__unpack( \
     stream, store, \
     \
-    _stream_name, _entry, _store, _path, _r, _store_p \
+    _stream_name, _entry, _store, _path, _r, _store_p, _vbaroot \
 ) {
     astore__new(_store, "/VBA/Project/ModulesRecord/Modules");
+    _vbaroot = astore__get(store, "/@VBA Root Directory");
+
     while (! astore__enum_end(_store)) {
         _entry = astore__enum_next(_store);
 
         _stream_name = astore__get(_store, _entry "/StreamNameRecord/StreamName");
-        _path = "/Root Entry/" _stream_name;
+        _path = _vbaroot "/" _stream_name;
 
         if (astore__has(store, "/CFB/@FileID" _path "/\003VBFrame/id")) {  # VBFrame exists
             astore__new(_store_p, "/Forms");
@@ -31968,10 +32028,28 @@ cli__process_stream( \
         return cli__E_UNEXPECTED;
     }
 
+    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+        if (__cli__S_show_header) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " ZIP information\n" \
+                  "-------------------------------------------------------------------------------\n";
+        }
+        astore__pretty_print(_store, "/Zip", "");
+    }
+
     astore__new(_store, "/ooxml");
     _r = cli__extract_vba(stream, _store);
     if (_r < 0) {
         return _r;
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_OOX)) {
+        if (__cli__S_show_header) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " OOXML information\n" \
+                  "-------------------------------------------------------------------------------\n";
+        }
+        astore__pretty_print(_store, "/ooxml", "");
     }
 
     _vbapath = astore__get(store, "/ooxml/@VBA Path");
@@ -31997,6 +32075,15 @@ cli__process_vbaproject_binary( \
     _r = cfb__unpack(stream, _store);
     if (_r < 0) {
         return _r;
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
+        if (__cli__S_show_header) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " CFB information\n" \
+                  "-------------------------------------------------------------------------------\n";
+        }
+        astore__pretty_print(_store, "/CFB", "");
     }
 
     # detect VBA root directory
@@ -32032,33 +32119,6 @@ cli__process_vbaproject_binary( \
         if (_r < 0) {
             return _r;
         }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
-        if (__cli__S_show_header) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " ZIP information\n" \
-                  "-------------------------------------------------------------------------------\n";
-        }
-        astore__pretty_print(_store, "/Zip", "");
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_OOX)) {
-        if (__cli__S_show_header) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " OOXML information\n" \
-                  "-------------------------------------------------------------------------------\n";
-        }
-        astore__pretty_print(_store, "/ooxml", "");
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
-        if (__cli__S_show_header) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " CFB information\n" \
-                  "-------------------------------------------------------------------------------\n";
-        }
-        astore__pretty_print(_store, "/CFB", "");
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
@@ -32135,6 +32195,12 @@ cli__process_vbaproject_binary( \
 # Microsoft Word (*.doc)
 #     -> "Macros"
 #
+# Microsoft Outlook (*.otm)
+#     -> "OutlookVbaData"
+#
+# Microsoft Outlook (*.)
+#     -> "OutlookVbaData"
+#
 function \
 __cli__detect_vbaroot( \
     stream, store, \
@@ -32144,7 +32210,9 @@ __cli__detect_vbaroot( \
     split("/Root Entry," \
           "/Root Entry/_VBA_PROJECT_CUR," \
           "/Root Entry/   29/CVba/2b400008_ffffffff," \
-          "/Root Entry/Macros", \
+          "/Root Entry/Macros," \
+          "/Root Entry/OutlookVbaData" \
+          "/Root Entry/VBA,", \
           _candidates, \
           ",");
 
@@ -32152,6 +32220,9 @@ __cli__detect_vbaroot( \
         _vbaroot = _candidates[_i];
         if (astore__has(store, "/CFB/@FileID" _vbaroot "/VBA/dir/id")) {
             if (astore__set(store, "/@VBA Root Directory", _vbaroot) < 0) {
+                return cli__E_UNEXPECTED;
+            }
+            if (astore__set(store, "/@VBA Directory", "VBA") < 0) {
                 return cli__E_UNEXPECTED;
             }
             return cli__S_OK;
