@@ -15206,6 +15206,13 @@ __acp__build_map_1258_to_u8char() {
 # }}}
 # }}}
 # {{{ @module zlib, functions for deflate/inflate algorithm
+# '${__pp_ut__zlib__:+"$(cut -d\# -f2-<<<'
+# BEGIN {
+#   _status = zlib__ut();
+#   exit;
+# }
+# ')"}'
+
 # {{{ zlib__init
 function \
 zlib__init() {
@@ -15293,7 +15300,6 @@ zlib__init() {
             + __zlib__C_DEFLATE_LZ77_DISTANCE[_i];
     }
 
-
     # Zip decoding: conversion table for code -> extend bits of distance
     split("0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6," \
           "7,7,8,8,9,9,10,10,11,11,12,12,13,13", \
@@ -15304,6 +15310,40 @@ zlib__init() {
     }
 
     __zlib__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ zlib__deflate
+# '${__pp_comment:+'
+#
+# '}'
+function \
+zlib__deflate( \
+    istream, store, ostream, \
+    \
+    _store, _bfinal, \
+    _btype, _status \
+) {
+    return (0);
+}
+function \
+__zlib__deflate__ut__00( \
+    \
+    _status, _istream, _store, _ostream, _size \
+) {
+    stream__new_from_string(_istream, "test");
+    stream__new(_ostream);
+
+    _status = zlib__deflate(_istream, _store, _ostream);
+    if (_status < 0) {
+        return _status;
+    }
+
+#    _size = stream__available_size(_ostream);
+#    if (stream__read_raw_string(_ostream, _size) != "a") {
+#        return (-1);
+#    }
 
     return (0);
 }
@@ -15434,6 +15474,64 @@ zlib__inflate( \
     if (_bfinal == 1) {
         return (1);  # stop decoding
     }
+
+    return (0);
+}
+function \
+__zlib__inflate__ut__00( \
+    \
+    _status, _istream, _store, _ostream, _size \
+) {
+    # echo -n test | gzip | LANG=C cut -b11- | perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
+    stream__new_from_string( \
+        _istream, \
+        "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
+    );
+
+    stream__new(_ostream);
+
+    _status = zlib__inflate(_istream, _store, _ostream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    _size = stream__available_size(_ostream);
+    if (stream__read_raw_string(_ostream, _size) != "test") {
+        return (-1);
+    }
+
+    stream__new_from_string( \
+        _istream, \
+        "\213\223\233\213\013\010\302\221\170\004" \
+    );
+
+    _status = zlib__inflate(_istream, _store, _ostream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    _size = stream__available_size(_ostream);
+    print stream__read_raw_string(_ostream, _size);
+
+    return (0);
+}
+# }}}
+# {{{ zlib__ut
+function \
+zlib__ut( \
+    \
+    _status, _istream, _store, _ostream \
+) {
+    _status = zlib__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    _status = __zlib__deflate__ut__00();
+    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
+
+    _status = __zlib__inflate__ut__00();
+    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
 
     return (0);
 }
@@ -15920,6 +16018,7 @@ __zlib__inflate__build_huffman_dictionary( \
     #            tree[n].Code = next_code[len];
     #            next_code[len]++;
     #        }
+    #    }
     # '}'
     for (_n = _min_bits; _n <= _max_code + 1; ++_n) {
         if (_n in code_lengths) {
