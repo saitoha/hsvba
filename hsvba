@@ -2052,7 +2052,7 @@ stream__decode_huffman(stream, huffman_table,    _p, _c, _l) {
 #
 #  +------------------------------------+
 #  | global address: 0 ~ 1048575        |
-#  | reserved for immutable             |
+#  | unused, reserved for immediate     |
 #  +------------------------------------+
 #  | global address: 1048576 ~ 2097151  |
 #  | stack address block                |
@@ -2157,7 +2157,8 @@ addr__ref( \
     if (v in __addr__S_RIT) {
         _id = __addr__S_RIT[v];
     } else if (__addr__S_immutable_block_count < __addr__C_max_blockaddr) {
-        __addr__S_immutable_block[_id = __addr__S_RIT[v] = ++__addr__S_immutable_block_count] = v;
+        __addr__S_immutable_block[_id = __addr__S_RIT[v] = \
+            ++__addr__S_immutable_block_count] = v;
     } else {
         E__message = "immutable address overflow";
         return addr__errno = addr__C_err_overflow;
@@ -3626,7 +3627,7 @@ function map__walk(p,   _p, _arr) {
 
     if (_p > 0) {
         _arr[_p];
-        __cell__map__walk_impl(_p, _arr, "");
+        __map__walk_impl(_p, _arr, "");
     }
 
     print > E__file;
@@ -3635,7 +3636,7 @@ function map__walk(p,   _p, _arr) {
 }
 # }}}
 # {{{ (private)::map::walk_impl
-function __cell__map__walk_impl( \
+function __map__walk_impl( \
     p, arr, indent, \
     \
     _color, _key, _value, _left, _right, _parent \
@@ -3654,7 +3655,7 @@ function __cell__map__walk_impl( \
         } else {
             arr[_left];
             print indent "  left:" > E__file;
-            __cell__map__walk_impl(_left, arr, indent "    ");
+            __map__walk_impl(_left, arr, indent "    ");
         }
     }
     if (_right > 0) {
@@ -3663,7 +3664,7 @@ function __cell__map__walk_impl( \
         } else {
             arr[_right];
             print indent "  right:" > E__file;
-            __cell__map__walk_impl(_right, arr, indent "    ");
+            __map__walk_impl(_right, arr, indent "    ");
         }
     }
 
