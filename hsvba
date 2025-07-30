@@ -22756,14 +22756,14 @@ __vba__projectstream__unpack_projectdocmodule( \
         return vba__projectstream__S_FALSE;
     }
 
-    if (! match(_v, /\/&H/)) {
+    if (! match(_v, /\/&H[0-9A-F]*$/)) {
         return vba__projectstream__E_UNEXPECTED;
     }
 
-    astore__chdir(store, "ProjectDocModule");
-
     _ident = substr(_v, 10, RSTART - 10);
-    _ver = substr(_v, RSTART + RLENGTH - 2);
+    _ver = substr(_v, RSTART + 2);
+
+    astore__chdir(store, "ProjectDocModule");
 
     if (astore__set(store, "ModuleIdentifier", _ident) < 0) {
         return vba__projectstream__E_UNEXPECTED;
