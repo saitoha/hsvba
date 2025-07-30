@@ -31945,7 +31945,7 @@ function \
 forms20__unpack_vbframestream( \
     stream, store, path, \
     \
-    _v, _r, _stream, _store \
+    _size, _src, _r, _stream, _store \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
@@ -31958,8 +31958,10 @@ forms20__unpack_vbframestream( \
     printf "-------------------------------------------------------------------------------\n" \
            _title "\n" \
            "-------------------------------------------------------------------------------\n";
-    _v = stream__available_size(_stream);
-    print stream__read_ansi_string(_stream, _v);
+    _size = stream__available_size(_stream);
+    _src = stream__read_ansi_string(_stream, _size);
+    gsub(/\r\n/, "\n", _src);
+    print _src;
 
     return forms20__S_OK;
 }
