@@ -32514,6 +32514,9 @@ cli__process_vbaproject_binary( \
 # Microsoft Outlook (*.otm)
 #     -> "OutlookVbaData"
 #
+# Microsoft Publisher (*.pub)
+#     -> "VBA"
+#
 function \
 __cli__detect_vbaroot( \
     stream, store, \
@@ -32524,7 +32527,7 @@ __cli__detect_vbaroot( \
           "/Root Entry/_VBA_PROJECT_CUR," \
           "/Root Entry/   29/CVba/2b400008_ffffffff," \
           "/Root Entry/Macros," \
-          "/Root Entry/OutlookVbaData" \
+          "/Root Entry/OutlookVbaData," \
           "/Root Entry/VBA,", \
           _candidates, \
           ",");
