@@ -21,7 +21,7 @@
 #    - #!/bin/awk -f
 #    - #!/usr/bin/gawk -bf
 #
-#    # for debugging, multibyte disabled.
+#    # for debugging, with multibyte support disabled.
 #    - #!/bin/bash
 #
 #  usage
@@ -54,7 +54,7 @@
 #        Show help
 #
 #  This awk script can be interpreted as Bash or Awk.
-#  Some enviromemnt variables are available in bash mode.
+#  Some environemnt variables are available in bash mode.
 #
 #    ex. 1) use gawk's --trace option
 #    $ AWK=gawk AWKOPT=--trace bash test.xlsm
@@ -93,6 +93,9 @@
 #      *.doc Word 97-2003 document
 #      *.dot Word 97-2003 template
 #
+#      TODO: *.xml, The Word 2003 XML format (WordML) is not supported yet.
+#      It appears to contain a Base64-encoded `vbaProject.bin` file.
+#
 #    - PowerPoint
 #      *.pptm Microsoft PowerPoint Macro-enabled Presentation (Open XML format)
 #      *.potm Microsoft PowerPoint Macro-enabled Template
@@ -100,12 +103,21 @@
 #      *.ppam add-in
 #      *.ppa Microsoft PowerPoint Add-in
 #
-#      Some legacy formats(*.ppt, *.pot, *.pps) are not supported yet.
+#      Some legacy formats (*.ppt, *.pot, *.pps) are not supported yet.
 #      TODO: implement [MS-PPT], PowerPoint (.ppt) Binary File Format
 #      https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-PPT/%5bMS-PPT%5d.pdf
 #
 #    - Access(*.accdb, *.mdb, *.accde)
 #      Unsupported.
+#      TODO: We may need to investigate mdbtools further.
+#
+#        https://github.com/mdbtools/mdbtools
+#
+#      We have confirmed that the output of the following
+#      command contains VBA code modules compressed with LZ77:
+#
+#        $ mdb-export xxx.mdb MSysModules2
+#
 #
 #    - Outlook
 #      *.otm Microsoft Outlook VBA Project File
@@ -166,7 +178,7 @@
 #    +--------+------------------------------------------------------------+
 #
 #    We believe these are the only ANSI/OEM character sets that
-#    vbaProject.bin may use internally. If you find a VBA project that
+#    VBA may use internally. If you encounter a VBA project that
 #    uses a codepage other than the ones listed above, please let us know.
 #
 #    reference:
@@ -31154,7 +31166,7 @@ forms20__unpack_siteflag( \
 # |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
 # +===============================================================+
 # |A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|          Unused           |
-# +-+-+-+-+-+-----------------------------------------------------+
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+---------------------------+
 #
 # '}'
 function \
