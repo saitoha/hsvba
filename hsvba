@@ -15350,28 +15350,48 @@ function \
 zlib__deflate( \
     istream, store, ostream, \
     \
-    _store, _bfinal, \
-    _btype, _status \
+    _status \
 ) {
+    # BFINAL (1: final)
+    stream__write_bits(ostream, 1, 1);
+
+    # BTYPE (1: fixed)
+    stream__write_bits(ostream, 2, 1);
+
+    _status = __zlib__deflate__fixed_huffman_block(istream, ostream, store);
+    if (_status < 0) {
+        return _status;
+    }
+
     return (0);
 }
 function \
 __zlib__deflate__ut__00( \
     \
-    _status, _istream, _store, _ostream, _size \
+    _status, _istream, _store, _ostream, _size, _rstream, _test_str \
 ) {
-    stream__new_from_string(_istream, "test");
+    _test_str = "\124\105\123\124\343\203\251\343" \
+                "\203\274\346\262\271\157\153\056";
+    stream__new(_istream);
     stream__new(_ostream);
+    stream__new(_rstream);
+
+    stream__write_string(_istream, _test_str);
 
     _status = zlib__deflate(_istream, _store, _ostream);
     if (_status < 0) {
         return _status;
     }
 
-#    _size = stream__available_size(_ostream);
-#    if (stream__read_raw_string(_ostream, _size) != "a") {
-#        return (-1);
-#    }
+    _status = zlib__inflate(_ostream, _store, _rstream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    _size = stream__available_size(_rstream);
+    if (stream__read_raw_string(_rstream, _size) != _test_str) {
+        return (-1);
+    }
 
     return (0);
 }
@@ -15510,7 +15530,8 @@ __zlib__inflate__ut__00( \
     \
     _status, _istream, _store, _ostream, _size \
 ) {
-    # echo -n test | gzip | LANG=C cut -b11- | perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
+    # echo -n test | gzip | LANG=C cut -b11- |
+    # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
     stream__new_from_string( \
         _istream, \
         "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
@@ -15527,19 +15548,6 @@ __zlib__inflate__ut__00( \
     if (stream__read_raw_string(_ostream, _size) != "test") {
         return (-1);
     }
-
-    stream__new_from_string( \
-        _istream, \
-        "\213\223\233\213\013\010\302\221\170\004" \
-    );
-
-    _status = zlib__inflate(_istream, _store, _ostream);
-    if (_status < 0) {
-        return _status;
-    }
-
-    _size = stream__available_size(_ostream);
-    print stream__read_raw_string(_ostream, _size);
 
     return (0);
 }
@@ -15560,6 +15568,33 @@ zlib__ut( \
 
     _status = __zlib__inflate__ut__00();
     print (_status == 0 ? "OK": "NG"), "\n" > E__file;
+
+    return (0);
+}
+# }}}
+# {{{ __zlib__deflate__fixed_huffman_block
+#
+# [RFC 1951] 3.2.6. Compression with fixed Huffman codes (BTYPE=01)
+#
+function \
+__zlib__deflate__fixed_huffman_block( \
+    istream, ostream, store, \
+    \
+    _c \
+) {
+    while (! stream__is_end(istream)) {
+        _c = stream__read_uint8(istream);
+        if (_c <= 143) {
+            _c += 48;
+            stream__write_bits(ostream, 8, num__reverse_bits(_c, 8));
+        } else {
+            _c += 258;
+            stream__write_bits(ostream, 9, num__reverse_bits(_c, 9));
+        }
+    }
+
+    # write the end-of-block marker(256)
+    stream__write_bits(ostream, 7, 0);
 
     return (0);
 }
