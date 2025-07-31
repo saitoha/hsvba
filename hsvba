@@ -615,6 +615,20 @@ num__lossless_mul( \
     return _r
 }
 # }}}
+# {{{ num__reverse_bits
+# reverse the bit order of the given integer
+function num__reverse_bits(n, w,    _p, _q, _r) {
+    for (_r = _p = 0; w--; ) {
+        _q = 2 ^ w;
+        if (n >= _q) {
+            _r += 2 ^ _p;
+            n -= _q;
+        }
+        ++_p;
+    }
+    return _r;
+}
+# }}}
 # }}}
 # {{{ @module str
 # - error / debugging
