@@ -910,7 +910,7 @@ stream__rewind(stream, n) {
 # }}}
 # {{{ stream::iseek
 function \
-stream__iseek(stream, n,    _pos) {
+stream__iseek(stream, n) {
     # '${__pp_debug_assert:+$'\nASSERT(n > 0)'}'
     stream[__stream__M_iit] = __stream__C_header_offset + n;
 
@@ -1085,7 +1085,7 @@ function \
 stream__write_bits( \
     stream, n, data, \
     \
-    _it, _it_bits, _bytes, _bits, _p, _bitsbuf \
+    _it, _it_bits, _bits, _bitsbuf \
 ) {
     _it = stream[__stream__M_oit];
     _it_bits = _bits = stream[__stream__M_obit];
