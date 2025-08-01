@@ -32999,3 +32999,8 @@ hsvba__commit_signatures(signed) {
 # interpreted by bash as the end of the awk code.
 #
 # vim: set ft=awk et ts=4 sw=0 sts=-1 fdm=marker fdl=0:
+# emacs: Local Variables:
+# emacs: mode: awk
+# emacs: indent-tabs-mode: nil
+# emacs: c-basic-offset: 4
+# emacs: End:
