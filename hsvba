@@ -32578,6 +32578,7 @@ END {
 function \
 hsvba__commit_signatures(signed) {
     signed[1] = "@saitoha: github.com/saitoha";
+    signed[2] = "@akinomyoga: github.com/akinomyoga";
     # Add your signature here.
 }
 # do not erase the following line.
