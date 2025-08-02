@@ -372,12 +372,14 @@
 true && echo "$( \
 HSVBA_TRACE_LEVEL=${HSVBA_TRACE_LEVEL-error}; \
 HSVBA_TRACE_TOPIC=${HSVBA_TRACE_TOPIC-zip,cfb,vbalz,dir,prj,frm,prf}; \
+: ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
 : ${AWK:=$(which mawk 2>/dev/null)} \
   ${AWK:=$(which gawk 2>/dev/null)} \
   ${AWK:=$(which goawk 2>/dev/null)} \
   ${AWK:=$(which awk 2>/dev/null)} \
   ${AWKOPT:=}; \
+for m in ${__pp_ut_modules}; do eval __pp_ut__${m}__=1; done; \
 eval $(eval echo $( \
     tr ' ' \\n <<< 'error warning info debug1 debug2 debug3 debug4'    | \
     sed -n $'1h;1!H;/^'${HSVBA_TRACE_LEVEL//[^a-z0-9_,]}$'$/ {g;p;q\n}'| \
@@ -2420,12 +2422,18 @@ addr__set(addr, v) {
 # |                  tail                   |
 # +-----------------------------------------+
 #
-# '${__pp_ut__cell__:+"$(cut -d\# -f2-<<<'
-# BEGIN {
-#   _status = cell__ut();
-#   exit;
-# }
+# {{{ ut
+# '${__pp_ut__cell__:+"$(cut -f3- -d\# <<<'
+#=# function cell__ut(    _status) {
+#=#
+#=#     print "[cell::ut]";
+#=#
+#=#     cell__init();
+#=#
+#=#     return (0);
+#=# }
 # ')"}'
+# }}}
 # {{{ cell::init
 function \
 cell__init(    _status) {
@@ -2482,60 +2490,67 @@ function cell__tail(cell) {
     return int(cell / 2147483648);
 }
 # }}}
-# {{{ vector::new
-function vector__new(size,    _p) {
-    _p = addr__malloc(size);
-    if (addr__errno < 0) {
-        return (-1);
-    }
-
-    addr__set(_p, size);
-    if (addr__errno < 0) {
-        return (-1);
-    }
-
-    return _p;
-}
-# }}}
-# {{{ vector::index
-function vector__index(p, n,    _size) {
-    _size = addr__deref(p);
-    if (addr__errno < 0) {
-        return (-1);
-    }
-    if (n >= _size) {
-        E__message = "invalid index: " n ", size: " _size;
-        cell__errno = cell__C_err_invalid_arg;
-        return;
-    }
-    return addr__deref(cell__tail(cell) + n);
-}
-# }}}
 # {{{ cell::pair::new
 function cell__pair__new(head, tail) {
     return cell__new(cell__C_tag_vector, head, tail);
 }
 # }}}
-# {{{ cell::ut
-function cell__ut(    _status) {
-
-    _status = cell__init();
-    if (_status < 0) {
-        return _status;
-    }
-
-    return (0);
-}
-# }}}
 # }}}
 # {{{ @module list
-#
-# '${__pp_ut__list__:+"$(cut -d\# -f2-<<<'
-# BEGIN {
-#   _status = list__ut();
-#   exit;
-# }
+# {{{ ut
+# '${__pp_ut__list__:+"$(cut -d\# -f3-<<<'
+#=# # {{{ list::ut
+#=# function list__ut(    _status) {
+#=#
+#=#     print "[list::ut]";
+#=#
+#=#     _status = list__init();
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     printf "%s", "__list__ut__00 ... "
+#=#     _status = __list__ut__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=#
+#=#     printf "%s", "__list__ut__01 ... "
+#=#     _status = __list__ut__01();
+#=#     print (_status == 0 ? "OK": "NG");
+#=# }
+#=# # }}}
+#=# # {{{ list::ut::00
+#=# function __list__ut__00(    _status, _v, _list) {
+#=#
+#=#     _list = list__new();
+#=#
+#=#     _status = list__append(_list, 13);
+#=#     if (_status < 0) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = list__append(_list, 45);
+#=#     if (_status < 0) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _v = list__at(_list, 2);
+#=#     if (_v != 45 || list__errno < 0) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+#=# # }}}
+#=# # {{{ list::ut::01
+#=# function __list__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _list, _command) {
+#=#     # {{{
+#=#     _list = list__new();
+#=#     # }}}
+#=#     return (0);
+#=# }
+#=# # }}}
 # ')"}'
+# }}}
 # {{{ list::init
 function list__init(    _status) {
 
@@ -2693,63 +2708,289 @@ function __list__walk_impl( \
     return;
 }
 # }}}
-# {{{ list::ut
-function list__ut(    _status) {
-
-    _status = list__init();
-    if (_status < 0) {
-        return _status;
-    }
-
-    printf "list__ut list_00 ..." > E__file;
-    _status = __list__ut__00();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-
-    printf "list__ut list_01 ...\n" > E__file;
-    _status = __list__ut__01();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-}
-# }}}
-# {{{ (private)::list::ut::00
-function __list__ut__00(    _status, _v, _list) {
-
-    _list = list__new();
-
-    _status = list__append(_list, 13);
-    if (_status < 0) {
-        return (-1);
-    }
-
-    _status = list__append(_list, 45);
-    if (_status < 0) {
-        return (-1);
-    }
-
-    _v = list__at(_list, 2);
-    if (_v != 45 || list__errno < 0) {
-        return (-1);
-    }
-
-    return (0);
-}
-# }}}
-# {{{ (private)::list::ut::01
-function __list__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _list, _command) {
-    # {{{
-    _list = list__new();
-    # }}}
-    return (0);
-}
-# }}}
 # }}}
 # {{{ @module map, a red-black tree implementation
-#
-# '${__pp_ut__map__:+"$(cut -d\# -f2-<<<'
-# BEGIN {
-#   _status = map__ut();
-#   exit;
-# }
+# {{{ ut
+# '${__pp_ut__map__:+"$(cut -d\# -f3-<<<'
+#=# function map__ut(    _status) {
+#=#
+#=#     _status = map__init();
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     printf "map__ut map_00 ..." > E__file;
+#=#     _status = __map__ut__00();
+#=#     print (_status == 0 ? "OK": "NG"), "\n" > E__file;
+#=#
+#=#     printf "map__ut map_01 ...\n" > E__file;
+#=#     _status = __map__ut__01();
+#=#     print (_status == 0 ? "OK": "NG"), "\n" > E__file;
+#=# }
+#=# # {{{ (private)::map::ut::00
+#=# function __map__ut__00(    _status, _v, _map) {
+#=#
+#=#     _map = map__new();
+#=#
+#=#     _status = map__insert(_map, "a1", 10.1);
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a1");
+#=#     if (_v != 10.1) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "a2", "aaa");
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a2");
+#=#     if (_v != "aaa") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "a3", "aab");
+#=#     if (_status < 0) {
+#=#         _status
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a3");
+#=#     if (_v != "aab") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "a4", "aab");
+#=#     if (_status < 0) {
+#=#         return _status
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a4");
+#=#     if (_v != "aab") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "a5", "aab");
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a5");
+#=#     if (_v != "aab") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "a6", "aab");
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a6");
+#=#     if (_v != "aab") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "0", "ccc");
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, "0");
+#=#     if (_v != "ccc") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _status = map__insert(_map, "11", "abc");
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _v = map__at(_map, 11);
+#=#     if (_v != "abc") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _map = map__clone(_map);
+#=#     if (addr__errno < 0) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _v = map__at(_map, 11);
+#=#     if (_v != "abc") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _v = map__at(_map, "a6");
+#=#     if (_v != "aab") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+#=# # }}}
+#=# # {{{ (private)::map::ut::01
+#=# function __map__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _map, _command) {
+#=#     # {{{
+#=#     _map = map__new();
+#=#
+#=#     _command = "gdate +%s.%6N";
+#=#     _count = split( \
+#=# "DYpj1gl4XRu15b4kFq/olkfg51ScdEvZyVp3CbirO/yWC8DgLW6D46SV8NH9" \
+#=# "1f2HDDUvokiqtF0217cilOLNErY4CGIuEriha70+wPdSlCWiBxegWVhykw3S" \
+#=# "MdZbCqbGBGaS6ZKP4c4BNDfmu0+WW5JhNY2L2C1IVrh5gIWepiIrtAZHKqEL" \
+#=# "Ya843sNw22+D7fzFqnwdGNTFo1Hix5V1DScq5c1L96M9lPKYXfJZ30DkzppB" \
+#=# "MQvGSmsoV3G+9fxwLi/GKsAw1t0uVMy3N92i5uf4PpkC6OhpOgftsVhGWu++" \
+#=# "Q59qprSSV7EheqlfnORCn0Gn+WakCqC7zy7HtZOZI5esWmijBwVZOtpp6tYN" \
+#=# "TiEKi+xG2SpgCo+dNGY5UouDAavI3dsz6VhaW8MrkWcC4Zz7wZ9w69q/P+8Q" \
+#=# "LGBkKdrmPVCD3yLnHC5oaAzOKS/Dnf5DQZ8xSl+ilZaMsEwzFtbxcaMA15Hd" \
+#=# "I1nF3yZpSttPiIqDr8L9fFtO/r3XrDXn9K1YZFuaN3L4ETh/MZpuml1bQ7fG" \
+#=# "WpdwpNBlM+X6zejwTXliAbqNtbGYPTmzU0XBOV6V6MD8bexCj1MPoNEHJe9t" \
+#=# "TuRIF5t8c1ga4GwYJR8glHOURTB35M5f4akASTxrM7WbODyx0Grn2qk1xfKP" \
+#=# "O6UeyGWgXPspuq+ziZqbPiGz+O3q2ouDX2AnCtObfZMj6LbhLi2ivkAWZsXe" \
+#=# "b2dePo9087gIOGM2Yp1/E863KyU7hLv1a1TQgEY0pJqcK03qYdbWzICFXenp" \
+#=# "I3TS3jrkWcLjWMgolQvM1IaQgx4Xg4re42HSJ/ibDrKgpTRiPQReRp720cv7" \
+#=# "t1CfrVCM+mVbf7uS7uREX4nspnhHxwENxIIKJUazMeEZnD7hnZBvpzwHLCx1" \
+#=# "JEbsM2ooJ7sY+hM0NFE30UNzDSC99R0czXisdv1eZXkC3sMGLlJ+1tmwA0KQ" \
+#=# "2ud6A/QPBX7Qz8tiH61L5oAgnOuTZkhqDTVR2niK1bh/IfHp/btbR6FX2Ahp" \
+#=# "IBdbB4tA6RhUb1HyVyW353H72JMgbwyQTUR5Sproa9SEjzhufTFM6IN21TMO" \
+#=# "xNLnM4mG/ihDO3vfEF07pkyuuNKu04IAGD56upsnEZaHvTF5nva/+OdaqGFY" \
+#=# "djDnP6dTpy+2NxqDqb8Y6Ga7jicHQ9i60LGdzB4tIPE2yZIpYiBwgi/T0gbD" \
+#=# "05JTCY3TXM3/N6jH8zkhQ+ZbOOMGZzmHcgZ4KxplwX5fvGd1BF2PO0+jQqmA" \
+#=# "u3aOejY+Lk4UeKKHHxfPoH+WgNtfZ1hpjhJc7lM6Lf0uTp0P8buY2uExM1ep" \
+#=# "LiXTezmY+m6if4k4dgruv8RpV+7SqZLSVtPxxNd0tSBZbCpOdf49R/3IL5Yr" \
+#=# "efPu9Xu2RvqiDwvXx5aFudRNflNR0NtesMYCLgPYLKaCcfa9V1e9ty8TF1zX" \
+#=# "jeMGUguVzwbDThYapkk7HkIhyVqjZvXRBTyNuQTptJRXwweBlH0wzn2NijLF" \
+#=# "ayA4ECV7QunmAL7OCNjmCoSMfdLLCGgclDueC2dDpUgGF1V7ui6zzy6AaZPs" \
+#=# "5rQd+gcXCBofu8njr5/WxISMYLFDF6M2vGQjtTF7Vg40UBlOpESytwz6wWav" \
+#=# "/xNJpAKcnLufgPWm5Y0NkJTxaVCQwHsGT6c8UyAbgyBwovOW5IvGrmo0c8xZ" \
+#=# "QQJ+X6eqQ6dd6UAf3BwZ/LRJWDx1xpve6Ax8vvRSw3wZKUVx8dYi4iV4GqVe" \
+#=# "Vm+G2n1GMHPfy0fBwX1jCis+abz/ONyV/5VZO7t2BlHIuT2SVngfeZhzzfGG" \
+#=# "Xam+xquGwZiAaohTqA8j10295yTniLqPlHqJfeTzofmrG0e8MwDPbqcQceP6" \
+#=# "2QiSAlmLcKw/EKIW5FklrMFGp+G1FrSURbcI/MfKwmBhDWzOSAQJ2m68hd1R" \
+#=# "qSsDYuImbUmsXNhqGasgChVtnlQ/8k70z6QPRBnmMoDupEmAmTRHo795ah4w" \
+#=# "e06k07gCKEv/5FFp52RGX7YOXLE7YlJ/5XaDKlciLbUAtmAtxC3zSEwWrhY8" \
+#=# "cCHxmVhUZUsbZ5WeEwztqswyCNAMjbA0azOWoRpKr2T+vaWO56pMeaNFFai9" \
+#=# "fiZK192OHFQN57m5BXSRLUWC1vALfBf+d7v25teIAzjxo5vVc5eBZyiz8uK1" \
+#=# "ojIyizxfM3NNZxy2Gck66uWqXb2mKY6BZuzHZSVID9QjTMoHolgrTWVdxbuY" \
+#=# "OzHYRltYkP54HxnP3BhM1N8y/Mn6jBGJo/EjzBb4dGNWCMwPO8r1rwFFNJoI" \
+#=# "xjZiYjaXBUiJUvkb6bmbTUTyWxNp9Cu/ydhgdzP+M61qGmdQfuVE182PeGxf" \
+#=# "kS09EbR1Tpuo7X5rpmbLQlKWlb4Bklf1IJILuVQEexabHwiR0KUZ6Xq2vDvW" \
+#=# "4nZqslOQF3F8htHJgnP5GVXffFU7OT7boZr9SQ3mD9Bre0m8RLKJEG78d8D8" \
+#=# "M/9xkOok0kYOk+Zl3OPkuVxRVfX5GbA8Jwrp4+SCHnBCdr9FqJXXB+ep70UJ" \
+#=# "qvdoDWY/ncjIxa3alsEYqY8IrVYAYoCIGRG1/rKcjIxP09gsHwnk81NxGt9z" \
+#=# "bQ0ApO2BmXwDG21Ot6jWO0fmhhBDbmu1v4nIsyhaYmOlMc4U9seqO/XNWV0z" \
+#=# "o4nanWq1PzT+d1sDTU0+DMjvjMmtTY7APCFsDSZ9cuhFiTlsQExSs5v4Pe5h" \
+#=# "MehAAs133zkds8HjryAG306oYedO37aI9HutlWPkTG3HbpmsxeDiBjxw7D1K" \
+#=# "O23md35hDue7S+abPNx98jMUKUAEkbrHHbEJreNX+zwM82NYKW7/+TvbYIhZ" \
+#=# "1+PvBpzSWLGTAyEgllUiDsIFM/dBrbEzSSxd758CB18hSnTk4WpEEXrfBgdR" \
+#=# "v8YQdr6q2Xodpkgz6OfSdtZ2Jsys7NTrq8atQYZncTd7Ddq4pJ6VHBAA2JsH" \
+#=# "TTU9+yXHh/SEfMxRJgkmWvxEoBBzm2o0AC5Q0aDn4p+5N7wMbmTIhCbw7wag" \
+#=# "+JPjWTCTwFBw9ZvkJ/5GPYRu+AVAXiumNbgYuFibgBX3XOWx8D7kxJGhdtVH" \
+#=# "o01R52qJ2CbC/u4PPs5zfwhaQn5kZ08ljL1zDCMmNP5DmBoZymWFuMrxjQ+x" \
+#=# "JxCzLeeeQNs0hmBYZQ8thh02LHtBVxtdSRmaQnJMXBCF+MmJXasXyUjiRAVN" \
+#=# "sz7yNH/II9/YoHtFLIsKuKpmQ0Rg9dbsS8kgAcRn3Y7ZRXWeuZAzHjdQ+YN8" \
+#=# "dQsJ4mFNhEGrz8BykrzFvDhfeM42IMU9+YvPGzmqpueKX5ZjpjmpdupdewuX" \
+#=# "mcB3MkCtaNEj97a9dNkRvs/0khq/SS1a78btjg2/ddBD4G2Jq/RZdFh3xPQi" \
+#=# "mzMAHi0rhVVhkHhej07TNuwGsF/VND2uDjLBeD9vgJK92b8KqtZsfzln/EbI" \
+#=# "dx8rRyOwhzWYx5dELji6bfdl3yxSw6h9UowinF4ZC4J6srUxSOYpkCq1yI3i" \
+#=# "T184PhaNH6WPqfW6FD0Aoj8CObc+m3Qlnodq7HWEDMKEa9GZMtTlOYG2am1m" \
+#=# "jqbMNKj8y3brX6v3RE2HWuEiOwYHkv97w1HHxD/a7fjQor3MIXXLLk1+B0bS" \
+#=# "EuiRgdIIeQrZUGvO5cYt51m9518JUq4pvCkOvGZTTYRco0t5c+7BFC0k7w96" \
+#=# "yYwvgA14x5R6o+J6yV3kOqV1Hpj+ltOMeY03FZKKOPV7sl8+p1GxHavTT1FA" \
+#=# "pUwCmiBsB4llWArMWhILEJNnORP3mIoeJb8iSgeA4LnnhHGkyAjENF/VEtqC" \
+#=# "oHkWdk+a71zczi2FZQ3DzFuniCVrT4Dpvs7EIBgmGGeGnQVvynzQ4wsmg7vo" \
+#=# "cHlygkVJANYSTj7QVand3s+y9sVnPobkxTdfOH63pfsHj+WHIsqo6zmeFWZf" \
+#=# "xFCQARrecyWnix29pVJpvstYlMl2VBftTf2CIFgDRwQIGt7XVq9i1tsTVThP" \
+#=# "pOARFvG5Xlj7DS7NRCLewkbJWIyKm6eDudqFgO5gsLqzwZ0jIcQcQLaLpmnd" \
+#=# "EIgEkhkP9BFkNs5y2AvtXf+elYIstlPzvB2WBUfrj5ZVudiIyDEbtpLRX/G3" \
+#=# "8Z316ET+1lcHD6C2b3yMDoRRDO5enO5Oi068MsvYfcZ4SF15qQokUFAwB37+" \
+#=# "I70/Y/dNRFg/0qjtWC5uMBmnR/CaehoBjHmoISOZh9Su8L9BRTR362SNyAdl" \
+#=# "oEZNim/Irt/kjJbpJPaIA0K3BmV5SmNYX1MX//HllmZFC9J6dh6vAGNP4ZFd" \
+#=# "uMMP6b3YeQ3R27toqIOvKeFchmBbyuPJ/LMNYQWE4zTwMVEa5WnlZiXNufVK" \
+#=# "GNC04g08/mXnzf8rhd+eC0H38lBAkzzZrLp0BRJg/4NyhlGjU0rQaCRhexMG" \
+#=# "6NR7f1rqnmGS+w+eH3I9G09b+/VW99OlOXumemaSkLkbSGaBao584ADsU6OL" \
+#=# "UCOMzeYlqmQZPruZuPPn2FbGEGyx457Hy/RVJ8yDWkPGHScEKSs1NGLVekCw" \
+#=# "S03LXYCe5cjFL2m5RCgd6/E/m06b+CYY3cHbreeg5ree72i38d0VIMqvcdec" \
+#=# "G2c7R/FGGyJUWYcrrkTi6FOYW8NIwdyxQsniVSn7g3eNrVWSVfFDjHWNrncM" \
+#=# "V8glqET0nPLfSIvoGi5As71VGRH1plCEAF1iZssfaiyNWXSjUCzPx5rYdq5T" \
+#=# "Z3e3RoGQmI0nFi8h3PcUTZy/LdbG+Oh2mo/o3BC4n3F8YDGzdKBfMn6Q+F8K" \
+#=# "kjrgMoH3VU9g5mhG0+DUXyvIa4iAIo2DmGXM5XOOn4CxEMOIg4UGJiVrxYhI" \
+#=# "bUM9qoQbXA2Ge1eqQZFOjXc+kz/jruCjCZpBD4k1LmKfPEGZ8uvPQDOqFnlk" \
+#=# "A0oCWxiWnAGMWLkAbeXjvL+u4pY6A067XAW9T8fPKPmn1jwfG4ANMhi6iUvH" \
+#=# "8plXr1zIBPoJF/rcE+uDq0VZZUZVL0eaDTYHAOhvZ+WyOeu8V8mEcdmgYpze" \
+#=# "2R51yBUBBgEu1P9GnLmmRYcEiObPVpMTlMgJ37IQELpm0q2ZHHsJd+pn+Spt" \
+#=# "cLvt79V5bRcVxhdye4uBs9FqmwJ07cR7JW1V5vOOQDJ4qpMzIDQC0z7Xg1LH" \
+#=# "yhCIdvMEhKMIKOHmVT1WxUQxqnQtn/LuFUjcfg75JImjkOOb71iEAZfo5hrE" \
+#=# "D8AL1nFLaxPdcks0D34La6PfDH8fOdF/qVRqE4czodmLhPg7ApzfHsiWWElp" \
+#=# "l8avsRPKSbFH5a4nHK64zqNu50cbRsT+B9YQ8I285+13pZ6n7CXOFB/e5qqB" \
+#=# "ooghSnbXzFnkUXj6w15xXSJ+ObbhAqzeVYyn5CCAjz3vfpMMD6lmoIAXp3ub" \
+#=# "trFRmUyED3lxRtx+ugXLWBmjWmlX5vqsiGqTKKEtOuxfYRmOMAMBupNgKji3" \
+#=# "SMvle0vhdmAHjc6T6ZOd4VXL8+02HLgvIh8zaU0HxDrLIcImu642a94bpF1e" \
+#=# "UUnp360sxksz+AUsKD1d3STkIYIKAJd2n5vXxsuGpZ84PAPQT/2ikZmIrMUO" \
+#=# "hpfuHFwhzAMUD6Wbbu6qj+cltRTWuHdYTyV3JDwP4DQkFu2JhjVnEGd9qotc" \
+#=# "sx42eHUuOUkqeECabcleKtw0hHxcTHXh0nA/K8SzCt+hvHL5vj5CFNMIc+kD" \
+#=# "6CKJAHc+jZge6N15lrQZ1ReDyiXt1giStA8PibP5zZi1mE9AHm/QM62CJaFf" \
+#=# "1LeA+X7RKlnmvjSTjoa0IKT4iC6sWyKcF4AU2ezy/43YCgLJD8dkcxJgALhG" \
+#=# "JWx0/rGnGGiPNr9H1xEPrUbHcLxsH0QXtP5qVUlqUGfOVIw1GxHDKEmSWIMm" \
+#=# "mOv53mYr9uf2hqJrmCjRU0ti6tK/0ObljGrrYBvgZESgw9YmqMgXjyiYE61O" \
+#=# "qoSB3pc/hMQTOg5OVX8E99J3bk5oCcmw5LviJZGiqHLdp/bHggWz13KiJsts" \
+#=# "1CrJVPjEU9HQ/fueCh27rzIxLGansiK5f92mbBHCe3g1cPpp84DhDp6vlP6K" \
+#=#         , _keys, "");
+#=#
+#=#     _command | getline _t1; close(_command);
+#=#
+#=#     for (_i = 1; _i <= _count; ++_i) {
+#=#
+#=#         _key = _keys[_i];
+#=# #print "\n\ni: " _i ", key: " _key > E__file
+#=#         _status = map__insert(_map, _key, rand());
+#=#         if (_status < 0) {
+#=#             return _status;
+#=#         }
+#=# #        map__walk(_map);
+#=#     }
+#=#
+#=#     _command | getline _t2; close(_command);
+#=#     print _t2 - _t1 > E__file;
+#=#
+#=# #        map__walk(_map);
+#=#     _command | getline _t1; close(_command);
+#=#
+#=#     for (_i = 1; _i <= _count; ++_i) {
+#=#         _key = _keys[_i];
+#=#         _a[_key] = rand();
+#=#     }
+#=#
+#=#     _command | getline _t2; close(_command);
+#=#     print _t2 - _t1 > E__file;
+#=#
+#=#     _command | getline _t1; close(_command);
+#=#
+#=#     for (_i = 1; _i <= _count; ++_i) {
+#=#         _key = _keys[_i];
+#=#         map__at(_map, _key) > E__file;
+#=#     }
+#=#
+#=#     _command | getline _t2; close(_command);
+#=#     print _t2 - _t1 > E__file;
+#=#
+#=#     _command | getline _t1; close(_command);
+#=#
+#=#     for (_i = 1; _i <= _count; ++_i) {
+#=#         _key = _keys[_i];
+#=#         _a[_key];
+#=#     }
+#=#
+#=#     _command | getline _t2; close(_command);
+#=#     print _t2 - _t1 > E__file;
+#=#     # }}}
+#=#     return (0);
+#=# }
+#=# # }}}
 # ')"}'
+# }}}
 # {{{ map::init
 function map__init(    _status) {
 
@@ -3795,301 +4036,6 @@ function __map__walk_impl( \
     }
 
     return;
-}
-# }}}
-# {{{ map::ut
-function map__ut(    _status) {
-
-    _status = map__init();
-    if (_status < 0) {
-        return _status;
-    }
-
-    printf "map__ut map_00 ..." > E__file;
-    _status = __map__ut__00();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-
-    printf "map__ut map_01 ...\n" > E__file;
-    _status = __map__ut__01();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-}
-# }}}
-# {{{ (private)::map::ut::00
-function __map__ut__00(    _status, _v, _map) {
-
-    _map = map__new();
-
-    _status = map__insert(_map, "a1", 10.1);
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a1");
-    if (_v != 10.1) {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "a2", "aaa");
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a2");
-    if (_v != "aaa") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "a3", "aab");
-    if (_status < 0) {
-        _status
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a3");
-    if (_v != "aab") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "a4", "aab");
-    if (_status < 0) {
-        return _status
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a4");
-    if (_v != "aab") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "a5", "aab");
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a5");
-    if (_v != "aab") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "a6", "aab");
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "a6");
-    if (_v != "aab") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "0", "ccc");
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, "0");
-    if (_v != "ccc") {
-        return (-1);
-    }
-
-    _status = map__insert(_map, "11", "abc");
-    if (_status < 0) {
-        return _status;
-    }
-
-#    map__walk(_map);
-
-    _v = map__at(_map, 11);
-    if (_v != "abc") {
-        return (-1);
-    }
-
-    _map = map__clone(_map);
-    if (addr__errno < 0) {
-        return (-1);
-    }
-
-    _v = map__at(_map, 11);
-    if (_v != "abc") {
-        return (-1);
-    }
-
-    _v = map__at(_map, "a6");
-    if (_v != "aab") {
-        return (-1);
-    }
-
-    return (0);
-}
-# }}}
-# {{{ (private)::map::ut::01
-function __map__ut__01(    _key, _count, _keys, _i, _status, _t1, _t2, _a, _map, _command) {
-    # {{{
-    _map = map__new();
-
-    _command = "gdate +%s.%6N";
-    _count = split( \
-"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" \
-        , _keys, "");
-
-    _command | getline _t1; close(_command);
-
-    for (_i = 1; _i <= _count; ++_i) {
-
-        _key = _keys[_i];
-#print "\n\ni: " _i ", key: " _key > E__file
-        _status = map__insert(_map, _key, rand());
-        if (_status < 0) {
-            return _status;
-        }
-#        map__walk(_map);
-    }
-
-    _command | getline _t2; close(_command);
-    print _t2 - _t1 > E__file;
-
-#        map__walk(_map);
-    _command | getline _t1; close(_command);
-
-    for (_i = 1; _i <= _count; ++_i) {
-        _key = _keys[_i];
-        _a[_key] = rand();
-    }
-
-    _command | getline _t2; close(_command);
-    print _t2 - _t1 > E__file;
-
-    _command | getline _t1; close(_command);
-
-    for (_i = 1; _i <= _count; ++_i) {
-        _key = _keys[_i];
-        map__at(_map, _key) > E__file;
-    }
-
-    _command | getline _t2; close(_command);
-    print _t2 - _t1 > E__file;
-
-    _command | getline _t1; close(_command);
-
-    for (_i = 1; _i <= _count; ++_i) {
-        _key = _keys[_i];
-        _a[_key];
-    }
-
-    _command | getline _t2; close(_command);
-    print _t2 - _t1 > E__file;
-    # }}}
-    return (0);
 }
 # }}}
 # }}}
@@ -7302,12 +7248,6 @@ astore__pretty_print( \
 #    |     members     |
 #    +-----------------+
 #
-# '${__pp_ut__struct__:+"$(cut -d\# -f2-<<<'
-# BEGIN {
-#   _status = struct__ut();
-#   exit;
-# }
-# ')"}'
 # {{{ struct::init
 function \
 struct__init(    _status) {
@@ -32899,6 +32839,12 @@ __cli__detect_vbaroot( \
 }
 # }}}
 # }}}
+# '${__pp_ut_modules:+"$(cut -d\# -f3-<<<'
+#=# BEGIN {
+#=#     '"$(for f in ${__pp_ut_modules}; do echo "${f}__ut() > E__file;"; done)"'
+#=#     exit;
+#=# }
+# ')"}'
 # {{{ entry point
 BEGIN {
     RS = "^$";       # multicharacter value of RS is a gawk extension
