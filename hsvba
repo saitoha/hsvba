@@ -115,7 +115,14 @@
 #      *.dot Word 97-2003 template
 #
 #      TODO: *.xml, The Word 2003 XML format (WordML) is not supported yet.
-#      It appears to contain a Base64-encoded `vbaProject.bin` file.
+#      It appears to contain a Base64-encoded `ActiveMime` format.
+#
+#      `ActiveMime` is an undocumented format, but its rough structure is
+#      becoming clearer thanks to the outstanding work in the
+#      idiom/activemime-format project.
+#
+#          https://github.com/idiom/activemime-format (MIT License)
+#
 #
 #    - PowerPoint
 #      *.pptm Microsoft PowerPoint Macro-enabled Presentation (Open XML format)
@@ -150,8 +157,11 @@
 #      *.vsdm Microsoft Visio Macro-enabled Drawing (Open XML format)
 #      *.vstm Microsoft Visio Macro-enabled Template
 #      *.vssm Microsoft Visio Macro-enabled Stencil
+#      *.vdx Microsoft Visio 2003 XML Drawing
+#      *.vtx Microsoft Visio 2003 XML Template
+#      *.vsx Microsoft Visio 2003 XML Stencil
 #
-#      Legacy formats(*.vsd, *.vst, *.vss) are not supported yet.
+#      Legacy binary formats(*.vsd, *.vst, *.vss) are not supported yet.
 #      TODO: Implement a VSD parser by referencing `libvisio`.
 #      https://github.com/LibreOffice/libvisio (licensed under MPL-2.0)
 #
@@ -9266,6 +9276,8 @@ function xmlp__init(    _status) {
         return _status;
     }
 
+    xml__C_magic_XML_DECLARATION = "3c3f786d6c207665";
+
     __xmlp__init_guard = 1;
 
     return (0);
@@ -9571,7 +9583,7 @@ __acp__decode_charmap( \
 ) {
     split(base64str, _buf, "");
     _size = length(base64str);
-    _iit = _oit = 0;
+    _iit = 0;
     _i = 0;
     _o = "";
     _tmp = "";
@@ -19029,7 +19041,7 @@ function \
 ooxml__parse( \
     store, stream, \
     \
-    _ev, _stream, _begin, _end, \
+    _ev, _begin, _end, \
     _xmlp, _counter, _elm, _attr, _val \
 ) {
     xmlp__new(_xmlp);
@@ -19058,7 +19070,7 @@ ooxml__parse( \
     if (_ev != xmlp__C_event_END_DOCUMENT) {
         E__message = sprintf( \
             "xml parse error, position: %d.", \
-            _stream[__stream__M_iit]);
+            stream[__stream__M_iit]);
         return ooxml__E_UNEXPECTED;
     }
 
@@ -19215,7 +19227,7 @@ cfb__init(    _status) {
     cfb__S_OK           = 0;
     cfb__S_FALSE        = 1;
 
-    __cfb__C_magic_CFB_STORAGE = "d0cf11e0a1b11ae1";
+    cfb__C_magic_CFB_STORAGE = "d0cf11e0a1b11ae1";
 
     # '${__pp_comment:+'
     #
@@ -32642,12 +32654,12 @@ cli__process_stream( \
     _stream, _store, _v, _r, _status, _vbapath \
 ) {
     _v = stream__read_hex_string(stream, 8);
-    if (_v == __cfb__C_magic_CFB_STORAGE) {
+    stream__rewind(stream, 8);
+    if (_v == cfb__C_magic_CFB_STORAGE) {
         # input may be raw vbaProject.bin
-        stream__iseek(stream, 0);
         return cli__process_vbaproject_binary(stream);
-    } else {
-        stream__rewind(stream, 8);
+    } else if (_v == xml__C_magic_XML_DECLARATION) {
+        return cli__process_mso_xml(stream);
     }
 
     astore__new(_store, "/Zip");
@@ -32802,6 +32814,90 @@ cli__process_vbaproject_binary( \
     }
 
     return cli__S_OK;
+}
+# }}}
+# {{{ cli::process_mso_xml
+#
+# Verify the presence of the following root tag:
+#   <w:wordDocument> -> Word 2003 XML (*.xml)
+#   <VisioDocument> -> Visio 2003 XML (*.vdx, *.vtx, *.vsx)
+#
+function \
+cli__process_mso_xml( \
+    istream, \
+    \
+    _xmlp, _ev, _end, _begin, _elm, _val, _attr, \
+    _path, _path_arr, _level, _target_level, _base64str,
+    _buf, _size, _iit, _c, _cl, _cr, _ostream \
+) {
+    xmlp__new(_xmlp);
+
+#    _path = "w:wordDocument/w:docSuppData/w:binData";
+    _path = "VisioDocument/VBProjectData";
+    split(_path, _path_arr, "/");
+    _level = 0;
+    _target_level = length(_path_arr);
+
+    while ((_ev = xmlp__parse(_xmlp, istream)) > 0) {
+        if (_ev == xmlp__C_event_START_ELEMENT) {
+            _end = xmlp__pop(_xmlp);
+            _begin = xmlp__pop(_xmlp);
+            _elm = str__binary_join_with_chr(istream, _begin, _end);
+            if (++_level == _target_level && _elm == _path_arr[_level]) {
+                while (xmlp__parse(_xmlp, istream) != xmlp__C_event_CHARACTERS);
+                _end = xmlp__pop(_xmlp);
+                _begin = xmlp__pop(_xmlp);
+                _base64str = str__binary_join_with_chr(istream, _begin, _end);
+                break;
+            }
+        } else if (_ev == xmlp__C_event_END_ELEMENT) {
+            --_level;
+        }
+    }
+
+    split(_base64str, _buf, "");
+    _size = length(_base64str);
+    stream__new(_ostream, int(_size / 4 * 3));
+    _iit = 0;
+
+    while (1) {
+        while (! ((_cl = _buf[++_iit]) in __base64_map) && _iit <= _size);
+
+        if (_iit > _size) {
+            break;
+        }
+
+        while (! ((_cr = _buf[++_iit]) in __base64_map) && _iit <= _size);
+        if (_iit > _size) {
+            break;
+        }
+
+        # cl << 2 | cr >> 4
+        _c = __base64_map[_cl] * 4 + num__rshift(__base64_map[_cr], 4);
+        stream__write_uint8(_ostream, _c);
+
+        while (! ((_cl = _buf[++_iit]) in __base64_map) && _iit <= _size);
+
+        if (_iit > _size) {
+            break;
+        }
+
+        # cr & ((1 << 4) - 1) | cl >> 2
+        _c = (__base64_map[_cr] % 16) * 16 + num__rshift(__base64_map[_cl], 2);
+        stream__write_uint8(_ostream, _c);
+
+        while (! ((_cr = _buf[++_iit]) in __base64_map) && _iit <= _size);
+
+        if (_iit > _size) {
+            break;
+        }
+
+        # (cr & ((1 << 2) - 1)) << 6 | cl
+        _c = (__base64_map[_cl] % 4) * 64 + __base64_map[_cr];
+        stream__write_uint8(_ostream, _c);
+    }
+
+    return cli__process_vbaproject_binary(_ostream);
 }
 # }}}
 # {{{ (private)::cli::detect_vbaroot
