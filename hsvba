@@ -759,6 +759,11 @@ stream__init(    _status) {
         return (1);
     }
 
+    _status = str__init();
+    if (_status < 0) {
+        return _status;
+    }
+
     _status = __stream__class_init();
     if (_status < 0) {
         return _status;
@@ -835,7 +840,30 @@ stream__init(    _status) {
 # this optimization!
 #
 # '}'
-# '${__pp_ut__stream__:+$'\n'"BEGIN { stream__ut(); }"}'
+# {{{ ut
+# '${__pp_ut__stream__:+"$(cut -d\# -f3-<<<'
+#=# # {{{ stream::ut
+#=# function stream__ut(    _status) {
+#=#     print "[stream::ut]"
+#=#
+#=#     stream__init();
+#=#
+#=#     printf "%s", "__stream__ut__read_bits__00 ... "
+#=#     _status = __stream__ut__read_bits__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=#
+#=#     printf "%s", "__stream__ut__write_bits__00 ... "
+#=#     _status = __stream__ut__write_bits__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=#
+#=#     printf "%s", "__stream__ut__search__00 ... "
+#=#     _status = __stream__ut__search__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=# }
+#=# # }}}
+#=# ')"}'
+# }}}
+
 # {{{ stream::class_init
 function \
 __stream__class_init() {
@@ -961,13 +989,96 @@ stream__longjmp(stream, jmp_buf) {
     stream[__stream__M_iit] = jmp_buf[1];
 }
 # }}}
+# {{{ stream::search
+# TODO: Adopt a more efficient algorithm (e.g., KMP method)
+# {{{ ut
+#=# # '${__pp_ut__stream__:+"$(cut -d\# -f3-<<<'
+#=# function \
+#=# __stream__ut__search__00(    _stream, _pos) {
+#=#
+#=#     stream__init();
+#=#
+#=#     stream__new(_stream);
+#=#     stream__write_string(_stream, "abc de123bcd\0eb");
+#=#
+#=#     _pos = stream__search(_stream, "x");
+#=#     if (_pos != (-1)) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     stream__iseek(_stream, 0);
+#=#     _pos = stream__search(_stream, "ab");
+#=#     if (_pos != 1) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     _pos = stream__search(_stream, "ab");
+#=#     if (_pos != 1) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     stream__skip(_stream, 1);
+#=#     _pos = stream__search(_stream, "ab");
+#=#     if (_pos != (-1)) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     stream__iseek(_stream, 0);
+#=#     _pos = stream__search(_stream, "bc");
+#=#     if (_pos != 2) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     stream__skip(_stream, 1);
+#=#     _pos = stream__search(_stream, "bc");
+#=#     if (_pos != 10) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     stream__skip(_stream, 1);
+#=#     _pos = stream__search(_stream, "\0eb");
+#=#     if (_pos != 13) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+#=# # ')"}'
+# }}}
+function \
+stream__search( \
+    stream, word, \
+    \
+    _i, _buf, _len, _c, _it, _it_begin, _it_end \
+) {
+    _len = length(word);
+    for (_i = 1; _i <= _len; ++_i) {
+        _buf[_i] = str__ord[substr(word, _i, 1)];
+    }
+    _it = _it_begin = stream[__stream__M_iit];
+    _it_end = stream[__stream__M_oit];
+    _c = _buf[1];
+    for (_i = 1; _i <= _len && _it <= _it_end; ) {
+        if (stream[++_it] == _c) {
+            _c = _buf[++_i];
+        } else {
+            _i = 1;
+            _c = _buf[1];
+        }
+    }
+    if (_i > _len) {
+        return (stream[__stream__M_iit] = _it - _i + 1) + 1 \
+                - __stream__C_header_offset;
+    }
+    return (-1);
+}
+# }}}
 # {{{ stream::rsearch
 function \
 stream__rsearch( \
     stream, word, \
     \
-    _i, _buf, _len, _c, \
-    _it, _it_end \
+    _i, _buf, _len, _c, _it, _it_end \
 ) {
     _len = length(word);
     for (_i = 1; _i <= _len; ++_i) {
@@ -1002,17 +1113,6 @@ stream__is_end(stream) {
     return stream[__stream__M_iit] >= stream[__stream__M_oit];
 }
 # }}}
-function stream__ut(    _status) {
-    stream__init();
-
-    _status = __stream__ut__read_bits__00();
-    print (_status == 0 ? "OK": "NG") > E__file;
-
-    _status = __stream__ut__write_bits__00();
-    print (_status == 0 ? "OK": "NG") > E__file;
-
-    exit;
-}
 # {{{ stream::read_bits
 function \
 stream__read_bits( \
