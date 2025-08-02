@@ -15644,18 +15644,18 @@ function \
 __zlib__deflate__with_fixed_huffman( \
     istream, ostream, store, \
     \
-    _code, _s, _hash, _pos \
+    _code, _s, _hash, _pos, _bits, _distance, _extra, _length, _past, _predict \
 ) {
     for (_pos = 0; ! stream__is_end(istream); ) {
         # match
         _predict = stream__read_raw_string(istream, _length = 3);
         if ((_predict in _hash) && (_distance = _pos - _hash[_predict] - 4) < 32768) {
             while (! stream__is_end(istream) && _length <= 258) {
-                _c = stream__read_uint8(istream);
+                _code = stream__read_uint8(istream);
                 stream__rewind(istream, _distance + 1);
                 _past = stream__read_uint8(istream);
                 stream__skip(istream, _distance);
-                if (_c == _past) {
+                if (_code == _past) {
                     ++_length;
                 } else {
                     stream__rewind(istream, 1);
@@ -18685,7 +18685,8 @@ pcode__disasm_function( \
     _arg_offset, _arg_opts, _arg_type, _arg_type_name, _as, \
     _c_options, _calltype, _decl, _decl_offset, _flags, _friend, \
     _funcname, _has_declare, _is_64bit, _new_flags, _optional, \
-    _passingtype, _private, _public, _static, _text, _vba_version \
+    _passingtype, _private, _public, _static, _text, _vba_version, \
+    _jmp_buf_arg \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
     _vba_version = pcode__vba_version(pcode);
@@ -22736,7 +22737,7 @@ function \
 __vba__projectstream__unpack_projecttext( \
     stream, store, \
     \
-    _v, _r \
+    _v, _r, _store \
 ) {
     # ProjectProperties
     astore__fork(_store, "ProjectProperties", _store);
@@ -23603,7 +23604,8 @@ function \
 __vba__projectstream__unpack_projectpassword( \
     stream, store, \
     \
-    _v, _i, _size, _stream, _r, _decrypted_stream, _decrypted_data \
+    _v, _i, _size, _stream, _r, _decrypted_stream, \
+    _decrypted_data, _store \
 ) {
     _v = stream__currentline(stream);
     if (index(_v, "DPB=\"") != 1) {
@@ -23685,7 +23687,8 @@ function \
 __vba__projectstream__unpack_projectvisibilitystate( \
     stream, store, \
     \
-    _v, _i, _stream, _r, _size, _decrypted_stream, _decrypted_data \
+    _v, _i, _stream, _r, _size, \
+    _decrypted_stream, _decrypted_data, _store \
 ) {
     _v = stream__currentline(stream);
     if (index(_v, "GC=\"") != 1) {
@@ -25606,7 +25609,7 @@ vba__modulestream__unpack_pcode( \
     _v, _i, _length, _opcount, _offset, _num_lines, _store, \
     _store_op, _jmp_buf_line, _pos, _arg, _args, _blocksize, _dword, \
     _k, _mnemonic, _opcode, _optype, _pcode, _store_args, _size, \
-    _text, _visibility, _word \
+    _text, _visibility, _word, _jmp_buf_arg \
 ) {
     # Magic (2 bytes)
     _v = stream__read_uint16(stream);
@@ -26588,7 +26591,7 @@ function \
 forms20__unpack_formembeddedactivexcontrol( \
     stream, store, size, cache_index, \
     \
-    _v, _r \
+    _v, _r, _store \
 ) {
     if (astore__set(store, "@CacheIndex", cache_index) < 0) {
         return forms20__E_UNEXPECTED;
