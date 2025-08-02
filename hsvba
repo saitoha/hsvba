@@ -66,14 +66,35 @@
 #    $ HSVBA_TRACE_LEVEL=debug3 HSVBA_TRACE_TOPIC=zip,cfb,vbalz bash ./hsvba test.xlsm -p
 #
 #    ex. 4) module unit testing
-#    $ __pp_ut__map__=1 bash ./hsvba
+#    $ HSVBA_UT=zlib,stream bash ./hsvba
+#
+#  Please note that blocks commented out with "#=#" at the beginning of a
+#  line may appear to be inactive code at first glance, but they can become
+#  valid code for purposes such as logging or testing when processed by the
+#  bash preprocessor.
+#
+#  Also, avoid using single quotes (') in parts of the code that are not
+#  intended to be preprocessed. If you wish to use them in comments or
+#  similar contexts, please use backticks (`) instead, or escape them using
+#  the form '\''.
 #
 #  install
 #  =======
 #
-#    ex.)
-#      $ git clone https://github.com/saitoha/hsvba.git
-#      $ sudo cp ./hsvba/hsvba /usr/local/bin/
+#  Example: Install to `/usr/local/bin/`
+#
+#    $ git clone https://github.com/saitoha/hsvba.git
+#    $ sudo cp ./hsvba/hsvba /usr/local/bin/
+#    $ sudo chmod +x /usr/local/bin/hsvba
+#
+#  Or:
+#
+#    $ sudo curl -O https://raw.githubusercontent.com/saitoha/hsvba/refs/heads/main/hsvba
+#    $ sudo cp ./hsvba /usr/local/bin/
+#    $ sudo chmod +x /usr/local/bin/hsvba
+#
+#    NOTE: You may need to modify the shebang line depending on your environment.
+#
 #
 #  supported formats
 #  ==================
