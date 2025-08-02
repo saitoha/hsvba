@@ -15334,13 +15334,32 @@ __acp__build_map_1258_to_u8char() {
 # }}}
 # }}}
 # {{{ @module zlib, functions for deflate/inflate algorithm
-# '${__pp_ut__zlib__:+"$(cut -d\# -f2-<<<'
-# BEGIN {
-#   _status = zlib__ut();
-#   exit;
-# }
+# {{{ zlib__ut
+# '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
+#=# function \
+#=# zlib__ut( \
+#=#     \
+#=#     _status, _istream, _store, _ostream \
+#=# ) {
+#=#     print "[zlib::ut]"
+#=#
+#=#     _status = zlib__init();
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     printf "%s", "__zlib__deflate__ut__00 ... "
+#=#     _status = __zlib__deflate__ut__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=#
+#=#     printf "%s", "__zlib__inflate__ut__00 ... "
+#=#     _status = __zlib__inflate__ut__00();
+#=#     print (_status == 0 ? "OK": "NG");
+#=#
+#=#     return (0);
+#=# }
 # ')"}'
-
+# }}}
 # {{{ zlib__init
 function \
 zlib__init(    _i, _status) {
@@ -15458,43 +15477,45 @@ zlib__deflate( \
     # BTYPE (1: fixed)
     stream__write_bits(ostream, 2, 1);
 
-    _status = __zlib__deflate__fixed_huffman_block(istream, ostream, store);
+    _status = __zlib__deflate__with_fixed_huffman(istream, ostream, store);
     if (_status < 0) {
         return _status;
     }
 
     return (0);
 }
-function \
-__zlib__deflate__ut__00( \
-    \
-    _status, _istream, _store, _ostream, _size, _rstream, _test_str \
-) {
-    _test_str = "\124\105\123\124\343\203\251\343" \
-                "\203\274\346\262\271\157\153\056";
-    stream__new(_istream);
-    stream__new(_ostream);
-    stream__new(_rstream);
-
-    stream__write_string(_istream, _test_str);
-
-    _status = zlib__deflate(_istream, _store, _ostream);
-    if (_status < 0) {
-        return _status;
-    }
-
-    _status = zlib__inflate(_ostream, _store, _rstream);
-    if (_status < 0) {
-        return _status;
-    }
-
-    _size = stream__available_size(_rstream);
-    if (stream__read_raw_string(_rstream, _size) != _test_str) {
-        return (-1);
-    }
-
-    return (0);
-}
+# '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
+#=# function \
+#=# __zlib__deflate__ut__00( \
+#=#     \
+#=#     _status, _istream, _store, _ostream, _size, _rstream, _test_str \
+#=# ) {
+#=#     _test_str = "\124\105\123\124\343\203\251\343" \
+#=#                 "\203\274\346\262\271\157\153\056";
+#=#     stream__new(_istream);
+#=#     stream__new(_ostream);
+#=#     stream__new(_rstream);
+#=#
+#=#     stream__write_string(_istream, _test_str);
+#=#
+#=#     _status = zlib__deflate(_istream, _store, _ostream);
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _status = zlib__inflate(_ostream, _store, _rstream);
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _size = stream__available_size(_rstream);
+#=#     if (stream__read_raw_string(_rstream, _size) != _test_str) {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+# ')"}'
 # }}}
 # {{{ zlib__inflate
 # '${__pp_comment:+'
@@ -15625,75 +15646,238 @@ zlib__inflate( \
 
     return (0);
 }
-function \
-__zlib__inflate__ut__00( \
-    \
-    _status, _istream, _store, _ostream, _size \
-) {
-    # echo -n test | gzip | LANG=C cut -b11- |
-    # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
-    stream__new_from_string( \
-        _istream, \
-        "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
-    );
-
-    stream__new(_ostream);
-
-    _status = zlib__inflate(_istream, _store, _ostream);
-    if (_status < 0) {
-        return _status;
-    }
-
-    _size = stream__available_size(_ostream);
-    if (stream__read_raw_string(_ostream, _size) != "test") {
-        return (-1);
-    }
-
-    return (0);
-}
+# '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
+#=# function \
+#=# __zlib__inflate__ut__00( \
+#=#     \
+#=#     _status, _istream, _store, _ostream, _size \
+#=# ) {
+#=#     # echo -n test | gzip | LANG=C cut -b11- |
+#=#     # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
+#=#     stream__new_from_string( \
+#=#         _istream, \
+#=#         "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
+#=#     );
+#=#
+#=#     stream__new(_ostream);
+#=#
+#=#     _status = zlib__inflate(_istream, _store, _ostream);
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _size = stream__available_size(_ostream);
+#=#     if (stream__read_raw_string(_ostream, _size) != "test") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+# ')"}'
 # }}}
-# {{{ zlib__ut
-function \
-zlib__ut( \
-    \
-    _status, _istream, _store, _ostream \
-) {
-    _status = zlib__init();
-    if (_status < 0) {
-        return _status;
-    }
-
-    _status = __zlib__deflate__ut__00();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-
-    _status = __zlib__inflate__ut__00();
-    print (_status == 0 ? "OK": "NG"), "\n" > E__file;
-
-    return (0);
-}
-# }}}
-# {{{ __zlib__deflate__fixed_huffman_block
+# {{{ __zlib__deflate__with_fixed_huffman
 #
 # [RFC 1951] 3.2.6. Compression with fixed Huffman codes (BTYPE=01)
 #
 function \
-__zlib__deflate__fixed_huffman_block( \
+__zlib__deflate__with_fixed_huffman( \
     istream, ostream, store, \
     \
-    _c \
+    _code, _s, _hash, _pos \
 ) {
-    while (! stream__is_end(istream)) {
-        _c = stream__read_uint8(istream);
-        if (_c <= 143) {
-            _c += 48;
-            stream__write_bits(ostream, 8, num__reverse_bits(_c, 8));
-        } else {
-            _c += 258;
-            stream__write_bits(ostream, 9, num__reverse_bits(_c, 9));
+    for (_pos = 0; ! stream__is_end(istream); ) {
+        # match
+        _predict = stream__read_raw_string(istream, _length = 3);
+        if ((_predict in _hash) && (_distance = _pos - _hash[_predict] - 4) < 32768) {
+            while (! stream__is_end(istream) && _length <= 258) {
+                _c = stream__read_uint8(istream);
+                stream__rewind(istream, _distance + 1);
+                _past = stream__read_uint8(istream);
+                stream__skip(istream, _distance);
+                if (_c == _past) {
+                    ++_length;
+                } else {
+                    stream__rewind(istream, 1);
+                    break;
+                }
+            }
+            _pos += _length;
+
+            # length
+            #
+            # [RFC 1951] 3.2.5. Compressed blocks (length and distance codes)
+            #
+            #                  Extra               Extra               Extra
+            #    Code Bits Length(s) Code Bits Lengths   Code Bits Length(s)
+            #    ---- ---- ------     ---- ---- -------   ---- ---- -------
+            #     257   0     3       267   1   15,16     277   4   67-82
+            #     258   0     4       268   1   17,18     278   4   83-98
+            #     259   0     5       269   2   19-22     279   4   99-114
+            #     260   0     6       270   2   23-26     280   4  115-130
+            #     261   0     7       271   2   27-30     281   5  131-162
+            #     262   0     8       272   2   31-34     282   5  163-194
+            #     263   0     9       273   3   35-42     283   5  195-226
+            #     264   0    10       274   3   43-50     284   5  227-257
+            #     265   1  11,12      275   3   51-58     285   0    258
+            #     266   1  13,14      276   3   59-66
+            #
+
+            if (_length < 11) {  # 3 - 10
+                _code = 254 + _length;
+                _extra = 0;
+                _bits = 0;
+            } else if (_length < 19) {  # 11 - 18
+                _code = 265 + int((_length - 11) / 2);
+                _extra = (_length - 11) % 2;
+                _bits = 1;
+            } else if (_length < 35) {  # 19 - 34
+                _code = 269 + int((_length - 19) / 4);
+                _extra = (_length - 19) % 4;
+                _bits = 2;
+            } else if (_length < 67) {  # 35 - 66
+                _code = 273 + int((_length - 35) / 8);
+                _extra = (_length - 35) % 8;
+                _bits = 3;
+            } else if (_length < 131) {  # 67 - 130
+                _code = 277 + int((_length - 67) / 16);
+                _extra = (_length - 67) % 16;
+                _bits = 3;
+            } else if (_length < 258) {  # 131 - 257
+                _code = 281 + int((_length - 131) / 32);
+                _extra = (_length - 131) % 32;
+                _bits = 3;
+            } else {  # 258
+                _code = 285
+                _extra = 0;
+                _bits = 0;
+            }
+
+            # [RFC 1951] 3.2.6. Compression with fixed Huffman codes (BTYPE=01)
+            #
+            #           Lit Value    Bits        Codes
+            #           ---------    ----        -----
+            #           256 - 279     7          0000000 through
+            #                                    0010111
+            #           280 - 287     8          11000000 through
+            #                                    11000111
+            if (_code < 280) {  # 257 - 279
+                _code -= 256
+                stream__write_bits(ostream, 7, num__reverse_bits(_code, 7));
+            } else {  # 280 - 285
+                _code -= 88
+                stream__write_bits(ostream, 8, num__reverse_bits(_code, 8));
+            }
+            if (_bits > 0) {
+                stream__write_bits(ostream, _bits, _extra);
+            }
+
+            # distance
+            #
+            #          Extra           Extra               Extra
+            #     Code Bits Dist  Code Bits   Dist     Code Bits Distance
+            #     ---- ---- ----  ---- ----  ------    ---- ---- --------
+            #       0   0    1     10   4     33-48    20    9   1025-1536
+            #       1   0    2     11   4     49-64    21    9   1537-2048
+            #       2   0    3     12   5     65-96    22   10   2049-3072
+            #       3   0    4     13   5     97-128   23   10   3073-4096
+            #       4   1   5,6    14   6    129-192   24   11   4097-6144
+            #       5   1   7,8    15   6    193-256   25   11   6145-8192
+            #       6   2   9-12   16   7    257-384   26   12  8193-12288
+            #       7   2  13-16   17   7    385-512   27   12 12289-16384
+            #       8   3  17-24   18   8    513-768   28   13 16385-24576
+            #       9   3  25-32   19   8   769-1024   29   13 24577-32768
+            #
+            if (_distance < 5) {  # 0 - 4
+                _code = _distance - 1;
+                _extra = 0;
+                _bits = 0;
+            } else if (_distance < 9) {  # 6 - 8
+                _code = 4 + int((_distance - 5) / 2);
+                _extra = (_distance - 5) % 2;
+                _bits = 1;
+            } else if (_distance < 17) {  # 9 - 16
+                _code = 6 + int((_distance - 9) / 2);
+                _extra = (_distance - 9) % 4;
+                _bits = 2;
+            } else if (_distance < 33) {  # 17 - 32
+                _code = 8 + int((_distance - 17) / 2);
+                _extra = (_distance - 17) % 8;
+                _bits = 3;
+            } else if (_distance < 65) {  # 33 - 64
+                _code = 10 + int((_distance - 33) / 2);
+                _extra = (_distance - 33) % 16;
+                _bits = 4;
+            } else if (_distance < 129) {  # 65 - 128
+                _code = 12 + int((_distance - 65) / 2);
+                _extra = (_distance - 65) % 32;
+                _bits = 5;
+            } else if (_distance < 257) {  # 129 - 256
+                _code = 14 + int((_distance - 129) / 2);
+                _extra = (_distance - 129) % 64;
+                _bits = 6;
+            } else if (_distance < 513) {  # 257 - 512
+                _code = 16 + int((_distance - 257) / 2);
+                _extra = (_distance - 257) % 128;
+                _bits = 7;
+            } else if (_distance < 1025) {  # 513 - 1024
+                _code = 18 + int((_distance - 513) / 2);
+                _extra = (_distance - 513) % 256;
+                _bits = 8;
+            } else if (_distance < 2049) {  # 1025 - 2048
+                _code = 20 + int((_distance - 1025) / 2);
+                _extra = (_distance - 1025) % 512;
+                _bits = 9;
+            } else if (_distance < 4097) {  # 2049 - 4096
+                _code = 22 + int((_distance - 2049) / 2);
+                _extra = (_distance - 2049) % 1024;
+                _bits = 10;
+            } else if (_distance < 8193) {  # 4097 - 8192
+                _code = 24 + int((_distance - 4097) / 2);
+                _extra = (_distance - 4097) % 2048;
+                _bits = 11;
+            } else if (_distance < 16385) {  # 8193 - 16384
+                _code = 26 + int((_distance - 8193) / 2);
+                _extra = (_distance - 8193) % 4096;
+                _bits = 12;
+            } else {  # 16385 - 32768
+                _code = 28 + int((_distance - 16385) / 2);
+                _extra = (_distance - 16385) % 8192;
+                _bits = 13;
+            }
+
+            _code += 48;
+            stream__write_bits(ostream, 8, num__reverse_bits(_code, 8));
+
+            if (_bits > 0) {
+                stream__write_bits(ostream, _bits, _extra);
+            }
+
+        } else {  # literal code
+            #
+            # [RFC 1951] 3.2.6. Compression with fixed Huffman codes (BTYPE=01)
+            #
+            #           Lit Value    Bits        Codes
+            #           ---------    ----        -----
+            #             0 - 143     8          00110000 through
+            #                                    10111111
+            #           144 - 255     9          110010000 through
+            #                                    11000111
+            #
+            stream__skip(istream, -3);
+            _code = stream__read_uint8(istream);
+            _s = substr(_s, 2) str__chr[_code];
+            _hash[_s] = _pos++;
+            if (_code <= 143) {
+                _code += 48;
+                stream__write_bits(ostream, 8, num__reverse_bits(_code, 8));
+            } else {
+                _code += 258;
+                stream__write_bits(ostream, 9, num__reverse_bits(_code, 9));
+            }
         }
     }
 
-    # write the end-of-block marker(256)
+    # write an EOB (end-of-block) marker(256)
     stream__write_bits(ostream, 7, 0);
 
     return (0);
