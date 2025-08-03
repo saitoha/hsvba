@@ -2455,7 +2455,7 @@ addr__set(addr, v) {
 #
 # {{{ ut
 # '${__pp_ut__cell__:+"$(cut -f3- -d\# <<<'
-#=# function cell__ut(    _status) {
+#=# function cell__ut() {
 #=#
 #=#     print "[cell::ut]";
 #=#
@@ -15312,7 +15312,7 @@ __acp__build_map_1258_to_u8char() {
 #=# function \
 #=# zlib__ut( \
 #=#     \
-#=#     _status, _istream, _store, _ostream \
+#=#     _status \
 #=# ) {
 #=#     print "[zlib::ut]"
 #=#
