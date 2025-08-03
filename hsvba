@@ -9578,7 +9578,7 @@ function \
 __acp__decode_charmap( \
     map, base64str, \
     \
-    _iit, _oit, _size, \
+    _iit, _size, \
     _o, _c, _i, _cl, _cr, _tmp, _buf \
 ) {
     split(base64str, _buf, "");
@@ -32826,7 +32826,7 @@ function \
 cli__process_mso_xml( \
     istream, \
     \
-    _xmlp, _ev, _end, _begin, _elm, _val, _attr, \
+    _xmlp, _ev, _end, _begin, _elm, \
     _path, _path_arr, _level, _target_level, _base64str,
     _buf, _size, _iit, _c, _cl, _cr, _ostream \
 ) {
