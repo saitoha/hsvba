@@ -54,7 +54,7 @@
 #        Show help
 #
 #  This awk script can be interpreted as Bash or Awk.
-#  Some environemnt variables are available in bash mode.
+#  Some environment variables are available in bash mode.
 #
 #    ex. 1) use gawk's --trace option
 #    $ AWK=gawk AWKOPT=--trace bash test.xlsm
