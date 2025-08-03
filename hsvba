@@ -32823,7 +32823,7 @@ cli__process_mso_xml( \
     istream, \
     \
     _xmlp, _ev, _end, _begin, _elm, \
-    _path, _path_arr, _level, _target_level, _base64str,
+    _path, _path_arr, _level, _target_level, _base64str, \
     _buf, _size, _iit, _c, _cl, _cr, _ostream \
 ) {
     xmlp__new(_xmlp);
