@@ -1082,13 +1082,13 @@ function \
 stream__search( \
     stream, word, \
     \
-    _i, _buf, _len, _c, _it, _it_begin, _it_end \
+    _i, _buf, _len, _c, _it, _it_end \
 ) {
     _len = length(word);
     for (_i = 1; _i <= _len; ++_i) {
         _buf[_i] = str__ord[substr(word, _i, 1)];
     }
-    _it = _it_begin = stream[__stream__M_iit];
+    _it = stream[__stream__M_iit]; # _it_begin
     _it_end = stream[__stream__M_oit];
     _c = _buf[1];
     for (_i = 1; _i <= _len && _it <= _it_end; ) {
@@ -1244,10 +1244,10 @@ function \
 stream__write_bits( \
     stream, n, data, \
     \
-    _it, _it_bits, _bits, _bitsbuf \
+    _it, _bits, _bitsbuf \
 ) {
     _it = stream[__stream__M_oit];
-    _it_bits = _bits = stream[__stream__M_obit];
+    _bits = stream[__stream__M_obit]; # _it_bits
     _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
     _bits += n;
     if (_bits >= 8) {
@@ -1530,11 +1530,10 @@ function \
 stream__read_guid_string( \
     stream, \
     \
-    _it, _i, _o, _s \
+    _it, _i, _o \
 ) {
 
     _it = stream[__stream__M_iit];
-    _s = "";
 
     for (_i = 1; _i <= 4; ++_i) {
         _o = _o str__hex[stream[++_it]];
@@ -2455,7 +2454,7 @@ addr__set(addr, v) {
 #
 # {{{ ut
 # '${__pp_ut__cell__:+"$(cut -f3- -d\# <<<'
-#=# function cell__ut(    _status) {
+#=# function cell__ut() {
 #=#
 #=#     print "[cell::ut]";
 #=#
@@ -7762,7 +7761,7 @@ __struct__parse( \
     \
     _v, _stack, _count, _i, _token, _pos, _key, _map, _list, \
     _tokid, _position, _tail, _typename, _type, _type_m, \
-    _stem, _n, _struct_name, _params, _rmap, _index, _x, \
+    _n, _struct_name, _params, _rmap, _index, _x, \
     _status, _member, _pos1, _pos2 \
 ) {
     # current parser state
@@ -7913,7 +7912,7 @@ __struct__parse( \
         } else if (__struct__S_pst == __struct__C_pst_struct) {
             # {{{
             if (_tokid == __struct__C_tok_identifier) {
-                _struct_name = _stem = addr__deref(_tail);
+                _struct_name = addr__deref(_tail); # _stem
                 if (addr__errno < 0) {
                     break;
                 }
@@ -9578,14 +9577,13 @@ function \
 __acp__decode_charmap( \
     map, base64str, \
     \
-    _iit, _oit, _size, \
-    _o, _c, _i, _cl, _cr, _tmp, _buf \
+    _iit, _size, \
+    _c, _i, _cl, _cr, _tmp, _buf \
 ) {
     split(base64str, _buf, "");
     _size = length(base64str);
     _iit = 0;
     _i = 0;
-    _o = "";
     _tmp = "";
 
     while (1) {
@@ -15312,7 +15310,7 @@ __acp__build_map_1258_to_u8char() {
 #=# function \
 #=# zlib__ut( \
 #=#     \
-#=#     _status, _istream, _store, _ostream \
+#=#     _status \
 #=# ) {
 #=#     print "[zlib::ut]"
 #=#
@@ -16405,9 +16403,7 @@ __zlib__inflate__compressed_content( \
     distance_huffman_table, \
     ostream, \
     \
-    _length, _distance, \
-    _extra_distance, _extra_bits, \
-    _code, _st \
+    _length, _distance, _extra_bits, _code, _st \
 ) {
     # '${__pp_comment:+'
     #
@@ -16531,7 +16527,7 @@ __zlib__inflate__compressed_content( \
             _distance = __zlib__C_DEFLATE_LZ77_DISTANCE[_code + 1];
             _extra_bits = __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_code + 1]
             if (_extra_bits > 0) {
-                _distance += _extra_distance = stream__read_bits(istream, _extra_bits);
+                _distance += stream__read_bits(istream, _extra_bits); # add _extra_distance
             }
 
             #=# '${__pp_trace__zip_debug3+"$(cut -d\# -f3-<<<'
@@ -18563,7 +18559,7 @@ function \
 pcode__disasm_name( \
     pcode, stream, store, offset, optype, opcode, \
     \
-    _v, _op_type, _idt_offset, \
+    _op_type, _idt_offset, \
    _jmp_buf_op, _str_type, _var_name, _var_types \
 ) {
     _idt_offset = pcode__get_idt_offset(pcode);
@@ -18576,7 +18572,7 @@ pcode__disasm_name( \
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, _idt_offset + 4 + offset);
 
-    _v = _var_name = pcode__getid(pcode, store, offset);
+    _var_name = pcode__getid(pcode, store, offset);
     stream__longjmp(stream, _jmp_buf_op);
 
     if (_op_type < 13) {
@@ -18613,7 +18609,7 @@ pcode__disasm_var( \
     pcode, stream, store, dword, optype, opcode, \
     \
     _v, _jmp_buf_op, _text, _flag1, _flag2, _has_as, _has_new, \
-    _offset, _typename, _varname \
+    _offset, _typename \
 ) {
     stream__setjmp(stream, _jmp_buf_op);
     stream__iseek(stream, pcode__get_idt_offset(pcode) + 4 + dword);
@@ -18626,7 +18622,7 @@ pcode__disasm_var( \
 
     _has_as = num__and(_flag1, 32);
     _has_new = num__and(_flag2, 32);
-    _v = _varname = pcode__getname(pcode, stream, store);
+    _v = pcode__getname(pcode, stream, store); # _var_name
     astore__set(store, "Name", _v);
 
     _text = _v;
@@ -20772,7 +20768,7 @@ function \
 __vba__dirstream__unpack_project_information_lcid( \
     stream, store, \
     \
-    _v, _size \
+    _v \
 ) {
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
@@ -20781,7 +20777,7 @@ __vba__dirstream__unpack_project_information_lcid( \
     }
 
     # Size (4 bytes)
-    _v = _size = stream__read_uint32(stream);
+    _v = stream__read_uint32(stream); # _size
     if (astore__set(store, "Size::uint32,mustbe(4)", _v) < 0) {
         return vba__dirstream__E_UNEXPECTED;
     }
@@ -21977,11 +21973,11 @@ function \
 __vba__dirstream__unpack_project_modules( \
     stream, store, \
     \
-    _v, _id, _r, _i, \
+    _v, _r, _i, \
     _count, _store, _left \
 ) {
     # Id (2 bytes)
-    _v = _id = stream__read_uint16(stream);
+    _v = stream__read_uint16(stream); # _id
     if (astore__set(store, "Id::VBAMagic,mustbe(15)", _v) < 0) {
         return vba__dirstream__E_UNEXPECTED;
     }
@@ -22037,10 +22033,10 @@ function \
 __vba__dirstream__unpack_project_modules_cookie( \
     stream, store, \
     \
-    _v, _id \
+    _v \
 ) {
     # Id (2 bytes)
-    _v = _id = stream__read_uint16(stream);
+    _v = stream__read_uint16(stream); # _id
     if (astore__set(store, "Id::VBAMagic,mustbe(19)", _v) < 0) {
         return vba__dirstream__E_UNEXPECTED;
     }
@@ -25413,7 +25409,7 @@ function \
 __vba__vbaprojectstream__unpack_cachedidentifier( \
     stream, store, \
     \
-    _v, _type_and_length, _length, _is_keyword, _name \
+    _v, _type_and_length, _length, _is_keyword \
 ) {
     _is_keyword = 0;
 
@@ -25447,7 +25443,7 @@ __vba__vbaprojectstream__unpack_cachedidentifier( \
 
     # the low byte of _type_and_length indicates the length
     if ((_length = _type_and_length % 256) != 0) {
-        _v = _name = stream__read_ansi_string(stream, _length);
+        _v = stream__read_ansi_string(stream, _length); # _name
         if (astore__set(store, "*Name", _v) < 0) {
             return __vba__vbaprojectstream__E_UNEXPECTED;
         }
@@ -32826,7 +32822,7 @@ function \
 cli__process_mso_xml( \
     istream, \
     \
-    _xmlp, _ev, _end, _begin, _elm, _val, _attr, \
+    _xmlp, _ev, _end, _begin, _elm, \
     _path, _path_arr, _level, _target_level, _base64str,
     _buf, _size, _iit, _c, _cl, _cr, _ostream \
 ) {
