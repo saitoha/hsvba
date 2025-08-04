@@ -1,4 +1,4 @@
-#!/usr/bin/env LANG=C awk -f
+#!/usr/bin/awk -f
 #
 # SPDX-License-Identifier: GPL-3.0-only
 #
