@@ -21883,7 +21883,7 @@ __vba__dirstream__unpack_project_references_reference_project( \
     # LibidAbsolute (variable)
     #
     # An array of SizeOfLibidAbsolute bytes that specifies the referenced
-    # VBA project’s identifier with an absolute path, <ProjectPath>. MUST
+    # VBA project`s identifier with an absolute path, <ProjectPath>. MUST
     # contain MBCS characters encoded using the code page specified in
     # PROJECTCODEPAGE (section 2.3.4.2.1.5). MUST NOT contain null characters.
     # MUST conform to the ABNF grammar ProjectReference (section 2.1.1.12).
@@ -21904,7 +21904,7 @@ __vba__dirstream__unpack_project_references_reference_project( \
     #
     # LibidRelative (variable)
     # An array of SizeOfLibidRelative bytes that specifies the referenced VBA
-    # project’s identifier with a relative path, <ProjectPath>, that is
+    # project`s identifier with a relative path, <ProjectPath>, that is
     # relative to the current VBA project. MUST contain MBCS characters encoded
     # using the code page specified in PROJECTCODEPAGE (section 2.3.4.2.1.5).
     # MUST NOT contain null characters. MUST conform to the ABNF grammar
