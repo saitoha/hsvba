@@ -19887,9 +19887,24 @@ __cfb__unpack_directorysectors( \
 
     # Directory Entry Name (64 bytes)
     _v = stream__read_utf16le_string(stream, 64);
+    #
+    # Fix for broken file in Mac Office 2004 - In this version of Office,
+    # we found test data in which the root entry name in the structured
+    # storage is only 2 bytes long: "0x00 0x52"
+    # (e.g., mso/excel_office2004mac-ppc-11.2.050714_xls-tmpl_ja-jp_001.xls).
+    #
+    # This appears to be the result of misinterpreting the string "Root Entry"
+    # as a UTF-16 string with reversed endianness, which leads to corruption
+    # of the name.
+    #
+    # \x00\x52 -> \u5200 (UTF16-LE) -> \xe5\x88\x80 (UTF-8)
+    if (id == 0 && _v == "\345\210\200") {
+        _v = "Root Entry";
+    }
     if (astore__set(_store, "Directory Entry Name", _v) < 0) {
         return cfb__E_UNEXPECTED;
     }
+
     if (astore__set(store, "@FileID" basedir "/" _v "/id", id) < 0) {
         return cfb__E_UNEXPECTED;
     }
