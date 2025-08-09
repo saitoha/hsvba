@@ -25682,10 +25682,10 @@ vba__modulestream__unpack( \
             # +-------------------------------+----------------+----------------+
             # | Version                       | SysKind value  |  Line endings  |
             # +-------------------------------+----------------+----------------+
-            # | Office 2004 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | Office 98 Macintosh Edition   | 2 (Macintosh)  |  CR (0x0D)     |
             # | (PowerPC, Carbon, VBA 5.0)    |                |                |
             # +-------------------------------+----------------+----------------+
-            # | Office 2004 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | Office 2001 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
             # | (PowerPC, Carbon, VBA 6.0)    |                |                |
             # +-------------------------------+----------------+----------------+
             # | Office v. X for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
