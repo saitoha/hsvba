@@ -7227,11 +7227,17 @@ astore__pretty_print( \
         if (_path in __astore__S_hash) {
             _v = __astore__S_hash[_path];
             if (_path "::" in __astore__S_hash) {
+                _type = __astore__S_hash[_path "::"];
                 if (verbose) {
-                    _type = __astore__S_hash[_path "::"];
-                    printf( \
-                        "%s[%s::%s] = %s\n", \
-                        indent, _key, _type, atom__tostring(_type, _v));
+                    if (_type) {
+                        printf( \
+                            "%s[%s::%s] = %s\n", \
+                            indent, _key, _type, atom__tostring(_type, _v));
+                    } else {
+                        printf( \
+                            "%s[%s] = %s\n", \
+                            indent, _key, atom__tostring(_type, _v));
+                    }
                 } else {
                     printf( \
                         "%s[%s] = %s\n", \
