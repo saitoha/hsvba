@@ -25615,7 +25615,7 @@ vba__modulestream__unpack( \
     _stream_name, _offset, \
     _entry_no, \
     _store, _path, _r, _src, \
-    _istream, _ostream, _store_p, _vbaroot, _vba \
+    _istream, _ostream, _store_p, _vbaroot, _vba, _syskind \
 ) {
     astore__new(_store, "/VBA/Project/ModulesRecord/Modules");
 
@@ -25625,6 +25625,8 @@ vba__modulestream__unpack( \
 
     _vbaroot = astore__get(store, "/@VBA Root Directory");
     _vba = astore__get(store, "/@VBA Directory");
+
+    _syskind = astore__get(store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
 
     while (! astore__enum_end(_store)) {
         _entry_no = astore__enum_next(_store);
@@ -25668,7 +25670,48 @@ vba__modulestream__unpack( \
                 return _r;
             }
             _src = stream__read_ansi_string(_ostream, stream__available_size(_ostream));
-            gsub(/\r\n/, "\n", _src);
+            #
+            # NOTE: Since Office 2016 for Mac (VBA 7.x), the line endings in
+            # source modules have been standardized to LF. However, as of this
+            # version, the SysKind value in Mac Office also changed from
+            # 2 (Macintosh) to 3 (64-bit Windows), so in effect, environments
+            # that use CR as the line ending can be described as those with
+            # SysKind = 2.
+            #
+            # Historical changes in SysKind and line endings in Office for Mac
+            # +-------------------------------+----------------+----------------+
+            # | Version                       | SysKind value  |  Line endings  |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2004 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | (PowerPC, Carbon, VBA 5.0)    |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2004 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | (PowerPC, Carbon, VBA 6.0)    |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office v. X for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | (PowerPC, Carbon, VBA 6.0)    |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2004 for Mac           | 2 (Macintosh)  |  CR (0x0D)     |
+            # | (PowerPC, Carbon, VBA 6.3)    |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2008 for Mac           | -              | -              |
+            # | (Intel/PPC, Carbon)           | No VBA support | No VBA support |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2011 for Mac           | 2 (Macintosh)  | CR (0x0D)      |
+            # | (Intel, Carbon, VBA 6.x)      |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2016 for Mac           | 3 (64-bit Win) | LF (0x0A)      |
+            # | (Intel, Cocoa, VBA 7.x)       |                |                |
+            # +-------------------------------+----------------+----------------+
+            # | Office 2019 / MS365 for Mac   | 3 (64-bit Win) | LF (0x0A)      |
+            # | (Intel/Apple Silicon, VBA 7.x)|                |                |
+            # +-------------------------------+----------------+----------------+
+            #
+            if (_syskind == 2) {  # mac
+                gsub("\r", "\n", _src);
+            } else {  # CRLF or LF
+                gsub("\r\n", "\n", _src);
+            }
             print "-------------------------------------------------------------------------------";
             print _src;
         }
@@ -32355,7 +32398,11 @@ forms20__unpack_vbframestream( \
            "-------------------------------------------------------------------------------\n";
     _size = stream__available_size(_stream);
     _src = stream__read_ansi_string(_stream, _size);
-    gsub(/\r\n/, "\n", _src);
+    if (_syskind == 2) {  # mac
+        gsub("\r", "\n", _src);
+    } else {
+        gsub("\r\n", "\n", _src);
+    }
     print _src;
 
     return forms20__S_OK;
