@@ -200,10 +200,11 @@
 #    +--------+------------------------------------------------------------+
 #    | 1258   | ANSI/OEM Vietnamese; Vietnamese (Windows)                  |
 #    +--------+------------------------------------------------------------+
+#    | 10000  | Mac OS Roman                                               |
+#    +--------+------------------------------------------------------------+
 #
-#    We believe these are the only ANSI/OEM character sets that
-#    VBA may use internally. If you encounter a VBA project that
-#    uses a codepage other than the ones listed above, please let us know.
+#    If you encounter a VBA project that uses a codepage other than the ones
+#    listed above, please let us know.
 #
 #    reference:
 #
