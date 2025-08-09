@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+#!/bin/bash
 # vim: set ft=awk et ts=4 sw=0 sts=-1 fdm=marker fdl=0:
 # SPDX-License-Identifier: GPL-3.0-only
 #
@@ -392,17 +392,29 @@
 #        https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1257.TXT
 #        https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1258.TXT
 #
+#    [Nakashima, 2021]
+#        Koichi Nakashima, Techniques for using awk as a programming language
+#        https://qiita.com/ko1nksm/items/16ca4f4546c1ea8e97d7
+#
 # {{{ bash preprocessing
+# If no environment variables starting with HSVBA_* are defined, pass the
+# script’s own filename to AWK using the -f option.
+# Otherwise, pass the preprocessed string to AWK as an argument and execute
+# it. The original idea for this approach was inspired by [Nakashima, 2021].
 true && echo "$( \
-HSVBA_TRACE_LEVEL=${HSVBA_TRACE_LEVEL-error}; \
-HSVBA_TRACE_TOPIC=${HSVBA_TRACE_TOPIC-zip,cfb,vbalz,dir,prj,frm,prf}; \
-: ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
-: ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
 : ${AWK:=$(which mawk 2>/dev/null)} \
   ${AWK:=$(which gawk 2>/dev/null)} \
   ${AWK:=$(which goawk 2>/dev/null)} \
   ${AWK:=$(which awk 2>/dev/null)} \
+  ${AWK:=$(which bioawk 2>/dev/null)} \
   ${AWKOPT:=}; \
+echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
+exec gawk -f \042${0}\042 -- \042${@}\042; \
+'; \
+: ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
+: ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
+HSVBA_TRACE_LEVEL=${HSVBA_TRACE_LEVEL-error}; \
+HSVBA_TRACE_TOPIC=${HSVBA_TRACE_TOPIC-zip,cfb,vbalz,dir,prj,frm,prf}; \
 for m in ${__pp_ut_modules}; do eval __pp_ut__${m}__=1; done; \
 eval $(eval echo $( \
     tr ' ' \\n <<< 'error warning info debug1 debug2 debug3 debug4'    | \
