@@ -22319,7 +22319,12 @@ __vba__dirstream__unpack_project_modules_module_nameunicode( \
     # Id (2 bytes)
     _v = stream__read_uint16(stream);
     if (astore__set(store, "Id::VBAMagic,mustbe(71)", _v) < 0) {
-        return vba__dirstream__E_UNEXPECTED;
+        # NOTE: This structure does not appear to be present in files
+        #       created by certain versions of Mac Office.
+        E__message = "";
+        stream__rewind(stream, 2);
+        return vba__dirstream__S_FALSE;
+        # return vba__dirstream__E_UNEXPECTED;
     }
 
     # SizeOfModuleNameUnicode (4 bytes)
