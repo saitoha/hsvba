@@ -673,6 +673,7 @@ function num__reverse_bits(n, w,    _p, _q, _r) {
 # - error / debugging
 # - binary join functions
 #   (str__binary_join, str__binary_join_with_chr)
+# - escape functions (str__utf16_escape)
 # {{{ str__init
 function \
 str__init(    _c, _i) {
@@ -770,6 +771,111 @@ str__binary_join( \
     }
     return str__binary_join(arr, left, _mid) \
            str__binary_join(arr, _mid + 1, right);
+}
+# }}}
+# {{{ str::str__utf16_escape
+function \
+str__utf16_escape(s,    _chars, _len, _i, _buf, _n, _c2, _c3, _c4) {
+
+    _len = split(s, _chars, "");
+    if (_len <= 0) {
+        return s;
+    }
+
+    _n = 0;
+    for (_i = 1; _i <= _len; ++_i) {
+        _c = _chars[_i];
+        _p = str__ord[_c];
+        if (_p < 32) {
+            _buf[++_n] = sprintf("\\u00%02X", _p);
+        } else if (_p == 34 || _p == 92) {  # " or \
+            _buf[++_n] = "\\" _c;
+        } else if (_p < 128) {
+            _buf[++_n] = _c;
+        } else if (_p < 224) {  # 110XXXXX 10XXXXXX
+            _c2 = _chars[++_i];
+            _buf[++_n] = sprintf( \
+                "\\u%04X", \
+                _c % 32 * 64 + _c2 % 64);
+        } else if (_p < 240) {  # 1110XXXX 10XXXXXX 10XXXXXX
+            _c2 = _chars[++_i];
+            _c3 = _chars[++_i];
+            _buf[++_n] = sprintf( \
+                "\\u%04X", \
+                _c % 16 * 4096 + _c2 % 64 * 64 + _c3 % 64);
+        } else if (_p < 245) {  # 11110XXX 10XXXXXX 10XXXXXX 10XXXXXX
+            _c2 = _chars[++_i];
+            _c3 = _chars[++_i];
+            _c4 = _chars[++_i];
+            # surrogate pair
+            _c = _c % 8 * 262144 \
+               + _c2 % 64 * 4096 \
+               + _c3 % 64 * 64 \
+               + _c4 % 64 \
+               - 65536;
+            _buf[++_n] = sprintf( "\\u%04X\\u%04X", int(_c / 1024), _c % 1024);
+        } else {
+            # fail over
+            break;
+        }
+    }
+
+    return str__binary_join(_buf, 1, _n);
+}
+
+function \
+__astore__pretty_print_json( \
+    store, key, indent, verbose, \
+    \
+    _keys, _i, _dir, _comp, \
+    _index, _path, _v, _count, _key, \
+    _type, _basetype, _pos \
+) {
+    if (index(key, "/") == 1) {
+        _dir = key;
+    } else {
+        _dir = store[__astore__M_workdir] (key == "" ? "": "/" key);
+    }
+    _dir = __astore__path_canonicalize(_dir);
+    _index = __astore__S_hash[_dir "/"];
+    split(_index, _keys, "/");
+    _count = length(_keys) - 1;
+    for (_i = 1; _i <= _count; ++_i) {
+        _key = _keys[_i];
+        _path = _dir "/" _key;
+        if (_path in __astore__S_hash) {
+            _v = __astore__S_hash[_path];
+            _type = __astore__S_hash[_path "::"];
+            # get base type, see the comment of __atom__type_pack.
+            _basetype = __atom__S_type[_type] % 4;
+            _pos = index(_key, ",");
+            if (_pos > 1) {
+                _key = substr(_key, 1, _pos - 1);
+            }
+            if (_basetype == 1) {
+                if (_type == "bool") {
+                    _v = _v ? "true": "false";
+                }
+                _key = str__utf16_escape(_key);
+                printf( \
+                    "%s\"%s\": %s%s\n", \
+                    indent, _key, _v, _i < _count ? ",": "");
+            } else {
+                _v = str__utf16_escape(_v);
+                _key = str__utf16_escape(_key);
+                printf( \
+                    "%s\"%s\": \"%s\"%s\n", \
+                    indent, _key, _v, _i < _count ? ",": "");
+            }
+        } else {
+            _key = str__utf16_escape(_key);
+            printf("%s\"%s\": {\n", indent, _key);
+            __astore__pretty_print_json(store, key "/" _key);
+            printf("%s}%s\n", indent, _i < _count ? ",": "");
+        }
+    }
+
+    return (0);
 }
 # }}}
 # {{{ str__binary_join_with_chr
