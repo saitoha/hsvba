@@ -22,12 +22,12 @@
 #
 #  Basic usage:
 #
-#    $ hsvba [awk options] -- [-p <switches>] <file1> <file2> ...
-#    $ hsvba [awk options] <file1> <file2> ... [-p <switches>]
+#    $ hsvba [-p <switches>] <file1> <file2> ...
+#    $ hsvba <file1> <file2> ... [-p <switches>]
 #
 #  Or input via stdin,
 #
-#    $ hsvba [awk options] -- [-p <switches>] < <file>
+#    $ hsvba [-p <switches>] < <file>
 #
 #  Options:
 #    -p <switch1,switch2,...>
@@ -85,8 +85,6 @@
 #    $ sudo curl -O https://raw.githubusercontent.com/saitoha/hsvba/refs/heads/main/hsvba
 #    $ sudo cp ./hsvba /usr/local/bin/
 #    $ sudo chmod +x /usr/local/bin/hsvba
-#
-#    NOTE: You may need to modify the shebang line depending on your environment.
 #
 #
 #  supported formats
@@ -276,7 +274,7 @@
 #
 #      (2) Configure Git to use `hsvba` as a text conversion filter for diffs:
 #
-#          $ git config diff.hsvba.textconv "hsvba -- -pprj,src,dir,frm"
+#          $ git config diff.hsvba.textconv "hsvba -pprj,src,dir,frm"
 #
 #    A sample .gitattributes file is present in the testdata/ directory.
 #
