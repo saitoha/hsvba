@@ -7205,14 +7205,18 @@ astore__enum_end(store,    _base, _arr) {
 # {{{ astore::pretty_print
 function \
 astore__pretty_print( \
-    store, key, indent, verbose \
+    store, key, indent, verbose, \
+    \
+    _key \
 ) {
     if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
         __astore__pretty_print_custom(store, key, indent, verbose);
     } else if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
-        printf "%s{\n", indent;
-        __astore__pretty_print_json(store, key, "    " indent, verbose);
-        printf "%s}\n", indent;
+        _key = key;
+        gsub(/^.*\//, "", _key);
+        printf "%s: {\n", key;
+        __astore__pretty_print_json(store, key);
+        printf "}\n";
     }
     return (-1);
 }
@@ -7279,11 +7283,9 @@ __astore__pretty_print_custom( \
                 printf("%s[%s] -> (nested array)\n", indent, _key);
             }
             if (key == "") {
-                __astore__pretty_print_custom( \
-                    store, _key, indent "    ", verbose);
+                __astore__pretty_print_custom(store, _key, indent "    ", verbose);
             } else {
-                __astore__pretty_print_custom(
-                    store, key "/" _key, indent "    ", verbose);
+                __astore__pretty_print_custom(store, key "/" _key, indent "    ", verbose);
             }
         }
     }
@@ -7306,14 +7308,6 @@ __astore__pretty_print_json( \
         _dir = store[__astore__M_workdir] (key == "" ? "": "/" key);
     }
     _dir = __astore__path_canonicalize(_dir);
-    if (indent == "") {
-        split(_dir, _comp, "/");
-        _count = length(_comp);
-        for (_i = 2; _i <= _count; ++_i) {
-            printf("%s\"%s\": {\n", indent, _comp[_i]);
-            indent = "    " indent;
-        }
-    }
     _index = __astore__S_hash[_dir "/"];
     split(_index, _keys, "/");
     _count = length(_keys) - 1;
@@ -7333,18 +7327,15 @@ __astore__pretty_print_json( \
                 if (_type == "bool") {
                     _v = _v ? "true": "false";
                 }
-                printf("%s\"%s\": %s%s\n", \
-                       indent, _key, _v, _i < _count ? ",": "");
+                printf("%s\"%s\": %s%s\n", indent, _key, _v, _i < _count ? ",": "");
             } else {
                 gsub(/\\/, "\\\\", _v);
                 # TODO: more canonical escaping
-                printf("%s\"%s\": \"%s\"%s\n", \
-                       indent, _key, _v, _i < _count ? ",": "");
+                printf("%s\"%s\": \"%s\"%s\n", indent, _key, _v, _i < _count ? ",": "");
             }
         } else {
             printf("%s\"%s\": {\n", indent, _key);
-            __astore__pretty_print_json( \
-                store, key "/" _key, indent "    ", verbose);
+            __astore__pretty_print_json(store, key "/" _key);
             printf("%s}%s\n", indent, _i < _count ? ",": "");
         }
     }
@@ -25725,8 +25716,10 @@ vba__modulestream__unpack( \
             return _r;
         }
 
-        print "-------------------------------------------------------------------------------";
-        printf "[File \"%s\"]\n", _stream_name;
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+            print "-------------------------------------------------------------------------------";
+            printf "[File \"%s\"]\n", _stream_name;
+        }
 
         if (num__and(__cli__S_opt_print, OPT_PRINT_PCD)) {
             astore__new(_store_p, "/P-code/" _stream_name);
@@ -25740,8 +25733,10 @@ vba__modulestream__unpack( \
             if (_r < 0) {
                 return _r;
             }
-            print "-------------------------------------------------------------------------------";
-            astore__pretty_print(_store, "/P-code/" _stream_name);
+            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+                print "-------------------------------------------------------------------------------";
+                astore__pretty_print(_store, "/P-code/" _stream_name);
+            }
         }
 
         if (num__and(__cli__S_opt_print, OPT_PRINT_SRC)) {
@@ -26259,11 +26254,13 @@ __forms20__unpack_formparts( \
                 return _r;
             }
 
-            _title = "[File \"" path "/\\001CompObj\"]";
-            printf "-------------------------------------------------------------------------------\n" \
-                   _title "\n" \
-                   "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, ".");
+            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+                _title = "[File \"" path "/\\001CompObj\"]";
+                printf "-------------------------------------------------------------------------------\n" \
+                       _title "\n" \
+                       "-------------------------------------------------------------------------------\n";
+                astore__pretty_print(_store, ".");
+            }
 
         } else if (_entry == "\003VBFrame") {
             # VBFrame stream
@@ -26959,10 +26956,13 @@ forms20__unpack_formstream( \
     if (_r < 0) {
         return _r;
     }
-    printf "-------------------------------------------------------------------------------\n" \
-           "[File \"" path "\"]\n" \
-           "-------------------------------------------------------------------------------\n";
-    astore__pretty_print(_store, "/Forms" path, "");
+
+    if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+        printf "-------------------------------------------------------------------------------\n" \
+               "[File \"" path "\"]\n" \
+               "-------------------------------------------------------------------------------\n";
+        astore__pretty_print(_store, "/Forms" path, "");
+    }
 
     return forms20__S_OK;
 }
@@ -27016,10 +27016,12 @@ forms20__unpack_objectstream( \
         }
     }
 
-    printf "-------------------------------------------------------------------------------\n" \
-           "[File \"" path "\"]\n" \
-           "-------------------------------------------------------------------------------\n";
-    astore__pretty_print(_store, "/Forms" path, "");
+    if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+        printf "-------------------------------------------------------------------------------\n" \
+               "[File \"" path "\"]\n" \
+               "-------------------------------------------------------------------------------\n";
+        astore__pretty_print(_store, "/Forms" path, "");
+    }
 
     return forms20__S_OK;
 }
@@ -32894,12 +32896,12 @@ cli__process_stream( \
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
-        if (__cli__S_show_header) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
             print "-------------------------------------------------------------------------------\n" \
                   " ZIP information\n" \
                   "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/Zip", "");
         }
-        astore__pretty_print(_store, "/Zip", "");
     }
 
     astore__new(_store, "/ooxml");
@@ -32909,12 +32911,12 @@ cli__process_stream( \
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_OOX)) {
-        if (__cli__S_show_header) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
             print "-------------------------------------------------------------------------------\n" \
                   " OOXML information\n" \
                   "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/ooxml", "");
         }
-        astore__pretty_print(_store, "/ooxml", "");
     }
 
     _vbapath = astore__get(store, "/ooxml/@VBA Path");
@@ -32943,12 +32945,12 @@ cli__process_vbaproject_binary( \
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
-        if (__cli__S_show_header) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
             print "-------------------------------------------------------------------------------\n" \
                   " CFB information\n" \
                   "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/CFB", "");
         }
-        astore__pretty_print(_store, "/CFB", "");
     }
 
     # detect VBA root directory
@@ -32987,11 +32989,6 @@ cli__process_vbaproject_binary( \
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
-        if (__cli__S_show_header) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " PROJECT stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-        }
         astore__new(_store, "/PROJECT");
         _r = vba__projectstream__init();
         if (_r < 0) {
@@ -33001,25 +32998,30 @@ cli__process_vbaproject_binary( \
         if (_r < 0) {
             return _r;
         }
-        astore__pretty_print(_store, "/PROJECT", "");
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " PROJECT stream information\n" \
+                  "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/PROJECT", "");
+        }
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
-        if (__cli__S_show_header) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
             print "-------------------------------------------------------------------------------\n" \
                   " _VBA_PROJECT stream information\n" \
                   "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/_VBA_PROJECT", "");
         }
-        astore__pretty_print(_store, "/_VBA_PROJECT", "");
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_DIR)) {
-        if (__cli__S_show_header) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
             print "-------------------------------------------------------------------------------\n" \
                   " dir stream information\n" \
                   "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/VBA", "");
         }
-        astore__pretty_print(_store, "/VBA", "");
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_FRM)) {
