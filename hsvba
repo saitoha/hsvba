@@ -6018,6 +6018,11 @@ astore__init(    _status) {
         return _status;
     }
 
+    astore__C_OUTPUT_CUSTOM = 1;
+    astore__C_OUTPUT_JSON   = 2;
+
+    astore__S_output_mode = 1;
+
     # basic types
     _status = atom__declare(" \
                                                     \
@@ -7200,6 +7205,21 @@ astore__enum_end(store,    _base, _arr) {
 # {{{ astore::pretty_print
 function \
 astore__pretty_print( \
+    store, key, indent, verbose \
+) {
+    if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+        __astore__pretty_print_custom(store, key, indent, verbose);
+    } else if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
+        printf "%s{\n", indent;
+        __astore__pretty_print_json(store, key, "    " indent, verbose);
+        printf "%s}\n", indent;
+    }
+    return (-1);
+}
+# }}}
+# {{{ (private)::astore::pretty_print_custom
+function \
+__astore__pretty_print_custom( \
     store, key, indent, verbose, \
     \
     _keys, _i, _dir, _comp, \
@@ -7259,10 +7279,73 @@ astore__pretty_print( \
                 printf("%s[%s] -> (nested array)\n", indent, _key);
             }
             if (key == "") {
-                astore__pretty_print(store, _key, indent "    ", verbose);
+                __astore__pretty_print_custom( \
+                    store, _key, indent "    ", verbose);
             } else {
-                astore__pretty_print(store, key "/" _key, indent "    ", verbose);
+                __astore__pretty_print_custom(
+                    store, key "/" _key, indent "    ", verbose);
             }
+        }
+    }
+
+    return (0);
+}
+# }}}
+# {{{ (private)::astore::pretty_print_json
+function \
+__astore__pretty_print_json( \
+    store, key, indent, verbose, \
+    \
+    _keys, _i, _dir, _comp, \
+    _index, _path, _v, _count, _key, \
+    _type, _basetype, _pos \
+) {
+    if (index(key, "/") == 1) {
+        _dir = key;
+    } else {
+        _dir = store[__astore__M_workdir] (key == "" ? "": "/" key);
+    }
+    _dir = __astore__path_canonicalize(_dir);
+    if (indent == "") {
+        split(_dir, _comp, "/");
+        _count = length(_comp);
+        for (_i = 2; _i <= _count; ++_i) {
+            printf("%s\"%s\": {\n", indent, _comp[_i]);
+            indent = "    " indent;
+        }
+    }
+    _index = __astore__S_hash[_dir "/"];
+    split(_index, _keys, "/");
+    _count = length(_keys) - 1;
+    for (_i = 1; _i <= _count; ++_i) {
+        _key = _keys[_i];
+        _path = _dir "/" _key;
+        if (_path in __astore__S_hash) {
+            _v = __astore__S_hash[_path];
+            _type = __astore__S_hash[_path "::"];
+            # get base type, see the comment of __atom__type_pack.
+            _basetype = __atom__S_type[_type] % 4;
+            _pos = index(_key, ",");
+            if (_pos > 1) {
+                _key = substr(_key, 1, _pos - 1);
+            }
+            if (_basetype == 1) {
+                if (_type == "bool") {
+                    _v = _v ? "true": "false";
+                }
+                printf("%s\"%s\": %s%s\n", \
+                       indent, _key, _v, _i < _count ? ",": "");
+            } else {
+                gsub(/\\/, "\\\\", _v);
+                # TODO: more canonical escaping
+                printf("%s\"%s\": \"%s\"%s\n", \
+                       indent, _key, _v, _i < _count ? ",": "");
+            }
+        } else {
+            printf("%s\"%s\": {\n", indent, _key);
+            __astore__pretty_print_json( \
+                store, key "/" _key, indent "    ", verbose);
+            printf("%s}%s\n", indent, _i < _count ? ",": "");
         }
     }
 
@@ -32600,6 +32683,30 @@ hsvba__cli_optparse( \
                 return _r;
             }
             exit 2;
+        } else if (_arg ~ /^\-[[:alnum:]]*f|^\-\-format$/) {
+            ARGV[_i] = "";
+            if (_arg == "-f" || _arg == "--format") {
+                ++_i;
+                _optarg = ARGV[_i];
+                ARGV[_i] = "";
+            } else {
+                _optarg = _arg;
+                sub(/^\-f|^\-\-format=/, "", _optarg);
+            }
+            if (astore__init() < 0) {
+                E__message = "Failed to initialize astore module.";
+                return cli__E_FAIL;
+            }
+            if (_optarg == "custom") {
+                astore__S_output_mode = astore__C_OUTPUT_CUSTOM;
+            } else if (_optarg == "json") {
+                astore__S_output_mode = astore__C_OUTPUT_JSON;
+            } else {
+                E__message = sprintf( \
+                    "Unknown output format is specified: %s.", \
+                    _optarg);
+                return cli__E_FAIL;
+            }
         } else if (_arg ~ /^\-p|^\-\-print=|^\-\-print$/) {
             ARGV[_i] = "";
             if (_arg == "-p" || _arg == "--print") {
