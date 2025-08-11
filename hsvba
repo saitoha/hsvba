@@ -407,15 +407,13 @@
 # script’s own filename to AWK using the -f option.
 # Otherwise, pass the preprocessed string to AWK as an argument and execute
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
+#
+# The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
 true && echo -n "$( \
-: ${AWK:=$(which mawk 2>/dev/null)} \
-  ${AWK:=$(which gawk 2>/dev/null)} \
-  ${AWK:=$(which goawk 2>/dev/null)} \
-  ${AWK:=$(which awk 2>/dev/null)} \
-  ${AWK:=$(which bioawk 2>/dev/null)} \
-  ${AWKOPT:=}; \
+: $'\042\047'; \
+: ${AWK:=$(which mawk gawk goawk awk bioawk 2>/dev/null | head -n1)}; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-LANG=C exec ${AWK} -f \042${0}\042 -- \042${@}\042; \
+LC_CTYPE=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -437,9 +435,9 @@ elif [[ ${AWK} =~ bioawk ]]; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
-  LANG=C exec ${AWK} ${AWKOPT} -- \042${@}\042; \
+  exec ${AWK} ${AWKOPT} -- \042${@}\042; \
 }'; \
-TZ=${HSVBA_TZ:-UTC} LC_CTYPE=C __rt_exec ' # ";
+LC_CTYPE=C __rt_exec ' # ";
 # }}}
 BEGIN {
     E__message = "";
