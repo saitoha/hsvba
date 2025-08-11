@@ -858,20 +858,20 @@ __astore__pretty_print_json( \
                 }
                 _key = str__utf16_escape(_key);
                 printf( \
-                    "%s\"%s\": %s%s\n", \
+                    "%s\"%s\":%s%s", \
                     indent, _key, _v, _i < _count ? ",": "");
             } else {
                 _v = str__utf16_escape(_v);
                 _key = str__utf16_escape(_key);
                 printf( \
-                    "%s\"%s\": \"%s\"%s\n", \
+                    "%s\"%s\":\"%s\"%s", \
                     indent, _key, _v, _i < _count ? ",": "");
             }
         } else {
             _key = str__utf16_escape(_key);
-            printf("%s\"%s\": {\n", indent, _key);
+            printf("%s\"%s\":{", indent, _key);
             __astore__pretty_print_json(store, key "/" _key);
-            printf("%s}%s\n", indent, _i < _count ? ",": "");
+            printf("%s}%s", indent, _i < _count ? ",": "");
         }
     }
 
@@ -7322,9 +7322,9 @@ astore__pretty_print( \
     if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
         __astore__pretty_print_custom(store, key, indent, verbose);
     } else if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
-        printf "\"%s\": {\n", rootname;
+        printf "\"%s\":{", rootname;
         __astore__pretty_print_json(store, key);
-        printf "}\n";
+        printf "}";
     }
     return (-1);
 }
