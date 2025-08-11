@@ -408,7 +408,7 @@ true && echo "$( \
   ${AWK:=$(which bioawk 2>/dev/null)} \
   ${AWKOPT:=}; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-exec gawk -f \042${0}\042 -- \042${@}\042; \
+exec ${AWK} -f \042${0}\042 -- \042${@}\042; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
