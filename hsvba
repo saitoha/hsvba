@@ -4344,6 +4344,8 @@ atom__init(    _status) {
         return (1);
     }
 
+    atom__err = 0;
+
     # required modules
     _status = str__init();
     if (_status < 0) {
