@@ -268,10 +268,7 @@
 #
 #    *1 integer overflow
 #    *2 parse error
-#    *3 Mostly works with Office 97–style files (e.g., *.doc, *.xls), but
-#       multibyte character output is broken. When processing Office 2007
-#       and later file formats (e.g., *.docm, *.xlsm), the following error
-#       occurs: "wak: FATAL: file hsvba line 33356: scalar in array context."
+#    *3 Mostly works but multibyte character output is broken.
 #
 #  integration
 #  ===========
@@ -411,7 +408,7 @@
 #
 # {{{ bash preprocessing
 # If no environment variables starting with HSVBA_* are defined, pass the
-# script’s own filename to AWK using the -f option.
+# script`s own filename to AWK using the -f option.
 # Otherwise, pass the preprocessed string to AWK as an argument and execute
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
 #
@@ -420,7 +417,7 @@ true && echo -n "$( \
 : $'\042\047'; \
 : ${AWK:=$(which mawk gawk goawk awk bioawk 2>/dev/null | head -n1)}; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-LC_CTYPE=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042; \
+LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -444,7 +441,7 @@ fi; \
 eval $'__rt_exec() { \
   exec ${AWK} ${AWKOPT} -- \042${@}\042; \
 }'; \
-LC_CTYPE=C __rt_exec ' # ";
+LANG=C __rt_exec ' # ";
 # }}}
 # {{{ error / debugging
 #=# '${__pp_trace___+"$(cut -d\# -f3-<<<'
@@ -15675,7 +15672,12 @@ zlib__inflate( \
     istream, store, ostream, no, \
     \
     _store, _bfinal, \
-    _btype, _status \
+    _btype, _status, \
+    _code_length_huffman_table, \
+    _literal_huffman_table, \
+    _distance_huffman_table, \
+    _literal_code_lengths, \
+    _distance_code_lengths \
 ) {
     astore__fork(store, "Data Blocks/" no, _store);
 
@@ -15743,21 +15745,46 @@ zlib__inflate( \
         }
 
     } else if (_btype == 1) {  # fixed huffman block
+        #
+        # workaround for wak:
+        #
+        # In WAK, if you declare a local variable in an argument list and try
+        # to initialize it with an array, it may already be initialized with
+        # a scalar value, resulting in an error. In this case, you need to
+        # initialize it as an array at the next higher level in the call graph
+        # and then pass that as an argument.
+        #
+        delete _literal_huffman_table[1];
+        delete _distance_huffman_table[1];
 
         _status = __zlib__inflate__fixed_huffman_block( \
             istream, \
             ostream, \
-            _store);
+            _store, \
+            _literal_huffman_table, \
+            _distance_huffman_table);
         if (_status < 0) {
             return _status;
         }
 
     } else if (_btype == 2) {  # dynamic huffman block
 
+        # workaround for wak
+        delete _code_length_huffman_table[1];
+        delete _literal_huffman_table[1];
+        delete _distance_huffman_table[1];
+        delete _literal_code_lengths[1];
+        delete _distance_code_lengths[1];
+
         _status = __zlib__inflate__dynamic_huffman_block( \
             istream, \
             ostream, \
-            _store);
+            _store, \
+            _code_length_huffman_table, \
+            _literal_huffman_table, \
+            _distance_huffman_table, \
+            _literal_code_lengths, \
+            _distance_code_lengths);
         if (_status < 0) {
             return _status;
         }
@@ -16155,13 +16182,14 @@ function \
 __zlib__inflate__dynamic_huffman_block( \
     istream, ostream, store, \
     \
-    _status, _hlit, _hdist, _hclen, \
-    _i, _p, _raw_code_lengths, _code_lengths, \
     _code_length_huffman_table, \
-    _literal_code_lengths, \
     _literal_huffman_table, \
+    _distance_huffman_table, \
+    _literal_code_lengths, \
     _distance_code_lengths, \
-    _distance_huffman_table \
+    _raw_code_lengths, \
+    _code_lengths, \
+    _i, _p, _status, _hlit, _hdist, _hclen \
 ) {
     # '${__pp_comment:+'
     #
@@ -16227,7 +16255,6 @@ __zlib__inflate__dynamic_huffman_block( \
             _code_lengths[_p] = _raw_code_lengths[_i];
         }
     }
-
     # build huffman code table from a list of code lengths for code length
     _status = __zlib__inflate__build_huffman_dictionary( \
         istream, \
@@ -16351,8 +16378,6 @@ __zlib__inflate__code_lengths_list( \
     #                  (7 bits of length)
     #
     # '}'
-    split("", code_lengths);
-
     _num_of_code_lengths = (-1);
 
     for (_num_of_code_lengths = (-1); _num_of_code_lengths < count - 1;) {
