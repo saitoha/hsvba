@@ -415,7 +415,7 @@ true && echo -n "$( \
   ${AWK:=$(which bioawk 2>/dev/null)} \
   ${AWKOPT:=}; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-exec ${AWK} -f \042${0}\042 -- \042${@}\042; \
+LANG=C exec ${AWK} -f \042${0}\042 -- \042${@}\042; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -466,7 +466,7 @@ elif [[ ${AWK} =~ bioawk ]]; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
-  exec ${AWK} ${AWKOPT} -- \042${@}\042; \
+  LANG=C exec ${AWK} ${AWKOPT} -- \042${@}\042; \
 }'; \
 TZ=${HSVBA_TZ:-UTC} LC_CTYPE=C __rt_exec ' # ";
 # }}}
