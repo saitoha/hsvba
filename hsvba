@@ -751,8 +751,12 @@ str__binary_join( \
 # }}}
 # {{{ str::str__utf16_escape
 function \
-str__utf16_escape(s,    _chars, _len, _i, _buf, _n, _c2, _c3, _c4) {
-
+str__utf16_escape( \
+    s, \
+    \
+    _chars, _len, _i, _buf, _n, \
+    _p, _c, _c2, _c3, _c4 \
+) {
     _len = split(s, _chars, "");
     if (_len <= 0) {
         return s;
@@ -32505,7 +32509,7 @@ function \
 forms20__unpack_vbframestream( \
     stream, store, path, \
     \
-    _size, _src, _r, _stream, _title \
+    _size, _src, _r, _stream, _title, _syskind \
 ) {
     _r = cfb__unpack_stream(stream, store, path, _stream);
     if (_r < 0) {
