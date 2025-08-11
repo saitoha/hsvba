@@ -3577,7 +3577,7 @@ function __map__fixup( \
                             } else {
 #                                map__walk(cell);
                                 # if the parent of p3 exists, apply the fixup process to p1
-                                _status = __map__fixup(cell, _p1);
+                                _status = __map__fixup(p, _p1);
                                 if (_status < 0) {
                                     return _status;
                                 }
@@ -3757,7 +3757,7 @@ function __map__fixup( \
                             } else {
 #                                map__walk(cell);
                                 # if the parent of p3 exists, apply the fixup process to node
-                                _status = __map__fixup(cell, node);
+                                _status = __map__fixup(p, node);
                                 if (_status < 0) {
                                     return _status;
                                 }
@@ -3957,7 +3957,7 @@ function __map__fixup( \
                             } else {
 #                                map__walk(cell);
                                 # if the parent of p3 exists, apply the fixup process to node
-                                _status = __map__fixup(cell, node);
+                                _status = __map__fixup(p, node);
                                 if (_status < 0) {
                                     return _status;
                                 }
@@ -4105,7 +4105,7 @@ function __map__fixup( \
                             } else {
 #                                map__walk(cell);
                                 # if the parent of p3 exists, apply the fixup process to p1
-                                _status = __map__fixup(cell, _p1);
+                                _status = __map__fixup(p, _p1);
                                 if (_status < 0) {
                                     return _status;
                                 }
