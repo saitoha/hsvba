@@ -14,9 +14,6 @@
 #    - #!/bin/awk -f
 #    - #!/usr/bin/gawk -bf
 #
-#    # for debugging, with multibyte support disabled.
-#    - #!/bin/bash
-#
 #  usage
 #  =====
 #
@@ -410,7 +407,7 @@
 # script’s own filename to AWK using the -f option.
 # Otherwise, pass the preprocessed string to AWK as an argument and execute
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
-true && echo "$( \
+true && echo -n "$( \
 : ${AWK:=$(which mawk 2>/dev/null)} \
   ${AWK:=$(which gawk 2>/dev/null)} \
   ${AWK:=$(which goawk 2>/dev/null)} \
@@ -33121,7 +33118,7 @@ cli__process_vbaproject_binary( \
 
     if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
         _continue = 0;
-        printf("{\n");
+        printf("{");
         if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
             if (_continue) {
                 printf(", ");
@@ -33185,7 +33182,7 @@ cli__process_vbaproject_binary( \
             astore__pretty_print(_store, "/P-code", "P-code");
             _continue = 1;
         }
-        printf("}\n");
+        printf("}");
     }
 
     return cli__S_OK;
