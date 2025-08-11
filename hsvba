@@ -55,16 +55,16 @@
 #  Some environment variables are available in bash mode.
 #
 #    ex. 1) use gawk's --trace option
-#    $ AWK=gawk AWKOPT=--trace bash test.xlsm
+#    $ AWK=gawk AWKOPT=--trace ./hsvba test.xlsm
 #
 #    ex. 2) use mawk's "-W dump" option
-#    $ AWK=mawk AWKOPT="-W dump" bash test.xlsm
+#    $ AWK=mawk AWKOPT=-Wdump ./hsvba test.xlsm
 #
 #    ex. 3) enable debugging log
-#    $ HSVBA_TRACE_LEVEL=debug3 HSVBA_TRACE_TOPIC=zip,cfb,vbalz bash ./hsvba test.xlsm -p
+#    $ HSVBA_TRACE_LEVEL=debug3 HSVBA_TRACE_TOPIC=zip,cfb,vbalz ./hsvba test.xlsm -p
 #
 #    ex. 4) module unit testing
-#    $ HSVBA_UT=zlib,stream bash ./hsvba
+#    $ HSVBA_UT=zlib,stream ./hsvba
 #
 #  Please note that blocks commented out with "#=#" at the beginning of a
 #  line may appear to be inactive code at first glance, but they can become
@@ -259,12 +259,15 @@
 #    +--------------------------+--------------------+--------------------+
 #    | frawk                    |                    | error *2           |
 #    +--------------------------+--------------------+--------------------+
-#    | wak                      |                    | error *3           |
+#    | wak                      |                    | works sometimes *3 |
 #    +--------------------------+--------------------+--------------------+
 #
 #    *1 integer overflow
 #    *2 parse error
-#    *3 segmentation error
+#    *3 Mostly works with Office 97–style files (e.g., *.doc, *.xls), but
+#       multibyte character output is broken. When processing Office 2007
+#       and later file formats (e.g., *.docm, *.xlsm), the following error
+#       occurs: "wak: FATAL: file hsvba line 33356: scalar in array context."
 #
 #  integration
 #  ===========
