@@ -261,14 +261,13 @@
 #    +--------------------------+--------------------+--------------------+
 #    | frawk                    |                    | error *2           |
 #    +--------------------------+--------------------+--------------------+
-#    | wak                      |                    | works sometimes *3 |
+#    | wak                      |                    | works              |
 #    +--------------------------+--------------------+--------------------+
 #    | awx                      |                    | error *2           |
 #    +--------------------------+--------------------+--------------------+
 #
 #    *1 integer overflow
 #    *2 parse error
-#    *3 Mostly works but multibyte character output is broken.
 #
 #  integration
 #  ===========
@@ -415,7 +414,7 @@
 # The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
 true && echo -n "$( \
 : $'\042\047'; \
-: ${AWK:=$(which mawk gawk goawk awk bioawk 2>/dev/null | head -n1)}; \
+: ${AWK:=$(which mawk gawk goawk awk bioawk wak 2>/dev/null | head -n1)}; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
 LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042; \
 '; \
@@ -679,9 +678,143 @@ str__init(    _c, _i) {
         # wak will force all strings to be interpreted as UTF-8 (even in the
         # C locale), and will abort if it encounters a character during split()
         # that cannot be interpreted as UTF-8 (such as "\375\376\377").
-        for (_i = 0; _i <= 255; ++_i) {
+        #
+        # for (_i = 0; _i <= 255; ++_i) {
+        #     str__chr[_i] = sprintf("%c", _i);
+        # }
+        for (_i = 0; _i <= 127; ++_i) {
             str__chr[_i] = sprintf("%c", _i);
         }
+        # In wak, sprintf("%c", i) is forced to encode as UTF-8 when i > 128,
+        # returning a result of two or more bytes.
+        str__chr[128] = "\200";
+        str__chr[129] = "\201";
+        str__chr[130] = "\202";
+        str__chr[131] = "\203";
+        str__chr[132] = "\204";
+        str__chr[133] = "\205";
+        str__chr[134] = "\206";
+        str__chr[135] = "\207";
+        str__chr[136] = "\210";
+        str__chr[137] = "\211";
+        str__chr[138] = "\212";
+        str__chr[139] = "\213";
+        str__chr[140] = "\214";
+        str__chr[141] = "\215";
+        str__chr[142] = "\216";
+        str__chr[143] = "\217";
+        str__chr[144] = "\220";
+        str__chr[145] = "\221";
+        str__chr[146] = "\222";
+        str__chr[147] = "\223";
+        str__chr[148] = "\224";
+        str__chr[149] = "\225";
+        str__chr[150] = "\226";
+        str__chr[151] = "\227";
+        str__chr[152] = "\230";
+        str__chr[153] = "\231";
+        str__chr[154] = "\232";
+        str__chr[155] = "\233";
+        str__chr[156] = "\234";
+        str__chr[157] = "\235";
+        str__chr[158] = "\236";
+        str__chr[159] = "\237";
+        str__chr[160] = "\240";
+        str__chr[161] = "\241";
+        str__chr[162] = "\242";
+        str__chr[163] = "\243";
+        str__chr[164] = "\244";
+        str__chr[165] = "\245";
+        str__chr[166] = "\246";
+        str__chr[167] = "\247";
+        str__chr[168] = "\250";
+        str__chr[169] = "\251";
+        str__chr[170] = "\252";
+        str__chr[171] = "\253";
+        str__chr[172] = "\254";
+        str__chr[173] = "\255";
+        str__chr[174] = "\256";
+        str__chr[175] = "\257";
+        str__chr[176] = "\260";
+        str__chr[177] = "\261";
+        str__chr[178] = "\262";
+        str__chr[179] = "\263";
+        str__chr[180] = "\264";
+        str__chr[181] = "\265";
+        str__chr[182] = "\266";
+        str__chr[183] = "\267";
+        str__chr[184] = "\270";
+        str__chr[185] = "\271";
+        str__chr[186] = "\272";
+        str__chr[187] = "\273";
+        str__chr[188] = "\274";
+        str__chr[189] = "\275";
+        str__chr[190] = "\276";
+        str__chr[191] = "\277";
+        str__chr[192] = "\300";
+        str__chr[193] = "\301";
+        str__chr[194] = "\302";
+        str__chr[195] = "\303";
+        str__chr[196] = "\304";
+        str__chr[197] = "\305";
+        str__chr[198] = "\306";
+        str__chr[199] = "\307";
+        str__chr[200] = "\310";
+        str__chr[201] = "\311";
+        str__chr[202] = "\312";
+        str__chr[203] = "\313";
+        str__chr[204] = "\314";
+        str__chr[205] = "\315";
+        str__chr[206] = "\316";
+        str__chr[207] = "\317";
+        str__chr[208] = "\320";
+        str__chr[209] = "\321";
+        str__chr[210] = "\322";
+        str__chr[211] = "\323";
+        str__chr[212] = "\324";
+        str__chr[213] = "\325";
+        str__chr[214] = "\326";
+        str__chr[215] = "\327";
+        str__chr[216] = "\330";
+        str__chr[217] = "\331";
+        str__chr[218] = "\332";
+        str__chr[219] = "\333";
+        str__chr[220] = "\334";
+        str__chr[221] = "\335";
+        str__chr[222] = "\336";
+        str__chr[223] = "\337";
+        str__chr[224] = "\340";
+        str__chr[225] = "\341";
+        str__chr[226] = "\342";
+        str__chr[227] = "\343";
+        str__chr[228] = "\344";
+        str__chr[229] = "\345";
+        str__chr[230] = "\346";
+        str__chr[231] = "\347";
+        str__chr[232] = "\350";
+        str__chr[233] = "\351";
+        str__chr[234] = "\352";
+        str__chr[235] = "\353";
+        str__chr[236] = "\354";
+        str__chr[237] = "\355";
+        str__chr[238] = "\356";
+        str__chr[239] = "\357";
+        str__chr[240] = "\360";
+        str__chr[241] = "\361";
+        str__chr[242] = "\362";
+        str__chr[243] = "\363";
+        str__chr[244] = "\364";
+        str__chr[245] = "\365";
+        str__chr[246] = "\366";
+        str__chr[247] = "\367";
+        str__chr[248] = "\370";
+        str__chr[249] = "\371";
+        str__chr[250] = "\372";
+        str__chr[251] = "\373";
+        str__chr[252] = "\374";
+        str__chr[253] = "\375";
+        str__chr[254] = "\376";
+        str__chr[255] = "\377";
     }
     for (_i = 0; _i <= 255; ++_i) {
         _c = str__chr[_i];
