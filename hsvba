@@ -429,35 +429,6 @@ eval $(eval echo $( \
     xargs printf __pp_trace__'{'${HSVBA_TRACE_TOPIC//[^a-z0-9_,]},'}'_'{%s,}'=1\\n \
 ) | tr ' ' \\n); \
 : ${__pp_ut__:+${__pp_ut_buf:=$(mktemp)}}; \
-eval $'__pp_ut__() { \
-  [ -n \042$1\042 ] && { \
-      cat \042${__pp_ut_buf}\042; \
-  } || gawk \047 \
-    /__pp_ut__/ { \
-        if (match($0, /__pp_ut__[^(]*\\(/ )) { \
-            fn = substr($0, RSTART + 9, RLENGTH - 10); \
-            print \042print \\\042\\\\ntesting \042 fn \042\\\042;\042; \
-            next; \
-        } \
-    } /^ *!/ { \
-        print fn, $0 > \042/tmp/ab3\042; \
-        l1 = l2 = $0; \
-        sub(/^ *!/, \042\042, l1); \
-        sub(/^ *!/, \042\042, l2); \
-        gsub(/\\042/, \042\\\\042\042, l1); \
-        print \042;print \\042\042 l1 \042\\042; \042l2\042;\042 \
-            >> \042\047\042${__pp_ut_buf}\042\047\042; \
-    } /^ *-/ { \
-        print fn, $0 > \042/tmp/ab3\042; \
-        l1 = l2 = $0; \
-        sub(/^ *-/, \042\042, l1); \
-        sub(/^ *-/, \042\042, l2); \
-        gsub(/\\042/, \042\\\\042\042, l1); \
-        gsub(/;$/, \042\042, l1); \
-        print \042;print \\042\042 l1 \042 => \\042, \042l2\042;\042; \
-    } \
-    \047 >> \042${__pp_ut_buf}\042; \
-}'; \
 if [[ ${AWK} =~ gawk ]]; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
   __pp_feat__has_native_bitwise_shift_functions=1; \
