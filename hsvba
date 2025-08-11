@@ -429,7 +429,6 @@ eval $(eval echo $( \
     tr \\n  ,                                                          | \
     xargs printf __pp_trace__'{'${HSVBA_TRACE_TOPIC//[^a-z0-9_,]},'}'_'{%s,}'=1\\n \
 ) | tr ' ' \\n); \
-: ${__pp_ut__:+${__pp_ut_buf:=$(mktemp)}}; \
 if [[ ${AWK} =~ gawk ]]; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
   __pp_feat__has_native_bitwise_shift_functions=1; \
