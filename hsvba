@@ -4509,6 +4509,8 @@ atom__declare( \
     \
     _tokens, _status \
 ) {
+    split("", _tokens, "");
+
     _status = __atom__scan(definition, _tokens);
     if (_status < 0) {
         return _status;
@@ -5610,7 +5612,7 @@ __atom__type_unpack( \
     _v, _base, _head \
 ) {
     if (! (name in __atom__S_type)) {
-        E__message = "unexpected base type: " name;
+        E__message = "(__atom__type_unpack) unexpected base type: " name;
         return (-1);
     }
 
@@ -5673,7 +5675,9 @@ __atom__type_apply( \
                     type[__atom__type__M_base] = 1;  # 1:signed integer
                 }
             } else {
-                E__message = "unexpected base type: " addr__deref(_word);
+                E__message = \
+                    "(__atom__type_apply) unexpected base type: " \
+                    addr__deref(_word);
             }
         } else {
             E__message = "unexpected token: " _tokid;
@@ -22889,7 +22893,6 @@ vba__projectstream__init(    _status) {
     return (0);
 }
 # }}}
-
 # {{{ [MS-OVBA] 2.3.1 PROJECT Stream: Project Information
 # '${__pp_comment:+'
 #
@@ -33326,6 +33329,7 @@ BEGIN {
     RS = "^$";       # multicharacter value of RS is a gawk extension
     BINMODE = "r";   # gawk/mawk extension, for Windows
     FS = "^$";
+    CONVFMT = "%.17g";  # Workaround for older versions of mawk
     FIELDWIDTH="*";
 
     if (cli__init() < 0) {
