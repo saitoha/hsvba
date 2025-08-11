@@ -52,13 +52,15 @@
 #        show help
 #
 #  This awk script can be interpreted as Bash or Awk.
-#  Some environment variables are available in bash mode.
 #
 #    ex. 1) use gawk's --trace option
 #    $ AWK=gawk AWKOPT=--trace ./hsvba test.xlsm
 #
 #    ex. 2) use mawk's "-W dump" option
 #    $ AWK=mawk AWKOPT=-Wdump ./hsvba test.xlsm
+#
+#  Some environment variables are available in bash-based
+#  preprocessing mode.
 #
 #    ex. 3) enable debugging log
 #    $ HSVBA_TRACE_LEVEL=debug3 HSVBA_TRACE_TOPIC=zip,cfb,vbalz ./hsvba test.xlsm -p
@@ -442,14 +444,7 @@ eval $'__rt_exec() { \
 }'; \
 LC_CTYPE=C __rt_exec ' # ";
 # }}}
-BEGIN {
-    E__message = "";
-    if (! E__file) {
-        E__file = "/dev/stderr";
-    }
-}
 # {{{ error / debugging
-#
 #=# '${__pp_trace___+"$(cut -d\# -f3-<<<'
 #=# function \
 #=# TRACE(t) {
@@ -33320,6 +33315,11 @@ BEGIN {
     FS = "^$";
     CONVFMT = "%.17g";  # Workaround for older versions of mawk
     FIELDWIDTH="*";
+
+    E__message = "";
+    if (! E__file) {
+        E__file = "/dev/stderr";
+    }
 
     if (cli__init() < 0) {
         exit;
