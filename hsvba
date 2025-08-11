@@ -7315,12 +7315,12 @@ astore__enum_end(store,    _base, _arr) {
 # {{{ astore::pretty_print
 function \
 astore__pretty_print( \
-    store, key, rootname, indent, verbose, \
+    store, key, rootname, indent, \
     \
     _key \
 ) {
     if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-        __astore__pretty_print_custom(store, key, indent, verbose);
+        __astore__pretty_print_custom(store, key, indent, 1);
     } else if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
         printf "\"%s\":{", rootname;
         __astore__pretty_print_json(store, key);
