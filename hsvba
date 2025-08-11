@@ -33,18 +33,26 @@
 #    -p <switch1,switch2,...>
 #    --print=<switches>
 #        Specifies the types of content to be output, separated by commas.
-#            zip: content stored in Zip headers (default: off)
-#            cfb: content stored in Compound File Binary Format (default: off)
-#            dir: content stored in dir stream (default: off)
-#            prj: content stored in PROJECT stream (default: off)
-#            src: VBA cls/bas/frm module source files (default: on)
-#            frm: VBA Forms and controls (default: off)
-#            all: enables all of the above switch options (default: off)
-#            ids: content stored in _VBA_PROJECT stream (default: off, experimental)
-#            pcd: P-CODE section in VBA modules (default: off, experimental)
+#        zip: content stored in Zip headers (default: off)
+#        cfb: content stored in Compound File Binary Format (default: off)
+#        dir: content stored in dir stream (default: off)
+#        prj: content stored in PROJECT stream (default: off)
+#        src: VBA cls/bas/frm module source files (default: on)
+#        frm: VBA Forms and controls (default: off)
+#        all: enables all of the above switch options (default: off)
+#        ids: content stored in _VBA_PROJECT stream (default: off, experimental)
+#        pcd: P-CODE section in VBA modules (default: off, experimental)
+#
+#    -f <format>
+#    --format=<format>
+#        Specifies the output format. The formats are as follows:
+#            custom: An original format provided by the application that
+#                    represents type information. Not machine-readable.
+#            json: JSON format
+#
 #    -h
 #    --help
-#        Show help
+#        show help
 #
 #  This awk script can be interpreted as Bash or Awk.
 #  Some environment variables are available in bash mode.
@@ -32718,18 +32726,24 @@ cli__usage() {
           "\n" \
           "-p <switch1,switch2,...>\n" \
           "--print=<switches>\n" \
-          "    specify the types of content to be output, separated by commas.\n" \
-          "        zip: parameters stored in zip header (default: off)\n" \
-          "        oox: parameters stored in ooxml (default: off)\n" \
-          "        cfb: parameters stored in compound file binary format (default: off)\n" \
-          "        dir: parameters stored in dir stream (default: off)\n" \
-          "        prj: parameters stored in PROJECT stream (default: off)\n" \
-          "        src: VBA cls/bas module source files (default: on)\n" \
-          "        frm: VBA Form module(.frm) data (default: off)\n" \
-          "        all: turn on all the above switch option (default: off)\n" \
-          "        ids(experimental): _VBA_PROJECT stream\n" \
-          "        pcd(experimental): P-CODE section\n" \
-          "" \
+          "    Specifies the types of content to be output, separated by commas.\n" \
+          "    zip: content stored in Zip headers (default: off)\n" \
+          "    cfb: content stored in Compound File Binary Format (default: off)\n" \
+          "    dir: content stored in dir stream (default: off)\n" \
+          "    prj: content stored in PROJECT stream (default: off)\n" \
+          "    src: VBA cls/bas/frm module source files (default: on)\n" \
+          "    frm: VBA Forms and controls (default: off)\n" \
+          "    all: enables all of the above switch options (default: off)\n" \
+          "    ids: content stored in _VBA_PROJECT stream (default: off, experimental)\n" \
+          "    pcd: P-CODE section in VBA modules (default: off, experimental)\n" \
+          "\n" \
+          "-f <format>\n" \
+          "--format=<format>\n" \
+          "    Specifies the output format. The formats are as follows:\n" \
+          "        custom: An original format provided by the application that\n" \
+          "                represents type information. Not machine-readable.\n" \
+          "        json: JSON format\n" \
+          "\n" \
           "-h\n" \
           "--help\n" \
           "    show help\n" \
