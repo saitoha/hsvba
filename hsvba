@@ -2053,7 +2053,7 @@ stream__read_ansi_string( \
         #
         _oit = 0;
 
-        if (acp__S_codepage >= 1250 && acp__S_codepage <= 1258) {  # iso8859
+        if (acp__S_codepage >= 1250) {  # iso8859 or Mac
             while (_iit < _it_end) {
                 _c = stream[++_iit];
                 if (_c == 0) {
