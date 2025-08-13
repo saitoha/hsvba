@@ -310,22 +310,22 @@
 #    [MS-OVBA]
 #        Microsoft Corporation, Office VBA File Format Structure, v20240820
 #        (protocol revision 14.0)
-#        https://msopenspecs.microsoft.com/files/MS-OVBA/%5bMS-OVBA%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-OVBA/%5bMS-OVBA%5d.pdf
 #
 #    [MS-OFORMS]
 #        Microsoft Corporation, Office Forms Binary File Formats, v20240820
 #        (protocol revision 9.0)
-#        https://msopenspecs.microsoft.com/files/MS-OFORMS/%5bMS-OFORMS%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-OFORMS/%5bMS-OFORMS%5d.pdf
 #
 #    [MS-VBAL]
 #        Microsoft Corporation, VBA Language Specification, v20250218
 #        (protocol revision 2.3)
-#        https://msopenspecs.microsoft.com/files/MS-VBAL/%5bMS-VBAL%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-VBAL/%5bMS-VBAL%5d.pdf
 #
 #    [MS-OSHARED]
 #        Microsoft Corporation, Office Common Data Types and Objects Structures, v20240820
 #        (protocol revision 11.0)
-#        https://msopenspecs.microsoft.com/files/MS-OSHARED/%5bMS-OSHARED%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-OSHARED/%5bMS-OSHARED%5d.pdf
 #
 #    [MS-LCID]
 #        Microsoft Corporation, Windows Language Code Identifier (LCID) Reference, v20240423
@@ -345,17 +345,22 @@
 #    [MS-DOC]
 #        Microsoft Corporation, Word (.doc) Binary File Format
 #        (protocol revision 12.2)
-#        https://msopenspecs.microsoft.com/files/MS-DOC/%5bMS-DOC%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-DOC/%5bMS-DOC%5d.pdf
 #
 #    [MS-XLS]
 #        Microsoft Corporation, Excel Binary File Format (.xls) Structure, v20240820
 #        (protocol revision 12.0)
-#        https://msopenspecs.microsoft.com/files/MS-XLS/%5bMS-XLS%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-XLS/%5bMS-XLS%5d.pdf
 #
 #    [MS-XLSB]
 #        Microsoft Corporation, Excel (.xlsb) Binary File Format, v20250404
 #        (protocol revision 20.0)
-#        https://msopenspecs.microsoft.com/files/MS-XLSB/%5bMS-XLSB%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-XLSB/%5bMS-XLSB%5d.pdf
+#
+#    [MS-PPT]
+#        Microsoft Corporation, PowerPoint (.ppt) Binary File Format,
+#        (protocol revision 10.1)
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-XLS/%5bMS-XLS%5d.pdf
 #
 #    [MS-DTYP]
 #        Microsoft Corporation, Windows Data Types
@@ -365,12 +370,12 @@
 #    [MS-OFFMACRO]
 #        Microsoft Corporation, Office Macro-Enabled File Format Version, v20160914
 #        (protocol revision 1.5)
-#        https://msopenspecs.microsoft.com/files/MS-OFFMACRO/%5bMS-OFFMACRO%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-OFFMACRO/%5bMS-OFFMACRO%5d.pdf
 #
 #    [MS-OFFMACRO2]
 #        Microsoft Corporation, Office Macro-Enabled File Format Version 2, v20240820
 #        (protocol revision 8.0)
-#        https://msopenspecs.microsoft.com/files/MS-OFFMACRO2/%5bMS-OFFMACRO2%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-OFFMACRO2/%5bMS-OFFMACRO2%5d.pdf
 #
 #    [MS-OFFICEVBA]
 #        Microsoft Corporation, Office VBA Reference
