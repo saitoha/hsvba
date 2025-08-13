@@ -2246,7 +2246,7 @@ stream__read_ansi_string( \
         _o = str__binary_join(_result, 1, _iit - stream[__stream__M_iit]);
     }
 
-    stream[__stream__M_iit] = _iit;
+    stream[__stream__M_iit] = terminator ? _iit: _it_end;
     if (terminator) {
         return stream[__stream__M_line] = _o;
     }
