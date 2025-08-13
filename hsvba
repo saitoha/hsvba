@@ -25899,7 +25899,7 @@ vba__modulestream__unpack( \
     while (! astore__enum_end(_store)) {
         _entry_no = astore__enum_next(_store);
 
-        _stream_name = astore__get(_store, _entry_no "/StreamNameRecord/StreamName");
+        _stream_name = astore__get(_store, _entry_no "/StreamNameRecord/StreamNameUnicode");
         # offset for skipping performance cache (P-CODE)
         _offset = astore__get(_store, _entry_no "/OffsetRecord/TextOffset");
 
