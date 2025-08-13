@@ -24754,10 +24754,1266 @@ vba__projectstream__unpack_passwordhashdata_decodenulls( \
 }
 # }}}
 # }}}
+# {{{ @module vba::ppt::common
+# {{{ vba::ppt::common::init
+function \
+vba__ppt__common__init(    _status) {
+
+    if (__vba__ppt__common__init_guard) {
+        return (1);
+    }
+
+    __vba__ppt__common__E_NOTIMPL      = -16385;
+    __vba__ppt__common__E_FAIL         = -16389;
+    __vba__ppt__common__E_ACCESSDENIED = -458757;
+    __vba__ppt__common__E_UNEXPECTED   = -65535;
+    __vba__ppt__common__S_OK           = 0;
+    __vba__ppt__common__S_FALSE        = 1;
+
+    #
+    # atom declarations
+    #
+
+    # {{{
+    #
+    # RecordType (2 bytes)
+    #
+    # An enumeration that specifies the record type of an atom record or a
+    # container record.
+    #
+    # +---------------------------+--------+-----------------------------------+
+    # | Name                      |  Value | Meaning                           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Document               | 0x03E8 | Specifies a DocumentContainer.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DocumentAtom           | 0x03E9 | Specifies a DocumentAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_EndDocumentAtom        | 0x03EA | Specifies a EndDocumentAtom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Slide                  | 0x03EE | Specifies a SlideContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideAtom              | 0x03EF | Specifies a SlideAtom.            |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Notes                  | 0x03F0 | Specifies a NotesContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NotesAtom              | 0x03F1 | Specifies a NotesAtom.            |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Environment            | 0x03F2 | Specifies a                       |
+    # |                           |        | DocumentTextInfoContainer.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlidePersistAtom       | 0x03F3 | Specifies a MasterPersistAtom,    |
+    # |                           |        | SlidePersistAtom, or              |
+    # |                           |        | NotesPersistAtom.                 |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_MainMaster             | 0x03F8 | Specifies a MainMasterContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideShowSlideInfoAtom | 0x03F9 | Specifies a                       |
+    # |                           |        | SlideShowSlideInfoAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideViewInfo          | 0x03FA | Specifies a                       |
+    # |                           |        | SlideViewInfoContainer or         |
+    # |                           |        | NotesViewInfoContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_GuideAtom              | 0x03FB | Specifies a GuideAtom.            |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ViewInfoAtom           | 0x03FD | Specifies a ZoomViewInfoAtom or   |
+    # |                           |        | NoZoomViewInfoAtom.               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideViewInfoAtom      | 0x03FE | Specifies a SlideViewInfoAtom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_VbaInfo                | 0x03FF | Specifies a VBAInfoContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_VbaInfoAtom            | 0x0400 | Specifies a VBAInfoAtom.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideShowDocInfoAtom   | 0x0401 | Specifies a SlideShowDocInfoAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Summary                | 0x0402 | Specifies a SummaryContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DocRoutingSlipAtom     | 0x0406 | Specifies a DocRoutingSlipAtom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineViewInfo        | 0x0407 | Specifies an OutlineViewInfoCont- |
+    # |                           |        | ainer                             |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SorterViewInfo         | 0x0408 | Specifies a SorterViewInfoContai- |
+    # |                           |        | ner                               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalObjectList     | 0x0409 | Specifies an ExObjListContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalObjectListAtom | 0x040A | Specifies an ExObjListAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DrawingGroup           | 0x040B | Specifies a DrawingGroupContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Drawing                | 0x040C | Specifies a DrawingContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_GridSpacing10Atom      | 0x040D | Specifies a GridSpacing10Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripTheme12Atom   | 0x040E | Specifies a RoundTripThemeAtom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripColorMapping- | 0x040F | Specifies a RoundTripColorMappin- |
+    # | 12Atom                    |        | gAtom                             |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NamedShows             | 0x0410 | Specifies a NamedShowsContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NamedShow              | 0x0411 | Specifies a NamedShowContainer.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NamedShowSlidesAtom    | 0x0412 | Specifies a NamedShowSlidesAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NotesTextViewInfo9     | 0x0413 | Specifies a                       |
+    # |                           |        | NotesTextViewInfoContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NormalViewSetInfo9     | 0x0414 | Specifies a                       |
+    # |                           |        | NormalViewSetInfoContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_NormalViewSetInfo9Atom | 0x0415 | Specifies a NormalViewSetInfoAtom.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripOriginalMain- | 0x041C | Specifies a RoundTripOriginalMain-|
+    # | MasterId12Atom            |        | MasterId12Atom.                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripCompositeMas- | 0x041D | Specifies a                       |
+    # | terId12Atom               |        | RoundTripCompositeMasterId12Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripContentMaste- | 0x041E | Specifies a                       |
+    # | rInfo12Atom               |        | RoundTripContentMasterInfo12Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripShapeId12Atom | 0x041F | Specifies a                       |
+    # |                           |        | RoundTripShapeId12Atom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripHFPlaceholde- | 0x0420 | Specifies a                       |
+    # | r12Atom                   |        | RoundTripHFPlaceholder12Atom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripContentMaste- | 0x0422 | Specifies a                       |
+    # | rId12Atom                 |        | RoundTripContentMasterId12Atom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripOArtTextStyl- | 0x0423 | Specifies a                       |
+    # | es12Atom                  |        | RoundTripOArtTextStyles12Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripHeaderFooter- | 0x0424 | Specifies a RoundTripHeaderFooter-|
+    # | Defaults12Atom            |        | Defaults12Atom.                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripDocFlags12At- | 0x0425 | Specifies a                       |
+    # | om                        |        | RoundTripDocFlags12Atom.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripShapeCheckSu- | 0x0426 | Specifies a RoundTripShapeCheckSu-|
+    # | mForCL12Atom              |        | mForCustomLayouts12Atom.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripNotesMasterT- | 0x0427 | Specifies a RoundTripNotesMasterT-|
+    # | extStyles12Atom           |        | extStyles12Atom.                  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripCustomTableS- | 0x0428 | Specifies a                       |
+    # | tyles12Atom               |        | RoundTripCustomTableStyles12Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_List                   | 0x07D0 | Specifies a DocInfoListContainer. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FontCollection         | 0x07D5 | Specifies a                       |
+    # |                           |        | FontCollectionContainer.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FontCollection10       | 0x07D6 | Specifies a                       |
+    # |                           |        | FontCollection10Container.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BookmarkCollection     | 0x07E3 | Specifies a                       |
+    # |                           |        | BookmarkCollectionContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SoundCollection        | 0x07E4 | Specifies a                       |
+    # |                           |        | SoundCollectionContainer.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SoundCollectionAtom    | 0x07E5 | Specifies a SoundCollectionAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Sound                  | 0x07E6 | Specifies a SoundContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SoundDataBlob          | 0x07E7 | Specifies a SoundDataBlob.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BookmarkSeedAtom       | 0x07E9 | Specifies a BookmarkSeedAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ColorSchemeAtom        | 0x07F0 | Specifies a                       |
+    # |                           |        | SlideSchemeColorSchemeAtom or     |
+    # |                           |        | SchemeListElementColorSchemeAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BlipCollection9        | 0x07F8 | Specifies a                       |
+    # |                           |        | BlipCollection9Container.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BlipEntity9Atom        | 0x07F9 | Specifies a BlipEntityAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalObjectRefAtom  | 0x0BC1 | Specifies an ExObjRefAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_PlaceholderAtom        | 0x0BC3 | Specifies a PlaceholderAtom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ShapeAtom              | 0x0BDB | Specifies a ShapeFlagsAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ShapeFlags10Atom       | 0x0BDC | Specifies a ShapeFlags10Atom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripNewPlaceholde-| 0x0BDD | Specifies a                       |
+    # | rId12Atom                 |        | RoundTripNewPlaceholderId12Atom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineTextRefAtom     | 0x0F9E | Specifies an OutlineTextRefAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextHeaderAtom         | 0x0F9F | Specifies a TextHeaderAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextCharsAtom          | 0x0FA0 | Specifies a TextCharsAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_StyleTextPropAtom      | 0x0FA1 | Specifies a StyleTextPropAtom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_MasterTextPropAtom     | 0x0FA2 | Specifies a MasterTextPropAtom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextMasterStyleAtom    | 0x0FA3 | Specifies a TextMasterStyleAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextCharFormatExceptio-| 0x0FA4 | Specifies a TextCFExceptionAtom.  |
+    # | nAtom                     |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextParagraphFormatExc-| 0x0FA5 | Specifies a TextPFExceptionAtom.  |
+    # | eptionAtom                |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextRulerAtom          | 0x0FA6 | Specifies a TextRulerAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextBookmarkAtom       | 0x0FA7 | Specifies a TextBookmarkAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextBytesAtom          | 0x0FA8 | Specifies a TextBytesAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextSpecialInfoDefault-| 0x0FA9 | Specifies a TextSIExceptionAtom.  |
+    # | Atom                      |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextSpecialInfoAtom    | 0x0FAA | Specifies a TextSpecialInfoAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DefaultRulerAtom       | 0x0FAB | Specifies a DefaultRulerAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_StyleTextProp9Atom     | 0x0FAC | Specifies a StyleTextProp9Atom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextMasterStyle9Atom   | 0x0FAD | Specifies a TextMasterStyle9Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineTextProps9      | 0x0FAE | Specifies an                      |
+    # |                           |        | OutlineTextProps9Container.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineTextPropsHeader-| 0x0FAF | Specifies an                      |
+    # | 9Atom                     |        | OutlineTextPropsHeaderExAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextDefaults9Atom      | 0x0FB0 | Specifies a TextDefaults9Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_StyleTextProp10Atom    | 0x0FB1 | Specifies a StyleTextProp10Atom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextMasterStyle10Atom  | 0x0FB2 | Specifies a TextMasterStyle10Atom.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineTextProps10     | 0x0FB3 | Specifies an                      |
+    # |                           |        | OutlineTextProps10Container.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextDefaults10Atom     | 0x0FB4 | Specifies a TextDefaults10Atom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_OutlineTextProps11     | 0x0FB5 | Specifies an                      |
+    # |                           |        | OutlineTextProps11Container.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_StyleTextProp11Atom    | 0x0FB6 | Specifies a StyleTextProp11Atom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FontEntityAtom         | 0x0FB7 | Specifies a FontEntityAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FontEmbedDataBlob      | 0x0FB8 | Specifies a FontEmbedDataBlob.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_CString                | 0x0FBA | Specifies a KinsokuLeadingAtom,   |
+    # |                           |        | KinsokuFollowingAtom,             |
+    # |                           |        | NamedShowNameAtom,                |
+    # |                           |        | MacroNameAtom,                    |
+    # |                           |        | UncOrLocalPathAtom, MenuNameAtom, |
+    # |                           |        | ProgIDAtom, ClipboardNameAtom,    |
+    # |                           |        | FriendlyNameAtom,                 |
+    # |                           |        | TargetAtom, LocationAtom,         |
+    # |                           |        | ScreenTipAtom,                    |
+    # |                           |        | PP9ShapeBinaryTagExtension,       |
+    # |                           |        | PP10ShapeBinaryTagExtension,      |
+    # |                           |        | PP11ShapeBinaryTagExtension,      |
+    # |                           |        | SlideNameAtom, TemplateNameAtom,  |
+    # |                           |        | PP9SlideBinaryTagExtension,       |
+    # |                           |        | PP10SlideBinaryTagExtension,      |
+    # |                           |        | Comment10AuthorAtom,              |
+    # |                           |        | Comment10TextAtom,                |
+    # |                           |        | Comment10AuthorInitialAtom,       |
+    # |                           |        | PP12SlideBinaryTagExtension,      |
+    # |                           |        | SoundNameAtom,                    |
+    # |                           |        | PP9DocBinaryTagExtension,         |
+    # |                           |        | FileNameAtom, NamedShowAtom,      |
+    # |                           |        | BCTitleAtom, BCDescriptionAtom,   |
+    # |                           |        | BCSpeakerAtom, BCContactAtom,     |
+    # |                           |        | BCRexServerNameAtom,              |
+    # |                           |        | BCEmailAddressAtom,               |
+    # |                           |        | BCEmailNameAtom, BCChatUrlAtom,   |
+    # |                           |        | BCArchiveDirAtom,                 |
+    # |                           |        | BCNetShowFilesBaseDirAtom,        |
+    # |                           |        | BCNetShowFilesDirAtom,            |
+    # |                           |        | BCNetShowServerNameAtom,          |
+    # |                           |        | BCPptFilesBaseDirAtom,            |
+    # |                           |        | BCPptFilesDirAtom,                |
+    # |                           |        | BCPptFilesBaseUrlAtom,            |
+    # |                           |        | BCBroadcastDateTimeAtom,          |
+    # |                           |        | BCPresentationNameAtom,           |
+    # |                           |        | BCAsdFileNameAtom,                |
+    # |                           |        | BCEntryIDAtom,                    |
+    # |                           |        | PP10DocBinaryTagExtension,        |
+    # |                           |        | AuthorNameAtom, CopyrightAtom,    |
+    # |                           |        | KeywordsAtom, ModifyPasswordAtom, |
+    # |                           |        | ReviewerNameAtom,                 |
+    # |                           |        | PP11DocBinaryTagExtension,        |
+    # |                           |        | PP12DocBinaryTagExtension,        |
+    # |                           |        | UserDateAtom, HeaderAtom,         |
+    # |                           |        | FooterAtom, BookmarkValueAtom,    |
+    # |                           |        | TagNameAtom, TagValueAtom,        |
+    # |                           |        | SoundExtensionAtom, SoundIdAtom,  |
+    # |                           |        | SoundBuiltinIdAtom,               |
+    # |                           |        | BCUserNameAtom, ServerIdAtom, or  |
+    # |                           |        | SlideLibUrlAtom.                  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_MetaFile               | 0x0FC1 | Specifies a MetafileBlob.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleObjectAtom  | 0x0FC3 | Specifies an ExOleObjAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Kinsoku                | 0x0FC8 | Specifies a KinsokuContainer or   |
+    # |                           |        | Kinsoku9Container.                |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Handout                | 0x0FC9 | Specifies a HandoutContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleEmbed       | 0x0FCC | Specifies an ExOleEmbedContainer. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleEmbedAtom   | 0x0FCD | Specifies an ExOleEmbedAtom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleLink        | 0x0FCE | Specifies an ExOleLinkContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BookmarkEntityAtom     | 0x0FD0 | Specifies a BookmarkEntityAtom or |
+    # |                           |        | BookmarkEntityAtomContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleLinkAtom    | 0x0FD1 | Specifies a ExOleLinkAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_KinsokuAtom            | 0x0FD2 | Specifies a KinsokuAtom or        |
+    # |                           |        | Kinsoku9Atom.                     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalHyperlinkAtom  | 0x0FD3 | Specifies an ExHyperlinkAtom or   |
+    # |                           |        | ExHyperlinkRefAtom.               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalHyperlink      | 0x0FD7 | Specifies an ExHyperlinkContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideNumberMetaCharAto-| 0x0FD8 | Specifies a SlideNumberMCAtom.    |
+    # | m                         |        | ExHyperlinkRefAtom.               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HeadersFooters         | 0x0FD9 | Specifies a                       |
+    # |                           |        | SlideHeadersFootersContainer,     |
+    # |                           |        | NotesHeadersFootersContainer, or  |
+    # |                           |        | PerSlideHeadersFootersContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HeadersFootersAtom     | 0x0FDA | Specifies a HeadersFootersAtom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TextInteractiveInfoAto-| 0x0FDF | Specifies a                       |
+    # | m                         |        | MouseClickTextInteractiveInfoAtom |
+    # |                           |        | or MouseOverTextInteractiveInfoAt-|
+    # |                           |        | -om                               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalHyperlink9     | 0x0FE4 | Specifies an                      |
+    # |                           |        | ExHyperlink9Container.            |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RecolorInfoAtom        | 0x0FE7 | Specifies a RecolorInfoAtom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleControl     | 0x0FEE | Specifies an ExControlContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideListWithText      | 0x0FF0 | Specifies a                       |
+    # |                           |        | MasterListWithTextContainer,      |
+    # |                           |        | SlideListWithTextContainer, or    |
+    # |                           |        | NotesListWithTextContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_AnimationInfoAtom      | 0x0FF1 | Specifies an AnimationInfoAtom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_InteractiveInfo        | 0x0FF2 | Specifies a MouseClickInteractive-|
+    # |                           |        | InfoContainer, or                 |
+    # |                           |        | MouseOverInteractiveInfoContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_InteractiveInfoAtom    | 0x0FF3 | Specifies an InteractiveInfoAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_UserEditAtom           | 0x0FF5 | Specifies a UserEditAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_CurrentUserAtom        | 0x0FF6 | Specifies a CurrentUserAtom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DateTimeMetaCharAtom   | 0x0FF7 | Specifies a DateTimeMCAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_GenericDateMetaCharAto-| 0x0FF8 | Specifies a GenericDateMCAtom.    |
+    # | m                         |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HeaderMetaCharAtom     | 0x0FF9 | Specifies a HeaderMCAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FooterMetaCharAtom     | 0x0FFA | Specifies a FooterMCAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleControlAtom | 0x0FFB | Specifies an ExControlAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalMediaAtom      | 0x1004 | Specifies an ExMediaAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalVideo          | 0x1005 | Specifies an ExVideoContainer.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalAviMovie       | 0x1006 | Specifies an ExAviMovieContainer. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalMciMovie       | 0x1007 | Specifies an ExMCIMovieContainer. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalMidiAudio      | 0x100D | Specifies an ExMIDIAudioContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalCdAudio        | 0x100E | Specifies an ExCDAudioContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalWavAudioEmbedd-| 0x100F | Specifies an                      |
+    # | ed                        |        | ExWAVAudioEmbeddedContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalWavAudioLink   | 0x1010 | Specifies an                      |
+    # |                           |        | ExWAVAudioLinkContainer.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalOleObjectStg   | 0x1011 | Specifies an                      |
+    # |                           |        | ExOleObjStgCompressedAtom,        |
+    # |                           |        | ExOleObjStgUncompressedAtom,      |
+    # |                           |        | VbaProjectStgCompressedAtom,      |
+    # |                           |        | VbaProjectStgUncompressedAtom,    |
+    # |                           |        | ExControlStgUncompressedAtom, or  |
+    # |                           |        | ExControlStgCompressedAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalCdAudioAtom    | 0x1012 | Specifies an ExCDAudioAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalWavAudioEmbedd-| 0x1013 | Specifies an                      |
+    # | edAtom                    |        | ExWAVAudioEmbeddedAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_AnimationInfo          | 0x1014 | Specifies an                      |
+    # |                           |        | AnimationInfoContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RtfDateTimeMetaCharAto-| 0x1015 | Specifies a RTFDateTimeMCAtom.    |
+    # | m                         |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ExternalHyperlinkFlags-| 0x1018 | Specifies an ExHyperlinkFlagsAtom.|
+    # | Atom                      |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ProgTags               | 0x1388 | Specifies a                       |
+    # |                           |        | SlideProgTagsContainer,           |
+    # |                           |        | DocProgTagsContainer, or          |
+    # |                           |        | ShapeProgTagsContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ProgStringTag          | 0x1389 | Specifies a                       |
+    # |                           |        | ProgStringTagContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ProgBinaryTag          | 0x138A | Specifies a                       |
+    # |                           |        | SlideProgBinaryTagContainer,      |
+    # |                           |        | DocProgBinaryTagContainer, or     |
+    # |                           |        | ShapeProgBinaryTagContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BinaryTagDataBlob      | 0x138B | Specifies a                       |
+    # |                           |        | PP9ShapeBinaryTagExtension,       |
+    # |                           |        | PP10ShapeBinaryTagExtension,      |
+    # |                           |        | PP11ShapeBinaryTagExtension,      |
+    # |                           |        | PP9DocBinaryTagExtension,         |
+    # |                           |        | PP10DocBinaryTagExtension,        |
+    # |                           |        | PP11DocBinaryTagExtension,        |
+    # |                           |        | PP12DocBinaryTagExtension,        |
+    # |                           |        | PP9SlideBinaryTagExtension,       |
+    # |                           |        | PP10SlideBinaryTagExtension,      |
+    # |                           |        | PP12SlideBinaryTagExtension, or   |
+    # |                           |        | BinaryTagDataBlob.                |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_PrintOptionsAtom       | 0x1770 | Specifies a PrintOptionsAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_PersistDirectoryAtom   | 0x1772 | Specifies a PersistDirectoryAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_PresentationAdvisorFla-| 0x177A | Specifies a PresAdvisorFlags9Atom.|
+    # | gs9Atom                   |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HtmlDocInfo9Atom       | 0x177B | Specifies an HTMLDocInfo9Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HtmlPublishInfoAtom    | 0x177C | Specifies an HTMLPublishInfoAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HtmlPublishInfo9       | 0x177D | Specifies an                      |
+    # |                           |        | HTMLPublishInfo9Container.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BroadcastDocInfo9      | 0x177E | Specifies a                       |
+    # |                           |        | BroadcastDocInfo9Container.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BroadcastDocInfo9Atom  | 0x177F | Specifies a BroadcastDocInfoAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BroadcastDocInfo9Atom  | 0x177F | Specifies a BroadcastDocInfoAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_EnvelopeFlags9Atom     | 0x1784 | Specifies an EnvelopeFlags9Atom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_EnvelopeData9Atom      | 0x1785 | Specifies an EnvelopeData9Atom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_VisualShapeAtom        | 0x2AFB | Specifies a VisualSoundAtom,      |
+    # |                           |        | VisualShapeChartElementAtom, or   |
+    # |                           |        | VisualShapeGeneralAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_HashCodeAtom           | 0x2B00 | Specifies a HashCode10Atom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_VisualPageAtom         | 0x2B01 | Specifies a VisualPageAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BuildList              | 0x2B02 | Specifies a BuildListContainer.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_BuildAtom              | 0x2B03 | Specifies a BuildAtom.            |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ChartBuild             | 0x2B04 | Specifies a ChartBuildContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ChartBuildAtom         | 0x2B05 | Specifies a ChartBuildAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DiagramBuild           | 0x2B06 | Specifies a DiagramBuildContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DiagramBuildAtom       | 0x2B07 | Specifies a DiagramBuildAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ParaBuild              | 0x2B08 | Specifies a ParaBuildContainer.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_ParaBuildAtom          | 0x2B09 | Specifies a ParaBuildAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_LevelInfoAtom          | 0x2B0A | Specifies a LevelInfoAtom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripAnimationAtom-| 0x2B0B | Specifies a                       |
+    # | 12Atom                    |        | RoundTripAnimationAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripAnimationHash-| 0x2B0D | Specifies a                       |
+    # | Atom12Atom                |        | RoundTripAnimationHashAtom.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Comment10              | 0x2EE0 | Specifies a Comment10Container.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Comment10Atom          | 0x2EE1 | Specifies a Comment10Atom.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_CommentIndex10         | 0x2EE4 | Specifies a                       |
+    # |                           |        | CommentIndex10Container.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_CommentIndex10Atom     | 0x2EE5 | Specifies a CommentIndex10Atom.   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_LinkedShape10Atom      | 0x2EE6 | Specifies a LinkedShape10Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_LinkedSlide10Atom      | 0x2EE7 | Specifies a LinkedSlide10Atom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideFlags10Atom       | 0x2EEA | Specifies a SlideFlags10Atom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideTime10Atom        | 0x2EEB | Specifies a SlideTime10Atom.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DiffTree10             | 0x2EEC | Specifies a DiffTree10Container.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Diff10                 | 0x2EED | Specifies a DocDiff10Container,   |
+    # |                           |        | HeaderFooterDiffContainer,        |
+    # |                           |        | NamedShowListDiffContainer,       |
+    # |                           |        | NamedShowDiffContainer,           |
+    # |                           |        | SlideListDiffContainer,           |
+    # |                           |        | MasterListDiffContainer,          |
+    # |                           |        | MainMasterDiffContainer,          |
+    # |                           |        | SlideDiffContainer,               |
+    # |                           |        | ShapeListDiffContainer,           |
+    # |                           |        | ShapeDiffContainer,               |
+    # |                           |        | TextDiffContainer,                |
+    # |                           |        | RecolorInfoDiffContainer,         |
+    # |                           |        | ExternalObjectDiffContainer,      |
+    # |                           |        | InteractiveInfoDiffContainer,     |
+    # |                           |        | TableDiffContainer,               |
+    # |                           |        | SlideShowDiffContainer,           |
+    # |                           |        | NotesDiffContainer, or            |
+    # |                           |        | TableListDiffContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_Diff10Atom             | 0x2EEE | Specifies a DocDiff10Container,   |
+    # |                           |        | HeaderFooterDiffContainer,        |
+    # |                           |        | NamedShowListDiffContainer,       |
+    # |                           |        | NamedShowDiffContainer,           |
+    # |                           |        | SlideListDiffContainer,           |
+    # |                           |        | MasterListDiffContainer,          |
+    # |                           |        | MainMasterDiffContainer,          |
+    # |                           |        | SlideDiffContainer,               |
+    # |                           |        | ShapeListDiffContainer,           |
+    # |                           |        | ShapeDiffContainer,               |
+    # |                           |        | TextDiffContainer,                |
+    # |                           |        | RecolorInfoDiffContainer,         |
+    # |                           |        | ExternalObjectDiffContainer,      |
+    # |                           |        | InteractiveInfoDiffContainer,     |
+    # |                           |        | TableDiffContainer,               |
+    # |                           |        | SlideShowDiffContainer,           |
+    # |                           |        | NotesDiffContainer, or            |
+    # |                           |        | TableListDiffContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideListTableSize10At-| 0x2EEF | Specifies a                       |
+    # | om                        |        | SlideListTableSize10Atom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideListEntry10Atom   | 0x2EF0 | Specifies a SlideListEntry10Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SlideListTable10       | 0x2EF1 | Specifies a                       |
+    # |                           |        | SlideListTable10Container.        |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_CryptSession10Container| 0x2F14 | Specifies a                       |
+    # |                           |        | CryptSession10Container.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FontEmbedFlags10Atom   | 0x32C8 | Specifies a FontEmbedFlags10Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_FilterPrivacyFlags10At-| 0x36B0 | Specifies a                       |
+    # | om                        |        | FilterPrivacyFlags10Atom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_DocToolbarStates10Atom | 0x36B1 | Specifies a                       |
+    # |                           |        | DocToolbarStates10Atom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_PhotoAlbumInfo10Atom   | 0x36B2 | Specifies a PhotoAlbumInfo10Atom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_SmartTagStore11Contain-| 0x36B3 | Specifies a                       |
+    # | er                        |        | SmartTagStore11Container.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripSlideSyncInfo | 0x3714 | Specifies a                       |
+    # | 12                        |        | RoundTripSlideSyncInfo12Container.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_RoundTripSlideSyncInfo-| 0x3715 | Specifies a SlideSyncInfoAtom12.  |
+    # | Atom12                    |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeConditionContainer | 0xF125 | Specifies a                       |
+    # |                           |        | TimeConditionContainer.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeNode               | 0xF127 | Specifies a TimeNodeAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeCondition          | 0xF128 | Specifies a TimeConditionAtom.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeModifier           | 0xF129 | Specifies a TimeModifierAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeBehaviorContainer  | 0xF12A | Specifies a TimeBehaviorContainer.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeAnimateBehaviorCon-| 0xF12B | Specifies a                       |
+    # | tainer                    |        | TimeAnimateBehaviorContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeColorBehaviorConta-| 0xF12C | Specifies a                       |
+    # | iner                      |        | TimeColorBehaviorContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeEffectBehaviorCont-| 0xF12D | Specifies a                       |
+    # | ainer                     |        | TimeEffectBehaviorContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeMotionBehaviorCont-| 0xF12E | Specifies a                       |
+    # | ainer                     |        | TimeMotionBehaviorContainer.      |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeRotationBehaviorCo-| 0xF12F | Specifies a                       |
+    # | ntainer                   |        | TimeRotationBehaviorContainer.    |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeScaleBehaviorConta-| 0xF130 | Specifies a                       |
+    # | iner                      |        | TimeScaleBehaviorContainer.       |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeSetBehaviorContain-| 0xF131 | Specifies a                       |
+    # | er                        |        | TimeSetBehaviorContainer.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeCommandBehaviorCon-| 0xF132 | Specifies a                       |
+    # | tainer                    |        | TimeCommandBehaviorContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeBehavior           | 0xF133 | Specifies a TimeBehaviorAtom.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeAnimateBehavior    | 0xF134 | Specifies a                       |
+    # |                           |        | TimeAnimateBehaviorAtom..         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeColorBehavior      | 0xF135 | Specifies a TimeColorBehaviorAtom.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeEffectBehavior     | 0xF136 | Specifies a                       |
+    # |                           |        | TimeEffectBehaviorAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeMotionBehavior     | 0xF137 | Specifies a                       |
+    # |                           |        | TimeMotionBehaviorAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeRotationBehavior   | 0xF138 | Specifies a                       |
+    # |                           |        | TimeRotationBehaviorAtom.         |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeScaleBehavior      | 0xF139 | Specifies a TimeScaleBehaviorAtom.|
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeSetBehavior        | 0xF13A | Specifies a TimeSetBehaviorAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeCommandBehavior    | 0xF13B | Specifies a                       |
+    # |                           |        | TimeCommandBehaviorAtom.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeClientVisualElement| 0xF13C | Specifies a                       |
+    # |                           |        | ClientVisualElementContainer.     |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimePropertyList       | 0xF13D | Specifies a                       |
+    # |                           |        | TimePropertyList4TimeNodeContainer|
+    # |                           |        | or TimePropertyList4TimeBehavior. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeVariantList        | 0xF13E | Specifies a                       |
+    # |                           |        | TimeStringListContainer.          |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeAnimationValueList | 0xF13F | Specifies a                       |
+    # |                           |        | TimeAnimationValueListContainer.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeIterateData        | 0xF140 | Specifies a TimeIterateDataAtom.  |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeSequenceData       | 0xF141 | Specifies a TimeSequenceDataAtom. |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeVariant            | 0xF142 | Specifies a TimeVariantBool,      |
+    # |                           |        | TimeVariantInt, TimeVariantFloat, |
+    # |                           |        | TimeVariantString,                |
+    # |                           |        | TimeDisplayType,                  |
+    # |                           |        | TimeMasterRelType, TimeSubType,   |
+    # |                           |        | TimeEffectID, TimeEffectType,     |
+    # |                           |        | TimeNodeTimeFilter,               |
+    # |                           |        | TimeEventFilter, TimeGroupID,     |
+    # |                           |        | TimeEffectNodeType,               |
+    # |                           |        | TimeColorModel,                   |
+    # |                           |        | TimeColorDirection,               |
+    # |                           |        | TimeOverride, TimeRuntimeContext, |
+    # |                           |        | or TimePointsTypes.               |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeAnimationValue     | 0xF143 | Specifies a                       |
+    # |                           |        | TimeAnimationValueAtom.           |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeExtTimeNodeContain-| 0xF144 | Specifies an ExtTimeNodeContainer.|
+    # | er                        |        |                                   |
+    # +---------------------------+--------+-----------------------------------+
+    # | RT_TimeSubEffectContainer | 0xF145 | Specifies a SubEffectContainer.
+    # +---------------------------+--------+-----------------------------------+
+    #
+    _status = atom__declare("" \
+    "atom RecordType: uint16 {                              " \
+    "    map: {                                             " \
+    "       1000: `RT_Document`                             " \
+    "       1001: `RT_DocumentAtom`                         " \
+    "       1002: `RT_EndDocumentAtom`                      " \
+    "       1006: `RT_Slide`                                " \
+    "       1007: `RT_SlideAtom`                            " \
+    "       1008: `RT_Notes`                                " \
+    "       1009: `RT_NotesAtom`                            " \
+    "       1010: `RT_Environment`                          " \
+    "       1011: `RT_SlidePersistAtom`                     " \
+    "       1016: `RT_MainMaster`                           " \
+    "       1017: `RT_SlideShowSlideInfoAtom`               " \
+    "       1018: `RT_SlideViewInfo`                        " \
+    "       1019: `RT_GuideAtom`                            " \
+    "       1021: `RT_ViewInfoAtom`                         " \
+    "       1022: `RT_SlideViewInfoAtom`                    " \
+    "       1023: `RT_VbaInfo`                              " \
+    "       1024: `RT_VbaInfoAtom`                          " \
+    "       1025: `RT_SlideShowDocInfoAtom`                 " \
+    "       1026: `RT_Summary`                              " \
+    "       1030: `RT_DocRoutingSlipAtom`                   " \
+    "       1031: `RT_OutlineViewInfo`                      " \
+    "       1032: `RT_SorterViewInfo`                       " \
+    "       1033: `RT_ExternalObjectList`                   " \
+    "       1034: `RT_ExternalObjectListAtom`               " \
+    "       1035: `RT_DrawingGroup`                         " \
+    "       1036: `RT_Drawing`                              " \
+    "       1037: `RT_GridSpacing10Atom`                    " \
+    "       1038: `RT_RoundTripTheme12Atom`                 " \
+    "       1039: `RT_RoundTripColorMapping12Atom`          " \
+    "       1040: `RT_NamedShows`                           " \
+    "       1041: `RT_NamedShow`                            " \
+    "       1042: `RT_NamedShowSlidesAtom`                  " \
+    "       1043: `RT_NotesTextViewInfo9`                   " \
+    "       1044: `RT_NormalViewSetInfo9`                   " \
+    "       1045: `RT_NormalViewSetInfo9Atom`               " \
+    "       1052: `RT_RoundTripOriginalMainMasterId12Atom`  " \
+    "       1053: `RT_RoundTripCompositeMasterId12Atom`     " \
+    "       1054: `RT_RoundTripContentMasterInfo12Atom`     " \
+    "       1055: `RT_RoundTripShapeId12Atom`               " \
+    "       1056: `RT_RoundTripHFPlaceholder12Atom`         " \
+    "       1058: `RT_RoundTripContentMasterId12Atom`       " \
+    "       1059: `RT_RoundTripOArtTextStyles12Atom`        " \
+    "       1060: `RT_RoundTripHeaderFooterDefaults12Atom`  " \
+    "       1061: `RT_RoundTripDocFlags12Atom`              " \
+    "       1062: `RT_RoundTripShapeCheckSumForCL12Atom`    " \
+    "       1063: `RT_RoundTripNotesMasterTextStyles12Atom` " \
+    "       1064: `RT_RoundTripCustomTableStyles12Atom`     " \
+    "       2000: `RT_List`                                 " \
+    "       2005: `RT_FontCollection`                       " \
+    "       2006: `RT_FontCollection10`                     " \
+    "       2019: `RT_BookmarkCollection`                   " \
+    "       2020: `RT_SoundCollection`                      " \
+    "       2021: `RT_SoundCollectionAtom`                  " \
+    "       2022: `RT_Sound`                                " \
+    "       2023: `RT_SoundDataBlob`                        " \
+    "       2025: `RT_BookmarkSeedAtom`                     " \
+    "       2032: `RT_ColorSchemeAtom`                      " \
+    "       2040: `RT_BlipCollection9`                      " \
+    "       2041: `RT_BlipEntity9Atom`                      " \
+    "       3009: `RT_ExternalObjectRefAtom`                " \
+    "       3011: `RT_PlaceholderAtom`                      " \
+    "       3035: `RT_ShapeAtom`                            " \
+    "       3036: `RT_ShapeFlags10Atom`                     " \
+    "       3037: `RT_RoundTripNewPlaceholderId12Atom`      " \
+    "       3998: `RT_OutlineTextRefAtom`                   " \
+    "       3999: `RT_TextHeaderAtom`                       " \
+    "       4000: `RT_TextCharsAtom`                        " \
+    "       4001: `RT_StyleTextPropAtom`                    " \
+    "       4002: `RT_MasterTextPropAtom`                   " \
+    "       4003: `RT_TextMasterStyleAtom`                  " \
+    "       4004: `RT_TextCharFormatExceptionAtom`          " \
+    "       4005: `RT_TextParagraphFormatExceptionAtom`     " \
+    "       4006: `RT_TextRulerAtom`                        " \
+    "       4007: `RT_TextBookmarkAtom`                     " \
+    "       4008: `RT_TextBytesAtom`                        " \
+    "       4009: `RT_TextSpecialInfoDefaultAtom`           " \
+    "       4010: `RT_TextSpecialInfoAtom`                  " \
+    "       4011: `RT_DefaultRulerAtom`                     " \
+    "       4012: `RT_StyleTextProp9Atom`                   " \
+    "       4013: `RT_TextMasterStyle9Atom`                 " \
+    "       4014: `RT_OutlineTextProps9`                    " \
+    "       4015: `RT_OutlineTextPropsHeader9Atom`          " \
+    "       4016: `RT_TextDefaults9Atom`                    " \
+    "       4017: `RT_StyleTextProp10Atom`                  " \
+    "       4018: `RT_TextMasterStyle10Atom`                " \
+    "       4019: `RT_OutlineTextProps10`                   " \
+    "       4020: `RT_TextDefaults10Atom`                   " \
+    "       4021: `RT_OutlineTextProps11`                   " \
+    "       4022: `RT_StyleTextProp11Atom`                  " \
+    "       4023: `RT_FontEntityAtom`                       " \
+    "       4024: `RT_FontEmbedDataBlob`                    " \
+    "       4026: `RT_CString`                              " \
+    "       4033: `RT_MetaFile`                             " \
+    "       4035: `RT_ExternalOleObjectAtom`                " \
+    "       4040: `RT_Kinsoku`                              " \
+    "       4041: `RT_Handout`                              " \
+    "       4044: `RT_ExternalOleEmbed`                     " \
+    "       4045: `RT_ExternalOleEmbedAtom`                 " \
+    "       4046: `RT_ExternalOleLink`                      " \
+    "       4048: `RT_BookmarkEntityAtom`                   " \
+    "       4049: `RT_ExternalOleLinkAtom`                  " \
+    "       4050: `RT_KinsokuAtom`                          " \
+    "       4051: `RT_ExternalHyperlinkAtom`                " \
+    "       4055: `RT_ExternalHyperlink`                    " \
+    "       4056: `RT_SlideNumberMetaCharAtom`              " \
+    "       4057: `RT_HeadersFooters`                       " \
+    "       4058: `RT_HeadersFootersAtom`                   " \
+    "       4063: `RT_TextInteractiveInfoAtom`              " \
+    "       4068: `RT_ExternalHyperlink9`                   " \
+    "       4071: `RT_RecolorInfoAtom`                      " \
+    "       4078: `RT_ExternalOleControl`                   " \
+    "       4080: `RT_SlideListWithText`                    " \
+    "       4081: `RT_AnimationInfoAtom`                    " \
+    "       4082: `RT_InteractiveInfo`                      " \
+    "       4083: `RT_InteractiveInfoAtom`                  " \
+    "       4085: `RT_UserEditAtom`                         " \
+    "       4086: `RT_CurrentUserAtom`                      " \
+    "       4087: `RT_DateTimeMetaCharAtom`                 " \
+    "       4088: `RT_GenericDateMetaCharAtom`              " \
+    "       4089: `RT_HeaderMetaCharAtom`                   " \
+    "       4090: `RT_FooterMetaCharAtom`                   " \
+    "       4091: `RT_ExternalOleControlAtom`               " \
+    "       4100: `RT_ExternalMediaAtom`                    " \
+    "       4101: `RT_ExternalVideo`                        " \
+    "       4102: `RT_ExternalAviMovie`                     " \
+    "       4103: `RT_ExternalMciMovie`                     " \
+    "       4109: `RT_ExternalMidiAudio`                    " \
+    "       4110: `RT_ExternalCdAudio`                      " \
+    "       4111: `RT_ExternalWavAudioEmbedded`             " \
+    "       4112: `RT_ExternalWavAudioLink`                 " \
+    "       4113: `RT_ExternalOleObjectStg`                 " \
+    "       4114: `RT_ExternalCdAudioAtom`                  " \
+    "       4115: `RT_ExternalWavAudioEmbeddedAtom`         " \
+    "       4116: `RT_AnimationInfo`                        " \
+    "       4117: `RT_RtfDateTimeMetaCharAtom`              " \
+    "       4120: `RT_ExternalHyperlinkFlagsAtom`           " \
+    "       5000: `RT_ProgTags`                             " \
+    "       5001: `RT_ProgStringTag`                        " \
+    "       5002: `RT_ProgBinaryTag`                        " \
+    "       5003: `RT_BinaryTagDataBlob`                    " \
+    "       6000: `RT_PrintOptionsAtom`                     " \
+    "       6002: `RT_PersistDirectoryAtom`                 " \
+    "       6010: `RT_PresentationAdvisorFlags9Atom`        " \
+    "       6011: `RT_HtmlDocInfo9Atom`                     " \
+    "       6012: `RT_HtmlPublishInfoAtom`                  " \
+    "       6013: `RT_HtmlPublishInfo9`                     " \
+    "       6014: `RT_BroadcastDocInfo9`                    " \
+    "       6015: `RT_BroadcastDocInfo9Atom`                " \
+    "       6020: `RT_EnvelopeFlags9Atom`                   " \
+    "       6021: `RT_EnvelopeData9Atom`                    " \
+    "      11003: `RT_VisualShapeAtom`                      " \
+    "      11008: `RT_HashCodeAtom`                         " \
+    "      11009: `RT_VisualPageAtom`                       " \
+    "      11010: `RT_BuildList`                            " \
+    "      11011: `RT_BuildAtom`                            " \
+    "      11012: `RT_ChartBuild`                           " \
+    "      11013: `RT_ChartBuildAtom`                       " \
+    "      11014: `RT_DiagramBuild`                         " \
+    "      11015: `RT_DiagramBuildAtom`                     " \
+    "      11016: `RT_ParaBuild`                            " \
+    "      11017: `RT_ParaBuildAtom`                        " \
+    "      11018: `RT_LevelInfoAtom`                        " \
+    "      11019: `RT_RoundTripAnimationAtom12Atom`         " \
+    "      11021: `RT_RoundTripAnimationHashAtom12Atom`     " \
+    "      12000: `RT_Comment10`                            " \
+    "      12001: `RT_Comment10Atom`                        " \
+    "      12004: `RT_CommentIndex10`                       " \
+    "      12005: `RT_CommentIndex10Atom`                   " \
+    "      12006: `RT_LinkedShape10Atom`                    " \
+    "      12007: `RT_LinkedSlide10Atom`                    " \
+    "      12010: `RT_SlideFlags10Atom`                     " \
+    "      12011: `RT_SlideTime10Atom`                      " \
+    "      12012: `RT_DiffTree10`                           " \
+    "      12013: `RT_Diff10`                               " \
+    "      12014: `RT_Diff10Atom`                           " \
+    "      12015: `RT_SlideListTableSize10Atom`             " \
+    "      12016: `RT_SlideListEntry10Atom`                 " \
+    "      12017: `RT_SlideListTable10`                     " \
+    "      12052: `RT_CryptSession10Container`              " \
+    "      13000: `RT_FontEmbedFlags10Atom`                 " \
+    "      14000: `RT_FilterPrivacyFlags10Atom`             " \
+    "      14001: `RT_DocToolbarStates10Atom`               " \
+    "      14002: `RT_PhotoAlbumInfo10Atom`                 " \
+    "      14003: `RT_SmartTagStore11Container`             " \
+    "      14100: `RT_RoundTripSlideSyncInfo12`             " \
+    "      14101: `RT_RoundTripSlideSyncInfoAtom12`         " \
+    "      61733: `RT_TimeConditionContainer`               " \
+    "      61735: `RT_TimeNode`                             " \
+    "      61736: `RT_TimeCondition`                        " \
+    "      61737: `RT_TimeModifier`                         " \
+    "      61738: `RT_TimeBehaviorContainer`                " \
+    "      61739: `RT_TimeAnimateBehaviorContainer`         " \
+    "      61740: `RT_TimeColorBehaviorContainer`           " \
+    "      61741: `RT_TimeEffectBehaviorContainer`          " \
+    "      61742: `RT_TimeMotionBehaviorContainer`          " \
+    "      61743: `RT_TimeRotationBehaviorContainer`        " \
+    "      61744: `RT_TimeScaleBehaviorContainer`           " \
+    "      61745: `RT_TimeSetBehaviorContainer`             " \
+    "      61746: `RT_TimeCommandBehaviorContainer`         " \
+    "      61747: `RT_TimeBehavior`                         " \
+    "      61748: `RT_TimeAnimateBehavior`                  " \
+    "      61749: `RT_TimeColorBehavior`                    " \
+    "      61750: `RT_TimeEffectBehavior`                   " \
+    "      61751: `RT_TimeMotionBehavior`                   " \
+    "      61752: `RT_TimeRotationBehavior`                 " \
+    "      61753: `RT_TimeScaleBehavior`                    " \
+    "      61754: `RT_TimeSetBehavior`                      " \
+    "      61755: `RT_TimeCommandBehavior`                  " \
+    "      61756: `RT_TimeClientVisualElement`              " \
+    "      61757: `RT_TimePropertyList`                     " \
+    "      61758: `RT_TimeVariantList`                      " \
+    "      61759: `RT_TimeAnimationValueList`               " \
+    "      61760: `RT_TimeIterateData`                      " \
+    "      61761: `RT_TimeSequenceData`                     " \
+    "      61762: `RT_TimeVariant`                          " \
+    "      61763: `RT_TimeAnimationValue`                   " \
+    "      61764: `RT_TimeExtTimeNodeContainer`             " \
+    "      61765: `RT_TimeSubEffectContainer`               " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-PPT] 2.3.2 CurrentUserAtom
+    #
+    # headerToken (4 bytes)
+    # An unsigned integer that specifies a token used to identify whether the
+    # file is encrypted. It MUST be a value from the following table.
+    # +------------+---------------------------------------------------+
+    # | Value      | Meaning                                           |
+    # +------------+---------------------------------------------------+
+    # | 0xE391C05F | The file SHOULD NOT be an encrypted document.     |
+    # +------------+---------------------------------------------------+
+    # | 0xF3D1C4DF | The file MUST be an encrypted document.           |
+    # +------------+---------------------------------------------------+
+    #
+    _status = atom__declare("" \
+    "atom HeaderToken: uint32 {                             " \
+    "    map: {                                             " \
+    "        3817979999: `HT_SHOULD_NOT_BE_ENCRYPTED`       " \
+    "        4090610911: `HT_MUST_BE_ENCRYPTED`             " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-PPT] 2.3.2 CurrentUserAtom
+    #
+    # relVersion (4 bytes): An unsigned integer that specifies the release
+    # version of the file format. It MUST be a value from the following table.
+    # +------------+---------------------------------------------------+
+    # | Value      | Meaning                                           |
+    # +------------+---------------------------------------------------+
+    # | 0x00000008 | The file contains one or more main master slide.  |
+    # +------------+---------------------------------------------------+
+    # | 0x00000009 | The file contains more than one main master slide.|
+    # |            | It SHOULD NOT be used.                            |
+    # +------------+---------------------------------------------------+
+    # }}}
+    _status = atom__declare("" \
+    "atom RelVersion: uint32 {                              " \
+    "    map: {                                             " \
+    "        8: `RV_ONE_OR_MORE`                            " \
+    "        9: `RV_MORE_THAN_ONE`                          " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+
+
+    __vba__ppt__common__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ vba::ppt::common::recordheader
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.3.2 RecordHeader
+# A structure at the beginning of each container record and each atom record
+# in the file. The values in the record header and the context of the record
+# are used to identify and interpret the record data that follows.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |recVer |      recInstance      |           recType             |
+# +-------+-----------------------+-------------------------------+
+# |                            recLen                             |
+# +---------------------------------------------------------------+
+#
+# recVer (4 bits)
+# An unsigned integer that specifies the version of the record data that
+# follows the record header. A value of 0xF specifies that the record is a
+# container record.
+#
+# recInstance (12 bits)
+# An unsigned integer that specifies the record instance data. Interpretation of
+# the value is dependent on the particular record type.
+#
+# recType (2 bytes)
+# A RecordType enumeration (section 2.13.24) that specifies the type of the
+# record data that follows the record header.
+#
+# recLen (4 bytes)
+# An unsigned integer that specifies the length, in bytes, of
+# the record data that follows the record header.
+#
+# '}'
+function \
+vba__ppt__common__unpack_recordheader( \
+    stream, store, exp_ver, exp_instance, exp_recordtype, \
+    \
+    _v \
+) {
+    _v = stream__read_bits(stream, 4);
+    if (astore__set(store, "recVer::bits<4>,mustbe(%)", _v, exp_ver) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_bits(stream, 12);
+    if (astore__set(store, "recInstance::bits<12>,mustbe(%)", _v, exp_instance) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "recType::RecordType", _v, exp_recordtype) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "recLen::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__currentuserstream__S_OK;
+}
+# }}}
+# }}}
+# {{{ @module vba::ppt::currentuserstream
+# analysis functions for "Current User" stream
+# {{{ vba::ppt::currentuserstream::init
+function \
+vba__ppt__currentuserstream__init(    _status) {
+
+    if (__vba__ppt__currentuserstream__init_guard) {
+        return (1);
+    }
+
+    _status = cfb__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    _status = vba__ppt__common__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    __vba__ppt__currentuserstream__E_NOTIMPL      = -16385;
+    __vba__ppt__currentuserstream__E_FAIL         = -16389;
+    __vba__ppt__currentuserstream__E_ACCESSDENIED = -458757;
+    __vba__ppt__currentuserstream__E_UNEXPECTED   = -65535;
+    __vba__ppt__currentuserstream__S_OK           = 0;
+    __vba__ppt__currentuserstream__S_FALSE        = 1;
+
+    __vba__ppt__currentuserstream__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ vba::ppt::currentuserstream::unpack
+function \
+vba__ppt__currentuserstream__unpack( \
+    stream, store, \
+    \
+    _r, _stream, _path, _store \
+) {
+    _path = "/Root Entry/Current User";
+
+    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    if (_r < 0) {
+        return _r;
+    }
+
+    astore__fork(store, "CurrentUserAtom", _store);
+    _r = __vba__ppt__currentuserstream__unpack_currentuseratom(_stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    return vba__projectstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::currentuserstream::unpack_currentuseratom
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.3.2 CurrentUserAtom
+# An atom record that specifies information about the last user to
+# modify the file and where the most recent user edit is located.
+# This is the only record in the Current User Stream (section 2.1.1).
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                             size                              |
+# +---------------------------------------------------------------+
+# |                          headerToken                          |
+# +---------------------------------------------------------------+
+# |                      offsetToCurrentEdit                      |
+# +-------------------------------+-------------------------------+
+# |          lenUserName          |        docFileVersion         |
+# +---------------+---------------+-------------------------------+
+# | majorVersion  | minorVersion  |             unused            |
+# +---------------+---------------+-------------------------------+
+# |                    ansiUserName (variable)                    |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                          relVersion                           |
+# +---------------------------------------------------------------+
+# |                   unicodeUserName (variable)                  |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+__vba__ppt__currentuserstream__unpack_currentuseratom( \
+    stream, store, \
+    \
+    _r, _v, _size, _store \
+) {
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        0, 0, "RT_CurrentUserAtom");
+    if (_r < 0) {
+        return _r;
+    }
+
+    # size(4 bytes)
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "size::uint32,mustbe(20)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    # headerToken(4 bytes)
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "headerToken::HeaderToken," \
+                           "a_kind_of(HeaderToken)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # offsetToCurrentEdit (4 bytes)
+    #
+    # An unsigned integer that specifies an offset, in bytes, from the
+    # beginning of the PowerPoint Document Stream (section 2.1.2) to the
+    # UserEditAtom record (section 2.3.3) for the most recent user edit.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "offsetToCurrentEdit::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # lenUserName (2 bytes)
+    #
+    # An unsigned integer that specifies the length, in bytes, of the
+    # ansiUserName field. It MUST be less than or equal to 255.
+    _v = _size = stream__read_uint16(stream);
+    if (astore__set(store, "lenUserName::uint16,le(255)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # docFileVersion (2 bytes)
+    #
+    # An unsigned integer that specifies the document file version of the
+    # file. It MUST be 0x03F4.
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "docFileVersion::uint16,mustbe(1012)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # majorVersion (1 byte)
+    #
+    # An unsigned integer that specifies the major version of the storage
+    # format.  It MUST be 0x03.
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "majorVersion::uint8,mustbe(3)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # minorVersion (1 byte)
+    #
+    # An unsigned integer that specifies the minor version of the storage
+    # format. It MUST be 0x00.
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "minorVersion::uint8,mustbe(0)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # unused (2 bytes)
+    #
+    # Undefined and MUST be ignored.
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "unused", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # ansiUserName (variable)
+    #
+    # A PrintableAnsiString (section 2.2.22) that specifies the user name of
+    # the last user to modify the file. The length, in bytes, of the field is
+    # specified by the lenUserName field.
+    #
+    # [MS-PPT] 2.2.22 PrintableAnsiString
+    #
+    # Referenced by: CurrentUserAtom, DocRoutingSlipString
+    # An array of bytes that specifies an ANSI string. It MUST NOT contain the
+    # following characters:
+    #     0x00 - 0x1F
+    #     0x7F - 0x9F
+    # The ANSI NULL character (0x00), if present, terminates the string.
+    #
+    __acp__build_map_1252_to_u8char();  # set charset to latin1
+    _v = stream__read_ansi_string(stream, _size);
+    if (astore__set(store, "ansiUserName", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "relVersion::RelVersion," \
+                           "mustbe(8:RV_ONE_OR_MORE)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # unicodeUserName (variable)
+    #
+    # An optional PrintableUnicodeString (section 2.2.23) that specifies the
+    # user name of the last user to modify the file. The length, in bytes, of
+    # the field is specified by 2 * lenUserName. This user name supersedes
+    # that specified by the ansiUserName field. It MAY be omitted.
+    #
+    if (stream__available_size(stream) >= _size * 2) {
+        _v = stream__read_ansi_string(stream, _size * 2);
+        if (astore__set(store, "unicodeUserName", _v) < 0) {
+            return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        }
+    }
+
+    return __vba__ppt__currentuserstream__S_OK;
+}
+# }}}
+# }}}  # vba::ppt::currentuserstream
 # {{{ @module vba::vbaprojectstream
 # analysis functions for _VBA_PROJECT stream
-#
-#
 function \
 vba__vbaprojectstream__init(    _status) {
 
@@ -32740,10 +33996,11 @@ cli__init(    _i, _status, _buf) {
     OPT_PRINT_DIR    = 16;
     OPT_PRINT_SRC    = 32;
     OPT_PRINT_FRM    = 64;
-    OPT_PRINT_ALL    = 127;
+    OPT_PRINT_USR    = 128;
+    OPT_PRINT_ALL    = 1023;
     # experimental flags
-    OPT_PRINT_IDS    = 128;
-    OPT_PRINT_PCD    = 256;
+    OPT_PRINT_IDS    = 1024;
+    OPT_PRINT_PCD    = 2048;
 
     __cli__S_opt_print = OPT_PRINT_SRC;
 
@@ -32956,6 +34213,8 @@ hsvba__cli_optparse( \
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_IDS);
                 } else if (_subopt == "pcd") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PCD);
+                } else if (_subopt == "usr") {
+                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_USR);
                 } else if (_subopt == "all") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ALL);
                 } else {
@@ -33175,13 +34434,27 @@ cli__process_vbaproject_binary( \
     # detect VBA root directory
     _r = __cli__detect_vbaroot(stream, _store);
     if (_r < 0) {
-        return _r;
-    }
-
-    astore__new(_store, "/VBA");
-    _r = vba__dirstream__unpack(stream, _store);
-    if (_r < 0) {
-        return _r;
+        # may be PowerPoint(*.ppt) or Visio(*.vsd)
+        if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
+            E__message = "";
+            astore__new(_store, "/Current User");
+            _r = vba__ppt__currentuserstream__init();
+            if (_r < 0) {
+                return _r;
+            }
+            _r = vba__ppt__currentuserstream__unpack(stream, _store);
+            if (_r < 0) {
+                return _r;
+            }
+        } else {
+            return _r;
+        }
+    } else {
+        astore__new(_store, "/VBA");
+        _r = vba__dirstream__unpack(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
     }
 
     if (num__and(__cli__S_opt_print, OPT_PRINT_IDS + OPT_PRINT_PCD)) {
@@ -33240,6 +34513,15 @@ cli__process_vbaproject_binary( \
                   " dir stream information\n" \
                   "-------------------------------------------------------------------------------\n";
             astore__pretty_print(_store, "/VBA");
+        }
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " Current User stream information\n" \
+                  "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/Current User");
         }
     }
 
