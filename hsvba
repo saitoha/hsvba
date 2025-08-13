@@ -416,11 +416,12 @@
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
 #
 # The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
-true && echo -n "$( \
+true && echo "$( \
 : $'\042\047'; \
-: ${AWK:=$(which mawk gawk goawk awk bioawk wak 2>/dev/null | head -n1)}; \
+: ${AWK:=$(which mawk gawk wak goawk bioawk awk 2>/dev/null | head -n1)}; \
+test x${AWK##*/} = xwak && AWKOPT=${AWKOPT}' -b'; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042; \
+LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042 2>/tmp/hsvba.log; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -433,15 +434,15 @@ eval $(eval echo $( \
     tr \\n  ,                                                          | \
     xargs printf __pp_trace__'{'${HSVBA_TRACE_TOPIC//[^a-z0-9_,]},'}'_'{%s,}'=1\\n \
 ) | tr ' ' \\n); \
-if [[ ${AWK} =~ gawk ]]; then \
+if test x${AWK##*/} = xgawk; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
   __pp_feat__has_native_bitwise_shift_functions=1; \
   __pp_feat__has_native_strftime=1; \
-elif [[ ${AWK} =~ bioawk ]]; then \
+elif test x${AWK} = xbioawk; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
-  exec ${AWK} ${AWKOPT} -- \042${@}\042; \
+  exec ${AWK} ${AWKOPT} -- \042${@}\042 2>/tmp/hsvba.log; \
 }'; \
 LANG=C __rt_exec ' # ";
 # }}}
@@ -33467,12 +33468,6 @@ __cli__detect_vbaroot( \
 }
 # }}}
 # }}}
-# '${__pp_ut_modules:+"$(cut -d\# -f3-<<<'
-#=# BEGIN {
-#=#     '"$(for f in ${__pp_ut_modules}; do echo "${f}__ut() > E__file;"; done)"'
-#=#     exit;
-#=# }
-# ')"}'
 # {{{ entry point
 BEGIN {
     RS = "^$";       # multicharacter value of RS is a gawk extension
@@ -33486,16 +33481,23 @@ BEGIN {
         E__file = "/dev/stderr";
     }
 
+# '${__pp_ut_modules:+"$(cut -d\# -f3-<<<'
+#=#     '"$(for f in ${__pp_ut_modules}; do echo "${f}__ut() > E__file;"; done)"'
+#=#     exit;
+# ')"}'
+
     if (cli__init() < 0) {
-        exit;
+        exit(1);
     }
     if (cli__main() < 0) {
-        exit;
+        exit(1);
     }
 }
 END {
     if (E__message) {
         printf "[error] %s\n", E__message > E__file;
+        fflush();
+        close(E__file);
     }
     fflush();
 }
@@ -33507,7 +33509,7 @@ hsvba__commit_signatures(signed) {
     # Add your signature here.
 }
 # do not erase the following line.
-# '           "$@"       )"$'\n'
+# '           "$@"       )" && cat /tmp/hsvba.log >&2; ! test -s /tmp/hsvba.log;
 # ^           ^          ^
 # |           |          |
 # |           |          the end paren of command substitution.
