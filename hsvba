@@ -32927,7 +32927,12 @@ hsvba__cli_optparse( \
                 _optarg = _arg;
                 sub(/^\-p|^\-\-print=/, "", _optarg);
             }
-            split(_optarg, _opts, ",");
+            if (split(_optarg, _opts, ",") < 1) {
+                E__message = \
+                    "No argument was specified " \
+                    "for the -p, --print option.";
+                return cli__E_FAIL;
+            }
 
             __cli__S_opt_print = OPT_PRINT_NULL;
 
@@ -32953,6 +32958,12 @@ hsvba__cli_optparse( \
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PCD);
                 } else if (_subopt == "all") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ALL);
+                } else {
+                    E__message = sprintf( \
+                        "Unknown argument \"%s\" specified " \
+                        "for the -p, --print option.", \
+                        _optarg);
+                    return cli__E_FAIL;
                 }
             }
         } else if (_arg ~ /^\-[[:alnum:]]*a|^\-\-archive$/) {
