@@ -652,7 +652,7 @@ function num__reverse_bits(n, w,    _p, _q, _r) {
 function \
 str__init(    _c, _i) {
 
-    if (__c__init_guard) {
+    if (__str__init_guard) {
         return (1);
     }
 
@@ -848,7 +848,7 @@ str__init(    _c, _i) {
         }
     }
 
-    __c__init_guard = 1;
+    __str__init_guard = 1;
 
     return (0);
 }
@@ -856,11 +856,11 @@ str__init(    _c, _i) {
 # {{{ __pp_ut____binary_join
 # '${__pp_ut__:+"$(__pp_ut__ <<< '
 function \
-__pp_ut____binary_join(ut) {
-    ! split("abcdefghijklmn", arr, "");
-    - str__binary_join(arr, 3, 40) == "cdefghijklmn";
-    - str__binary_join(arr, 2, 8) == "bcdefgh";
-    - str__binary_join(arr, 4, 3) == "";
+__pp_ut____binary_join(ut, _arr) {
+    ! split("abcdefghijklmn", _arr, "");
+    - str__binary_join(_arr, 3, 40) == "cdefghijklmn";
+    - str__binary_join(_arr, 2, 8) == "bcdefgh";
+    - str__binary_join(_arr, 4, 3) == "";
 }
 # ')"}'
 # }}}
@@ -25896,10 +25896,10 @@ vba__modulestream__unpack( \
         pcode__init();
     }
 
-    _vbaroot = astore__get(store, "/@VBA Root Directory");
-    _vba = astore__get(store, "/@VBA Directory");
+    _vbaroot = astore__get(_store, "/@VBA Root Directory");
+    _vba = astore__get(_store, "/@VBA Directory");
 
-    _syskind = astore__get(store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
+    _syskind = astore__get(_store, "/VBA/Project/InformationRecord/SysKindRecord/SysKind");
 
     while (! astore__enum_end(_store)) {
         _entry_no = astore__enum_next(_store);
@@ -32861,15 +32861,15 @@ cli__usage() {
           "-p <switch1,switch2,...>\n" \
           "--print=<switches>\n" \
           "    Specifies the types of content to be output, separated by commas.\n" \
-          "    zip: content stored in Zip headers (default: off)\n" \
-          "    cfb: content stored in Compound File Binary Format (default: off)\n" \
-          "    dir: content stored in dir stream (default: off)\n" \
-          "    prj: content stored in PROJECT stream (default: off)\n" \
-          "    src: VBA cls/bas/frm module source files (default: on)\n" \
-          "    frm: VBA Forms and controls (default: off)\n" \
-          "    all: enables all of the above switch options (default: off)\n" \
-          "    ids: content stored in _VBA_PROJECT stream (default: off, experimental)\n" \
-          "    pcd: P-CODE section in VBA modules (default: off, experimental)\n" \
+          "        zip: content stored in Zip headers (default: off)\n" \
+          "        cfb: content stored in Compound File Binary Format (default: off)\n" \
+          "        dir: content stored in dir stream (default: off)\n" \
+          "        prj: content stored in PROJECT stream (default: off)\n" \
+          "        src: VBA cls/bas/frm module source files (default: on)\n" \
+          "        frm: VBA Forms and controls (default: off)\n" \
+          "        all: enables all of the above switch options (default: off)\n" \
+          "        ids: content stored in _VBA_PROJECT stream (default: off, experimental)\n" \
+          "        pcd: P-CODE section in VBA modules (default: off, experimental)\n" \
           "\n" \
           "-f <format>\n" \
           "--format=<format>\n" \
@@ -33130,7 +33130,7 @@ cli__process_stream( \
         }
     }
 
-    _vbapath = astore__get(store, "/ooxml/@VBA Path");
+    _vbapath = astore__get(_store, "/ooxml/@VBA Path");
 
     astore__new(_store, "/Zip");
     _status = zip__unpack_file(stream, _store, _vbapath, _stream);
@@ -33165,7 +33165,7 @@ cli__process_vbaproject_binary( \
     }
 
     # detect VBA root directory
-    _r = __cli__detect_vbaroot(stream, store);
+    _r = __cli__detect_vbaroot(stream, _store);
     if (_r < 0) {
         return _r;
     }
