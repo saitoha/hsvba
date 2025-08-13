@@ -24779,7 +24779,7 @@ vba__ppt__common__init(    _status) {
     # atom declarations
     #
 
-    # {{{
+    # {{{ vba::ppt::common::recordtype
     #
     # RecordType (2 bytes)
     #
@@ -25676,57 +25676,6 @@ vba__ppt__common__init(    _status) {
         return _status;
     }
 
-    # [MS-PPT] 2.3.2 CurrentUserAtom
-    #
-    # headerToken (4 bytes)
-    # An unsigned integer that specifies a token used to identify whether the
-    # file is encrypted. It MUST be a value from the following table.
-    # +------------+---------------------------------------------------+
-    # | Value      | Meaning                                           |
-    # +------------+---------------------------------------------------+
-    # | 0xE391C05F | The file SHOULD NOT be an encrypted document.     |
-    # +------------+---------------------------------------------------+
-    # | 0xF3D1C4DF | The file MUST be an encrypted document.           |
-    # +------------+---------------------------------------------------+
-    #
-    _status = atom__declare("" \
-    "atom HeaderToken: uint32 {                             " \
-    "    map: {                                             " \
-    "        3817979999: `HT_SHOULD_NOT_BE_ENCRYPTED`       " \
-    "        4090610911: `HT_MUST_BE_ENCRYPTED`             " \
-    "    }                                                  " \
-    "}                                                      " \
-    "");
-    if (_status < 0) {
-        return _status;
-    }
-
-    # [MS-PPT] 2.3.2 CurrentUserAtom
-    #
-    # relVersion (4 bytes): An unsigned integer that specifies the release
-    # version of the file format. It MUST be a value from the following table.
-    # +------------+---------------------------------------------------+
-    # | Value      | Meaning                                           |
-    # +------------+---------------------------------------------------+
-    # | 0x00000008 | The file contains one or more main master slide.  |
-    # +------------+---------------------------------------------------+
-    # | 0x00000009 | The file contains more than one main master slide.|
-    # |            | It SHOULD NOT be used.                            |
-    # +------------+---------------------------------------------------+
-    # }}}
-    _status = atom__declare("" \
-    "atom RelVersion: uint32 {                              " \
-    "    map: {                                             " \
-    "        8: `RV_ONE_OR_MORE`                            " \
-    "        9: `RV_MORE_THAN_ONE`                          " \
-    "    }                                                  " \
-    "}                                                      " \
-    "");
-    if (_status < 0) {
-        return _status;
-    }
-
-
     __vba__ppt__common__init_guard = 1;
 
     return (0);
@@ -25769,7 +25718,7 @@ vba__ppt__common__init(    _status) {
 # '}'
 function \
 vba__ppt__common__unpack_recordheader( \
-    stream, store, exp_ver, exp_instance, exp_recordtype, \
+    stream, store, exp_ver, exp_instance, exp_rectype, validator_reclen, \
     \
     _v \
 ) {
@@ -25779,22 +25728,24 @@ vba__ppt__common__unpack_recordheader( \
     }
 
     _v = stream__read_bits(stream, 12);
-    if (astore__set(store, "recInstance::bits<12>,mustbe(%)", _v, exp_instance) < 0) {
+    if (astore__set(store, "recInstance::bits<12>,mustbe(%)",
+                    _v, exp_instance) < 0) {
         return __vba__ppt__currentuserstream__E_UNEXPECTED;
     }
 
     _v = stream__read_uint16(stream);
-    if (astore__set(store, "recType::RecordType", _v, exp_recordtype) < 0) {
+    if (astore__set(store, "recType::RecordType,mustbe(%)", _v, exp_rectype) < 0) {
         return __vba__ppt__currentuserstream__E_UNEXPECTED;
     }
 
     _v = stream__read_uint32(stream);
-    if (astore__set(store, "recLen::uint32", _v) < 0) {
+    if (astore__set(store, "recLen::uint32" validator_reclen, _v) < 0) {
         return __vba__ppt__currentuserstream__E_UNEXPECTED;
     }
 
     return __vba__ppt__currentuserstream__S_OK;
 }
+# }}}
 # }}}
 # }}}
 # {{{ @module vba::ppt::currentuserstream
@@ -25823,6 +25774,55 @@ vba__ppt__currentuserstream__init(    _status) {
     __vba__ppt__currentuserstream__E_UNEXPECTED   = -65535;
     __vba__ppt__currentuserstream__S_OK           = 0;
     __vba__ppt__currentuserstream__S_FALSE        = 1;
+
+    # [MS-PPT] 2.3.2 CurrentUserAtom
+    #
+    # headerToken (4 bytes)
+    # An unsigned integer that specifies a token used to identify whether the
+    # file is encrypted. It MUST be a value from the following table.
+    # +------------+---------------------------------------------------+
+    # | Value      | Meaning                                           |
+    # +------------+---------------------------------------------------+
+    # | 0xE391C05F | The file SHOULD NOT be an encrypted document.     |
+    # +------------+---------------------------------------------------+
+    # | 0xF3D1C4DF | The file MUST be an encrypted document.           |
+    # +------------+---------------------------------------------------+
+    #
+    _status = atom__declare("" \
+    "atom HeaderToken: uint32 {                             " \
+    "    map: {                                             " \
+    "        3817979999: `HT_SHOULD_NOT_BE_ENCRYPTED`       " \
+    "        4090610911: `HT_MUST_BE_ENCRYPTED`             " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-PPT] 2.3.2 CurrentUserAtom
+    #
+    # relVersion (4 bytes): An unsigned integer that specifies the release
+    # version of the file format. It MUST be a value from the following table.
+    # +------------+---------------------------------------------------+
+    # | Value      | Meaning                                           |
+    # +------------+---------------------------------------------------+
+    # | 0x00000008 | The file contains one or more main master slide.  |
+    # +------------+---------------------------------------------------+
+    # | 0x00000009 | The file contains more than one main master slide.|
+    # |            | It SHOULD NOT be used.                            |
+    # +------------+---------------------------------------------------+
+    _status = atom__declare("" \
+    "atom RelVersion: uint32 {                              " \
+    "    map: {                                             " \
+    "        8: `RV_ONE_OR_MORE`                            " \
+    "        9: `RV_MORE_THAN_ONE`                          " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
 
     __vba__ppt__currentuserstream__init_guard = 1;
 
@@ -25856,6 +25856,7 @@ vba__ppt__currentuserstream__unpack( \
 # '${__pp_comment:+'
 #
 # [MS-PPT] 2.3.2 CurrentUserAtom
+#
 # An atom record that specifies information about the last user to
 # modify the file and where the most recent user edit is located.
 # This is the only record in the Current User Stream (section 2.1.1).
@@ -25900,7 +25901,7 @@ __vba__ppt__currentuserstream__unpack_currentuseratom( \
     astore__fork(store, "rh::RecordHeader", _store);
     _r = vba__ppt__common__unpack_recordheader( \
         stream, _store, \
-        0, 0, "RT_CurrentUserAtom");
+        0, 0, "4086:RT_CurrentUserAtom");
     if (_r < 0) {
         return _r;
     }
@@ -26017,6 +26018,285 @@ __vba__ppt__currentuserstream__unpack_currentuseratom( \
 }
 # }}}
 # }}}  # vba::ppt::currentuserstream
+# {{{ @module vba::ppt::powerpointdocumentstream
+# analysis functions for "PowerPoint Document" stream
+# {{{ vba::ppt::powerpointdocumentstream::init
+function \
+vba__ppt__powerpointdocumentstream__init(    _status) {
+
+    if (__vba__ppt__powerpointdocumentstream__init_guard) {
+        return (1);
+    }
+
+    _status = cfb__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    _status = vba__ppt__common__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    __vba__ppt__powerpointdocumentstream__E_NOTIMPL      = -16385;
+    __vba__ppt__powerpointdocumentstream__E_FAIL         = -16389;
+    __vba__ppt__powerpointdocumentstream__E_ACCESSDENIED = -458757;
+    __vba__ppt__powerpointdocumentstream__E_UNEXPECTED   = -65535;
+    __vba__ppt__powerpointdocumentstream__S_OK           = 0;
+    __vba__ppt__powerpointdocumentstream__S_FALSE        = 1;
+
+    __vba__ppt__powerpointdocumentstream__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ vba::ppt::powerpointdocumentstream::unpack
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.1.2 PowerPoint Document Stream
+#
+# A required stream whose name MUST be "PowerPoint Document".
+# Let a top-level record be specified as any one of the following:
+# DocumentContainer (section 2.4.1), MasterOrSlideContainer (section 2.5.5),
+# HandoutContainer (section 2.5.8), SlideContainer (section 2.5.1),
+# NotesContainer (section 2.5.6), ExOleObjStg (section 2.10.34),
+# ExControlStg (section 2.10.37), VbaProjectStg (section 2.10.40),
+# PersistDirectoryAtom (section 2.3.4), or UserEditAtom (section 2.3.3) record.
+#
+# The contents of this stream are specified by a sequence of top-level
+# records. Partial ordering restrictions on the record sequence are specified
+# in the PersistDirectoryAtom and UserEditAtom records.
+#
+# As container records, the DocumentContainer,
+# MainMasterContainer (section 2.5.3), HandoutContainer (section 2.5.8),
+# SlideContainer (section 2.5.1), and NotesContainer (section 2.5.6) records
+# are each the root of a tree of container records and atom records. Inside any
+# container record, other records can exist that are not explicitly listed as
+# child records. Unknown records are identified when the recType field of the
+# RecordHeader structure (section 2.3.1) contains a value not specified by the
+# RecordType enumeration (section 2.13.24). These unknown records, if
+# encountered, MUST be ignored, and MAY<1> be preserved. Unknown records can be
+# ignored by seeking forward recLen bytes from the end of the RecordHeader
+# structure.
+#
+# Each time this stream is written, new top-level records, a user edit, can be
+# appended to the existing stream, or the entire stream contents can be
+# replaced with an updated sequence of top-level records.
+#
+# If the entire stream is not replaced, any previously existing top-level
+# records that comprised any previous user edit, can be made obsolete by the
+# subsequently appended top-level records that comprise the current user edit.
+#
+# Let a live record be specified as any top-level record in this stream,
+# identified by the following process:
+#
+# Part 1: Construct the persist object directory.
+#
+#   1. Read the CurrentUserAtom record (section 2.3.2) from the Current User
+#      Stream (section 2.1.1). All seek operations in the steps that follow
+#      this step are in the PowerPoint Document Stream.
+#
+#   2. Seek, in the PowerPoint Document Stream, to the offset specified by the
+#      offsetToCurrentEdit field of the CurrentUserAtom record identified in
+#      step 1.
+#
+#   3. Read the UserEditAtom record at the current offset. Let this record be
+#      a live record.
+#
+# '}'
+function \
+vba__ppt__powerpointdocumentstream__unpack( \
+    stream, store, \
+    \
+    _r, _stream, _path, _store, _pos \
+) {
+    _path = "/Root Entry/PowerPoint Document";
+
+    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    if (_r < 0) {
+        return _r;
+    }
+
+    _pos = astore__get(_store, "/Current User/CurrentUserAtom/offsetToCurrentEdit");
+    stream__iseek(_stream, _pos);
+
+    astore__fork(store, "UserEditAtom", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_usereditatom(_stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    return vba__projectstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_usereditatom
+#
+# [MS-PPT] 2.3.3 UserEditAtom
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                        lastSlideIdRef                         |
+# +-------------------------------+-------------------------------+
+# |            version            | minorVersion  | majorVersion  |
+# +-------------------------------+---------------+---------------+
+# |                         offsetLastEdit                        |
+# +---------------------------------------------------------------+
+# |                     offsetPersistDirectory                    |
+# +---------------------------------------------------------------+
+# |                        docPersistIdRef                        |
+# +---------------------------------------------------------------+
+# |                         persistIdSeed                         |
+# +-------------------------------+-------------------------------+
+# |           lastView            |             unused            |
+# +-------------------------------+-------------------------------+
+# |              encryptSessionPersistIdRef (optional)            |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
+    stream, store, \
+    \
+    _r, _v, _size, _store \
+) {
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        0, 0, "4085:RT_UserEditAtom", ",one_of(28,32)");
+    if (_r < 0) {
+        return _r;
+    }
+    #
+    # lastSlideIdRef (4 bytes)
+    #
+    # A SlideIdRef (section 2.2.25) that specifies the last slide viewed, if
+    # this is the last UserEditAtom record in the PowerPoint Document Stream
+    # (section 2.1.2). In all other cases the value of this field is undefined
+    # and MUST be ignored
+    #
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "lastSlideIdRef::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # version (16 bits)
+    #
+    # An unsigned integer that specifies a build version of
+    # the executable that wrote the file. It SHOULD be 0x0000 and MUST be
+    # ignored.
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "version::uint16", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # minorVersion (8 bits)
+    #
+    # An unsigned integer that specifies the minor version of the storage
+    # format. It MUST be 0x00.
+    #
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "minorVersion::uint8,mustbe(0)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # majorVersion (8 bits)
+    #
+    # An unsigned integer that specifies the major version of the storage
+    # format. It MUST be 0x03.
+    #
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "majorVersion::uint8,mustbe(3)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # offsetLastEdit (4 bytes)
+    #
+    # An unsigned integer that specifies an offset, in bytes, from the
+    # beginning of the PowerPoint Document Stream to a UserEditAtom record
+    # for the previous user edit. It MUST be less than the offset, in bytes,
+    # of this UserEditAtom record. The value 0x00000000 specifies that no
+    # previous user edit exists.
+    #
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "offsetLastEdit::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # offsetPersistDirectory (4 bytes)
+    #
+    # An unsigned integer that specifies an offset, in bytes, from the
+    # beginning of the PowerPoint Document Stream to the PersistDirectoryAtom
+    # record (section 2.3.4) for this user edit. It MUST be greater than
+    # offsetLastEdit and less than the offset, in bytes, of this UserEditAtom
+    # record.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "offsetPersistDirectory::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # docPersistIdRef (4 bytes)
+    #
+    # A PersistIdRef (section 2.2.21) that specifies the value to look up in
+    # the persist object directory to find the offset of the DocumentContainer
+    # record (section 2.4.1). It MUST be 0x00000001.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "docPersistIdRef::uint32,mustbe(1)", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # persistIdSeed (4 bytes)
+    #
+    # An unsigned integer that specifies a seed for creating a new persist
+    # object identifier. It MUST be greater than or equal to all persist
+    # object identifiers in the file as specified by the PersistDirectoryAtom
+    # records.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "persistIdSeed::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # lastView (2 bytes)
+    #
+    # A ViewTypeEnum enumeration (section 2.13.42) that specifies the last view
+    # used to display the file.
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "lastView::uint16", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    #
+    # unused (2 bytes)
+    #
+    # Undefined and MUST be ignored.
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "unused", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+
+    if (stream__available_size(stream) <= 0) {
+        return __vba__ppt__powerpointdocumentstream__S_OK;
+    }
+    #
+    # encryptSessionPersistIdRef (4 bytes)
+    #
+    # An optional PersistIdRef that specifies the value to look up in the
+    # persist object directory to find the offset of the
+    # CryptSession10Container record (section 2.3.7). It MAY be omitted.
+    # It MUST exist if the document is an encrypted document.
+    #
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "encryptSessionPersistIdRef::uint32", _v) < 0) {
+        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    }
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# }}}  # vba::ppt::powerpointdocumentstream
 # {{{ @module vba::vbaprojectstream
 # analysis functions for _VBA_PROJECT stream
 function \
@@ -34002,6 +34282,7 @@ cli__init(    _i, _status, _buf) {
     OPT_PRINT_SRC    = 32;
     OPT_PRINT_FRM    = 64;
     OPT_PRINT_USR    = 128;
+    OPT_PRINT_PPT    = 256;
     OPT_PRINT_ALL    = 1023;
     # experimental flags
     OPT_PRINT_IDS    = 1024;
@@ -34220,6 +34501,8 @@ hsvba__cli_optparse( \
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PCD);
                 } else if (_subopt == "usr") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_USR);
+                } else if (_subopt == "ppt") {
+                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PPT);
                 } else if (_subopt == "all") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ALL);
                 } else {
@@ -34451,6 +34734,15 @@ cli__process_vbaproject_binary( \
             if (_r < 0) {
                 return _r;
             }
+            astore__new(_store, "/PowerPoint Document");
+            _r = vba__ppt__powerpointdocumentstream__init();
+            if (_r < 0) {
+                return _r;
+            }
+            _r = vba__ppt__powerpointdocumentstream__unpack(stream, _store);
+            if (_r < 0) {
+                return _r;
+            }
         } else {
             return _r;
         }
@@ -34527,6 +34819,15 @@ cli__process_vbaproject_binary( \
                   " Current User stream information\n" \
                   "-------------------------------------------------------------------------------\n";
             astore__pretty_print(_store, "/Current User");
+        }
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_PPT)) {
+        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+            print "-------------------------------------------------------------------------------\n" \
+                  " PowerPoint Document stream information\n" \
+                  "-------------------------------------------------------------------------------\n";
+            astore__pretty_print(_store, "/PowerPoint Document");
         }
     }
 
