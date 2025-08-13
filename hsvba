@@ -1163,12 +1163,10 @@ __stream__class_init() {
 # {{{ stream::new
 function \
 stream__new(stream, forecast_size) {
-    if (forecast_size && __feat__has_cy_split_array) {
-        # mawk`s CY_SPLIT optimization
+    if (forecast_size) {
         split( \
             substr($0, 1, forecast_size + __stream__C_header_offset), \
-            stream, \
-            "");
+            stream, "");
     }
     stream[__stream__M_iit]   = __stream__C_header_offset;
     stream[__stream__M_oit]   = __stream__C_header_offset;
@@ -1186,17 +1184,14 @@ stream__new_from_string( \
     _i, _size \
 ) {
     # strategic branching:
-    # using mawk`s CY_SPLIT optimization
-    if (__feat__has_cy_split_array) {
-        split("000000" str, stream, "");
-        # '${__pp_comment:+'
-        # Avoid using length(array), whose behavior is undefined under POSIX.
-        # In some non-modern AWK systems, strlen is called at this point,
-        # which is an O(n) operation.
-        # '}'
-        # _size = length(stream);
-        _size = length(str) + __stream__C_header_offset;
-        stream[__stream__M_iit] = __stream__C_header_offset;
+    if (__feat__has_split_in_bytes) {
+        # Optimization for mawk:
+        _size = split("000000" str, stream, "");
+        # Perform a destructive change to convert AY_SPLIT to AY_INT in one
+        # step. This turns out to be faster than inserting elements into
+        # AY_INT sequentially, which would trigger multiple memory
+        # reallocations and rehash operations.
+        stream[__stream__M_iit] = __stream__C_header_offset;  # AY_SPLIT -> AY_INT
         stream[__stream__M_oit] = _size;
         for (_i = __stream__C_header_offset + 1; _i <= _size; ++_i) {
             stream[_i] = str__ord[stream[_i]];
@@ -17875,7 +17870,7 @@ function pcode__class_init(    _v, _store) {
     __pcode__C_op_EndEnum               = 263;
     __pcode__C_op_Illegal               = 264;
 
-    # mawk`s CY_SPLIT optimization
+    # optimization for mawk
     split("0000000000000000000000000000000000000000000000000000000000000000" \
           "0000000000000000000000000000000000000000000000000000000000000000" \
           "0000000000000000000000000000000000000000000000000000000000000000" \
@@ -32812,6 +32807,9 @@ cli__main( \
     # flags for optimization and portability
     if (split("123", _arr, "") == 3) {
         __feat__has_modern_nullsplit = 1;
+        if (split("\342\226\240", _arr, "") == 3) {
+            __feat__has_split_in_bytes = 1;
+        }
     }
 
     if ("PROCINFO" in SYMTAB) {
@@ -32824,7 +32822,6 @@ cli__main( \
     if (split("\343\200\200", _arr, " ") == 0) {  # may be goawk
         __feat__has_cow_strings = 1;
     } else if (("FS" in SYMTAB) == 0) {
-        __feat__has_cy_split_array = 1;
         __feat__has_cow_strings = 1;
         __feat__has_native_strftime = 1;
     }
