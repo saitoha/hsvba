@@ -5833,7 +5833,7 @@ __atom__type_apply( \
                 return (-1);
             }
             # parameter index
-            _v = cell__new(__atom__C_tag_ldp, params[_v]);
+            _v = cell__new(__atom__C_tag_ldp, params[_v], 0);
             _v = addr__ref(_v);
             if (_v < 0) {
                 return (-1);
@@ -5845,7 +5845,7 @@ __atom__type_apply( \
             if (_v < 0) {
                 return (-1);
             }
-            _v = cell__new(__atom__C_tag_ldi, _v);
+            _v = cell__new(__atom__C_tag_ldi, _v, 0);
             _v = addr__ref(_v);
             if (_v < 0) {
                 return (-1);
@@ -6111,7 +6111,7 @@ __atom__eval( \
             if (index(_v, "%") == 1) {
                 return atom__errno = (1);
             }
-            return cell__new(__atom__C_tag_ldi, _v);
+            return cell__new(__atom__C_tag_ldi, _v, 0);
         } else if (_tag == __atom__C_tag_ldr) {
             return cell;
         }
@@ -6184,19 +6184,19 @@ __atom__eval( \
         if (_v < 0) {
             return atom__errno = (-1);
         }
-        return cell__new(__atom__C_tag_ldr, _v);
+        return cell__new(__atom__C_tag_ldr, _v, 0);
     } else if (_tag == __atom__C_tag_add) {
         _v = _lhs + _rhs;
-        return cell__new(__atom__C_tag_ldi, _v);
+        return cell__new(__atom__C_tag_ldi, _v, 0);
     } else if (_tag == __atom__C_tag_sub) {
         _v = _lhs - _rhs;
-        return cell__new(__atom__C_tag_ldi, _v);
+        return cell__new(__atom__C_tag_ldi, _v, 0);
     } else if (_tag == __atom__C_tag_mul) {
         _v = _lhs * _rhs;
-        return cell__new(__atom__C_tag_ldi, _v);
+        return cell__new(__atom__C_tag_ldi, _v, 0);
     } else if (_tag == __atom__C_tag_div) {
         _v = int(_lhs / _rhs);
-        return cell__new(__atom__C_tag_ldi, _v);
+        return cell__new(__atom__C_tag_ldi, _v, 0);
     }
     # else
     E__message "not impl: " _tag;
@@ -7956,22 +7956,22 @@ __struct__scan( \
                 # _skip
             } else if (_c == 40) {  # (
                 _id = __struct__C_tok_lparen;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 41) {  # )
                 _id = __struct__C_tok_rparen;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 42) {  # *
                 _id = __struct__C_tok_mul;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 43) {  # +
                 _id = __struct__C_tok_add;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 45) {  # -
                 _id = __struct__C_tok_sub;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 47) {  # /
                 _id = __struct__C_tok_div;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c >= 48 && _c <= 57) {  # digits
                 _stack[++_stack[0]] = _scanner_state;  # push current state
                 _stack[++_stack[0]] = _i;  # push current position
@@ -7987,7 +7987,7 @@ __struct__scan( \
                 _scanner_state = __struct__C_lst_path;
             } else if (_c == 125) {  # }
                 _id = __struct__C_tok_rbrace;
-                tokens[++tokens[0]] = cell__new(_id, _i);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 _stack[++_stack[0]] = _i;  # push current position
                 _scanner_state = __struct__C_lst_quote;
             } else {
@@ -9625,6 +9625,8 @@ function xmlp__class_init() {
     __xmlp__C_pst_DECLARATION      = 14;
     __xmlp__C_pst_DOCTYPE          = 15;
     __xmlp__C_pst_EMPTY_SLASH      = 16;
+
+    return (0);
 }
 # }}}
 # {{{ xmlp::new
@@ -25941,7 +25943,8 @@ vba__ppt__common__init(    _status) {
 # '}'
 function \
 vba__ppt__common__unpack_recordheader( \
-    stream, store, exp_ver, exp_instance, exp_rectype, validator_reclen, \
+    stream, store, \
+    exp_ver, exp_instance, exp_rectype, validator_reclen, \
     \
     _v \
 ) {
@@ -26965,11 +26968,11 @@ __vba__ppt__powerpointdocumentstream__unpack_persistdirectoryentry( \
     for (_i = 1; _i <= _size; ++_i) {
         _v = stream__read_uint32(stream);
         if (astore__set(_store, _i, _v) < 0) {
-            return __vba__vbaprojectstream__E_UNEXPECTED;
+            return __vba__powerpointdocumentstream__E_UNEXPECTED;
         }
         # Part 1 - step 8
         if (astore__set(store, _entry_path _id++, _v) < 0) {
-            return __vba__vbaprojectstream__E_UNEXPECTED;
+            return __vba__powerpointdocumentstream__E_UNEXPECTED;
         }
     }
 
@@ -27077,7 +27080,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_documentcontainer( \
     stream, store, \
     \
-    _r, _v, _store, _pos \
+    _r, _store, _pos \
 ) {
     # rh (8 bytes)
     astore__fork(store, "rh::RecordHeader", _store);
@@ -27199,7 +27202,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_documentatom( \
     stream, store, \
     \
-    _r, _v, _store, _size \
+    _r, _v, _store \
 ) {
     # rh (8 bytes)
     #
@@ -27389,7 +27392,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_exobjlistcontainer( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size, _i \
+    _r, _store, _pos, _size, _i \
 ) {
     _pos = stream__pos(stream);
     # rh (8 bytes)
@@ -27444,7 +27447,7 @@ __vba__ppt__powerpointdocumentstream__unpack_exobjlistcontainer( \
 #            return _r;
 #        }
 #    }
-    stream__skip(steram, _size + 8);
+    stream__skip(stream, _size + 8);
 
     return __vba__ppt__powerpointdocumentstream__S_OK;
 }
@@ -27470,7 +27473,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_exobjlistatom( \
     stream, store, \
     \
-    _r, _v, _store, _size \
+    _r, _v, _store \
 ) {
     # rh (8 bytes)
     #
@@ -27561,7 +27564,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_docuemnttextinfocontainer( \
     stream, store, \
     \
-    _r, _v, _store, _size \
+    _r, _store, _size \
 ) {
     # rh (8 bytes)
     astore__fork(store, "rh::RecordHeader", _store);
@@ -27606,7 +27609,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_sourndcollectioncontainer( \
     stream, store, \
     \
-    _r, _v, _store, _size, _pos \
+    _r, _store, _size, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -27651,7 +27654,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_drawinggroupcontainer( \
     stream, store, \
     \
-    _r, _v, _store, _size, _pos \
+    _r, _store, _size, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -27708,7 +27711,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_masterlistwithtextcontainer( \
     stream, store, \
     \
-    _r, _v, _store, _size, _pos \
+    _r, _store, _size, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -27765,7 +27768,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_docinfolistcontainer( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size \
+    _r, _store, _pos, _size \
 ) {
     _pos = stream__pos(stream);
 
@@ -27854,7 +27857,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_docinfolistsubcontaineroratom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _leftsize, _type, _i, _size \
+    _r, _store, _pos, _leftsize, _type, _i, _size \
 ) {
     _pos = stream__pos(stream);
     _leftsize = astore__get(store, "../rh/recLen");
@@ -27920,7 +27923,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbainfocontainer( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size \
+    _r, _store, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -27991,7 +27994,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbainfoatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size \
+    _r, _v, _store, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -28079,7 +28082,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _rec_instance \
+    _r, _store, _pos, _rec_instance \
 ) {
     _pos = stream__pos(stream);
 
@@ -28138,7 +28141,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos \
+    _r, _store, _pos \
 ) {
     _pos = stream__pos(stream);
 
@@ -28160,7 +28163,7 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
 #    if (_r < 0) {
 #        return _r;
 #    }
-    _r =  cli__process_vbaproject_binary(ostream, "/CFB_NESTED");
+    _r =  cli__process_vbaproject_binary(stream, "/CFB_NESTED");
     if (_r < 0) {
         __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
@@ -28194,7 +28197,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size, _no, _ostream \
+    _r, _v, _store, _pos, _size, _ostream \
 ) {
     _pos = stream__pos(stream);
 
@@ -28224,7 +28227,7 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     # decompression.
     _v = stream__read_uint32(stream);
     if (astore__set(store, "decompressedSize::uint32", _v) < 0) {
-        return __vba__vbaprojectstream__E_UNEXPECTED;
+        return __vba__powerpointdocumentstream__E_UNEXPECTED;
     }
     # pptVbaProjStgCompressed (variable)
     #
