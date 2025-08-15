@@ -4768,7 +4768,7 @@ atom__validate( \
         } else if (match(_type, /,gt\([^\)]+\)/)) {
             _arg1 = substr(_type, RSTART + 4, RLENGTH - 5);
             _type = substr(_type, RSTART + RLENGTH);
-            if (v >= int(_arg1)) {
+            if (v <= int(_arg1)) {
                 _strval = atom__tostring(t, v);
                 E__message = sprintf( \
                     "Invalid value %s, MUST be greater than %s.", \
