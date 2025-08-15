@@ -36744,7 +36744,7 @@ cli__process_vbaproject_binary( \
             }
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_SRC)) {
-            if (astore__get(_store, "/@Source")) {
+            if (astore__has(_store, "/@Source")) {
                 astore__new(_store, "/@Source");
                 while (! astore__enum_end(_store)) {
                     _stream_name = astore__enum_next(_store);
