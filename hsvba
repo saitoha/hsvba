@@ -15981,6 +15981,155 @@ zlib__inflate( \
 #=# }
 # ')"}'
 # }}}
+# {{{ zlib__rfc1950_decompress
+# '${__pp_comment:+'
+#
+# [RFC 1950] 2.2. Data format
+#
+#      A zlib stream has the following structure:
+#
+#           0   1
+#         +---+---+
+#         |CMF|FLG|   (more-->)
+#         +---+---+
+#
+#      (if FLG.FDICT set)
+#
+#           0   1   2   3
+#         +---+---+---+---+
+#         |     DICTID    |   (more-->)
+#         +---+---+---+---+
+#
+#         +=====================+---+---+---+---+
+#         |...compressed data...|    ADLER32    |
+#         +=====================+---+---+---+---+
+#
+#      Any data which may appear after ADLER32 are not part of the zlib
+#      stream.
+#
+#      CMF (Compression Method and flags)
+#         This byte is divided into a 4-bit compression method and a 4-
+#         bit information field depending on the compression method.
+#
+#            bits 0 to 3  CM     Compression method
+#            bits 4 to 7  CINFO  Compression info
+#
+#      CM (Compression method)
+#         This identifies the compression method used in the file. CM = 8
+#         denotes the "deflate" compression method with a window size up
+#         to 32K.  This is the method used by gzip and PNG (see
+#         references [1] and [2] in Chapter 3, below, for the reference
+#         documents).  CM = 15 is reserved.  It might be used in a future
+#         version of this specification to indicate the presence of an
+#         extra field before the compressed data.
+#
+#      CINFO (Compression info)
+#         For CM = 8, CINFO is the base-2 logarithm of the LZ77 window
+#         size, minus eight (CINFO=7 indicates a 32K window size). Values
+#         of CINFO above 7 are not allowed in this version of the
+#         specification.  CINFO is not defined in this specification for
+#         CM not equal to 8.
+#
+#      FLG (FLaGs)
+#         This flag byte is divided as follows:
+#
+#            bits 0 to 4  FCHECK  (check bits for CMF and FLG)
+#            bit  5       FDICT   (preset dictionary)
+#            bits 6 to 7  FLEVEL  (compression level)
+#
+#         The FCHECK value must be such that CMF and FLG, when viewed as
+#         a 16-bit unsigned integer stored in MSB order (CMF*256 + FLG),
+#         is a multiple of 31.
+#
+# '}'
+function \
+zlib__rfc1950_decompress( \
+    istream, size, store, ostream, \
+    \
+    _v, _no, _pos, _bodysize, _fdict, _r \
+) {
+    # CM
+    _v = stream__read_bits(istream, 4);
+    if (astore__set(store, "CM::bits<4>,mustbe(8)", _v) < 0) {  # 8:DEFLATE
+        return (-1);
+    }
+    # CINFO
+    _v = stream__read_bits(istream, 4);
+    if (astore__set(store, "CINFO::bits<4>", _v) < 0) {  # LZ77 window size
+        return (-1);
+    }
+    # FCHECK
+    _v = stream__read_bits(istream, 5);
+    if (astore__set(store, "FCHECK::bits<5>", _v) < 0) {
+        return (-1);
+    }
+    # FDICT
+    _v = _fdict = stream__read_bits(istream, 1);
+    if (astore__set(store, "FDICT::bits<5>", _v) < 0) {
+        return (-1);
+    }
+    _v = stream__read_bits(istream, 2);
+    if (astore__set(store, "FLEVEL::bits<5>", _v) < 0) {
+        return (-1);
+    }
+    if (_fdict) {
+        _v = stream__read_uint32(istream);
+        if (astore__set(store, "DICTID::uint32", _v) < 0) {
+            return (-1);
+        }
+    }
+    # sizeof(header) -> 2
+    size -= 2;
+
+    # sizeof(Adler-32 checksum) -> 4
+    _bodysize = size - 4;
+    _pos = stream__pos(istream);
+    stream__new(ostream);
+    do {
+        _r = zlib__inflate(istream, store, ostream, ++_no);
+        if (_r < 0) {
+            return _r;
+        }
+        astore__set(store, _no "/nread", stream__pos(istream) - _pos) < 0
+        astore__set(store, _no "/size", size) < 0
+    } while (stream__pos(istream) - _pos < size);
+
+    _v = stream__read_uint32(istream);
+    if (astore__set(store, "Adler32CheckSum::hexint32", _v) < 0) {
+        return (-1);
+    }
+
+    return (0);
+}
+# '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
+#=# function \
+#=# __zlib__inflate__ut__00( \
+#=#     \
+#=#     _status, _istream, _store, _ostream, _size \
+#=# ) {
+#=#     # echo -n test | gzip | LANG=C cut -b11- |
+#=#     # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
+#=#     stream__new_from_string( \
+#=#         _istream, \
+#=#         "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
+#=#     );
+#=#
+#=#     stream__new(_ostream);
+#=#
+#=#     _status = zlib__inflate(_istream, _store, _ostream);
+#=#     if (_status < 0) {
+#=#         return _status;
+#=#     }
+#=#
+#=#     _size = stream__available_size(_ostream);
+#=#     if (stream__read_raw_string(_ostream, _size) != "test") {
+#=#         return (-1);
+#=#     }
+#=#
+#=#     return (0);
+#=# }
+# ')"}'
+# }}}
 # {{{ __zlib__deflate__with_fixed_huffman
 #
 # [RFC 1951] 3.2.6. Compression with fixed Huffman codes (BTYPE=01)
@@ -25839,7 +25988,7 @@ vba__ppt__common__unpack_recordheader( \
     # An unsigned integer that specifies the length, in bytes, of the record
     # data that follows the record header.
     #
-   _v = stream__read_uint32(stream);
+    _v = stream__read_uint32(stream);
     if (astore__set(store, "recLen::uint32" validator_reclen, _v) < 0) {
         return __vba__ppt__common__E_UNEXPECTED;
     }
@@ -26336,7 +26485,7 @@ function \
 vba__ppt__powerpointdocumentstream__unpack( \
     stream, store, cfbpath, \
     \
-    _r, _stream, _path, _store, _pos, _i, _idref_vba \
+    _r, _stream, _path, _store, _pos, _i, _idref_vba, _entry \
 ) {
     _path = "/Root Entry/PowerPoint Document";
 
@@ -26772,7 +26921,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_persistdirectoryentry( \
     stream, store, \
     \
-    _r, _v, _size, _store, _id, _entry_path \
+    _v, _size, _store, _id, _entry_path, _i \
 ) {
     #
     # persistId (20 bits)
@@ -27705,7 +27854,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_docinfolistsubcontaineroratom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _leftsize, _type, _i \
+    _r, _v, _store, _pos, _leftsize, _type, _i, _size \
 ) {
     _pos = stream__pos(stream);
     _leftsize = astore__get(store, "../rh/recLen");
@@ -27728,10 +27877,10 @@ __vba__ppt__powerpointdocumentstream__unpack_docinfolistsubcontaineroratom( \
 
         _type = astore__get(_store, "recType");
         if (_type == 1023) {  # RT_VbaInfo
-            astore__fork(store, _i "::VBAInfoContainer", _store2);
+            astore__fork(store, _i "::VBAInfoContainer", _store);
 #            stream__rewind(stream, 8);  # sizeof(RecordHeader)
             _r = __vba__ppt__powerpointdocumentstream__unpack_vbainfocontainer( \
-                stream, _store2);
+                stream, _store);
             if (_r < 0) {
                 return _r;
             }
@@ -27936,11 +28085,12 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
 
     # rh (8 bytes)
     astore__fork(store, "rh::RecordHeader", _store);
-    _r = vba__ppt__common__unpack_recordheader(stream, _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, 0, "", "4113:RT_ExternalOleObjectStg");
     if (_r < 0) {
         return _r;
     }
-    stream__rewind(stream, 8);  # sizeof(RecordHeader);
+#    stream__rewind(stream, 8);  # sizeof(RecordHeader);
 
     _rec_instance = astore__get(store, "rh/recInstance");
     if (_rec_instance == 0) {
@@ -27966,36 +28116,54 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
 # }}}
 # {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbaprojectstguncompressedatom
 #
-# [MS-PPT] 2.10.40 VbaProjectStg
+# [MS-PPT] 2.10.41 VbaProjectStgUncompressedAtom
 #
-# A variable type record whose type and meaning are dictated by the value of
-# the record header member rh.recInstance of the contained storage, as
-# specified in the following table.
+# An atom record that specifies information about the uncompressed structured
+# storage (described in [MSDN-COM]) for a VBA project.
 #
-# +----------+---------------------------------------------------------------+
-# | Value    | Meaning                                                       |
-# +----------+---------------------------------------------------------------+
-# | 0x000    | A VbaProjectStgUncompressedAtom record that specifies         |
-# |          | uncompressed storage for a VBA project.                       |
-# +----------+---------------------------------------------------------------+
-# | 0x001    | A VbaProjectStgCompressedAtom record that specifies compressed|
-# |          | storage for a VBA project.                                    |
-# +----------+---------------------------------------------------------------+
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |              pptVbaProjStgUncompressed (variable)             |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
 #
 function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _rec_instance \
+    _r, _v, _store, _pos \
 ) {
     _pos = stream__pos(stream);
 
-#    # rh (8 bytes)
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header
+    # for this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0x0.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_ExternalOleObjectStg.             |
+    # +-----------------+----------------------------------------------+
 #    astore__fork(store, "rh::RecordHeader", _store);
 #    _r = vba__ppt__common__unpack_recordheader(stream, _store);
 #    if (_r < 0) {
 #        return _r;
 #    }
+    _r =  cli__process_vbaproject_binary(ostream, "/CFB_NESTED");
+    if (_r < 0) {
+        __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
 
     return __vba__ppt__powerpointdocumentstream__S_OK;
 }
@@ -28026,7 +28194,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size, _fdict, _no \
+    _r, _v, _store, _pos, _size, _no, _ostream \
 ) {
     _pos = stream__pos(stream);
 
@@ -28044,30 +28212,18 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     # | rh.recType      | MUST be RT_ExternalOleObjectStg.             |
     # +-----------------+----------------------------------------------+
     # rh (8 bytes)
-    astore__fork(store, "rh::RecordHeader", _store);
-    _r = vba__ppt__common__unpack_recordheader( \
-        stream, _store, 0, 1, "4113:RT_ExternalOleObjectStg");
-    if (_r < 0) {
-        return _r;
-    }
-    if (astore__get(store, "rh/recVer") != 0) {
-        print "a", astore__get(store, "rh/recVer")
-        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
-    }
-    if (astore__get(store, "rh/recInstance") != 1) {
-        print "b", astore__get(store, "rh/recInstance")
-        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
-    }
-    if (astore__get(store, "rh/recType") != 4113) {  # RT_ExternalOleObjectStg20
-        print "c", astore__get(store, "rh/recType")
-        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
-    }
+#    astore__fork(store, "rh::RecordHeader", _store);
+#    _r = vba__ppt__common__unpack_recordheader( \
+#        stream, _store, 0, 1, "4113:RT_ExternalOleObjectStg");
+#    if (_r < 0) {
+#        return _r;
+#    }
     # decompressedSize (4 bytes)
     #
     # An unsigned integer that specifies the length of the storage after
     # decompression.
     _v = stream__read_uint32(stream);
-    if (astore__set(store, "decompressedSize", _v) < 0) {
+    if (astore__set(store, "decompressedSize::uint32", _v) < 0) {
         return __vba__vbaprojectstream__E_UNEXPECTED;
     }
     # pptVbaProjStgCompressed (variable)
@@ -28081,102 +28237,16 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     #
     #   rh.recLen - 4
     #
+    _size = astore__get(store, "../rh/recLen") - 4;  # sizeof(decompressedSize)
 
-    # [RFC 1950] 2.2. Data format
-    #
-    #      A zlib stream has the following structure:
-    #
-    #           0   1
-    #         +---+---+
-    #         |CMF|FLG|   (more-->)
-    #         +---+---+
-    #
-    #      (if FLG.FDICT set)
-    #
-    #           0   1   2   3
-    #         +---+---+---+---+
-    #         |     DICTID    |   (more-->)
-    #         +---+---+---+---+
-    #
-    #         +=====================+---+---+---+---+
-    #         |...compressed data...|    ADLER32    |
-    #         +=====================+---+---+---+---+
-    #
-    #      Any data which may appear after ADLER32 are not part of the zlib
-    #      stream.
-    #
-    #      CMF (Compression Method and flags)
-    #         This byte is divided into a 4-bit compression method and a 4-
-    #         bit information field depending on the compression method.
-    #
-    #            bits 0 to 3  CM     Compression method
-    #            bits 4 to 7  CINFO  Compression info
-    #
-    #      CM (Compression method)
-    #         This identifies the compression method used in the file. CM = 8
-    #         denotes the "deflate" compression method with a window size up
-    #         to 32K.  This is the method used by gzip and PNG (see
-    #         references [1] and [2] in Chapter 3, below, for the reference
-    #         documents).  CM = 15 is reserved.  It might be used in a future
-    #         version of this specification to indicate the presence of an
-    #         extra field before the compressed data.
-    #
-    #      CINFO (Compression info)
-    #         For CM = 8, CINFO is the base-2 logarithm of the LZ77 window
-    #         size, minus eight (CINFO=7 indicates a 32K window size). Values
-    #         of CINFO above 7 are not allowed in this version of the
-    #         specification.  CINFO is not defined in this specification for
-    #         CM not equal to 8.
-    #
-    #      FLG (FLaGs)
-    #         This flag byte is divided as follows:
-    #
-    #            bits 0 to 4  FCHECK  (check bits for CMF and FLG)
-    #            bit  5       FDICT   (preset dictionary)
-    #            bits 6 to 7  FLEVEL  (compression level)
-    #
-    #         The FCHECK value must be such that CMF and FLG, when viewed as
-    #         a 16-bit unsigned integer stored in MSB order (CMF*256 + FLG),
-    #         is a multiple of 31.
-    #
-    _v = stream__read_bits(stream, 4);
-    if (astore__set(store, "CM::bits<4>,mustbe(8)", _v) < 0) {  # 8:DEFLATE
-        return __vba__vbaprojectstream__E_UNEXPECTED;
-    }
-    _v = stream__read_bits(stream, 4);
-    if (astore__set(store, "CINFO::bits<4>", _v) < 0) {  # LZ77 window size
-        return __vba__vbaprojectstream__E_UNEXPECTED;
-    }
-    _v = stream__read_bits(stream, 5);
-    if (astore__set(store, "FCHECK::bits<5>", _v) < 0) {
-        return __vba__vbaprojectstream__E_UNEXPECTED;
-    }
-    _v = _fdict = stream__read_bits(stream, 1);
-    if (astore__set(store, "FDICT::bits<5>", _v) < 0) {
-        return __vba__vbaprojectstream__E_UNEXPECTED;
-    }
-    _v = stream__read_bits(stream, 2);
-    if (astore__set(store, "FLEVEL::bits<5>", _v) < 0) {
-        return __vba__vbaprojectstream__E_UNEXPECTED;
-    }
-    if (_fdict) {
-        _v = stream__read_uint32(stream);
-        if (astore__set(store, "DICTID::uint32", _v) < 0) {
-            return __vba__vbaprojectstream__E_UNEXPECTED;
-        }
-    }
-    _no = 0;
-    _pos = stream__pos(stream);
-    _size = astore__get(store, "rh/recLen");
-    stream__new(ostream);
-    do {
-        _r = zlib__inflate(stream, store, ostream, ++_no);
-        if (_r < 0) {
-            return _r;
-        }
-    } while (stream__pos(stream) - _pos < _size - 6);
+    astore__fork(store, "pptVbaProjStgCompressed::RFC1950Stream", _store);
 
-    _r =  cli__process_vbaproject_binary(ostream, "/CFB_NESTED");
+    _r = zlib__rfc1950_decompress(stream, _size, _store, _ostream);
+    if (_r < 0) {
+        __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    _r =  cli__process_vbaproject_binary(_ostream, "/CFB_NESTED");
     if (_r < 0) {
         __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
@@ -36525,7 +36595,7 @@ function \
 cli__process_vbaproject_binary( \
     stream, cfbpath, \
     \
-    _store, _r, _status, _continue, _stream_name, _hairline \
+    _store, _r, _status, _continue, _stream_name, _hairline, _src \
 ) {
     astore__new(_store, cfbpath);
     _r = cfb__unpack(stream, _store);
