@@ -127,12 +127,11 @@
 #      *.pptm Microsoft PowerPoint Macro-enabled Presentation (Open XML format)
 #      *.potm Microsoft PowerPoint Macro-enabled Template
 #      *.ppsm Microsoft PowerPoint Macro-enabled Slideshow
-#      *.ppam add-in
-#      *.ppa Microsoft PowerPoint Add-in
-#
-#      Some legacy formats (*.ppt, *.pot, *.pps) are not supported yet.
-#      TODO: implement [MS-PPT], PowerPoint (.ppt) Binary File Format
-#      https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-PPT/%5bMS-PPT%5d.pdf
+#      *.ppam Microsoft PowerPoint add-in
+#      *.ppt Microsoft PowerPoint 97-2003 document
+#      *.pot Microsoft PowerPoint 97-2003 template
+#      *.pos Microsoft PowerPoint 97-2003 template
+#      *.ppa Microsoft PowerPoint 97-2003 Add-in
 #
 #    - Access(*.accdb, *.mdb, *.accde)
 #      Unsupported.
@@ -298,6 +297,10 @@
 #        PKWARE, .ZIP File Format Specification, Version: 6.3.10
 #        https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 #
+#    [RFC 1950]
+#        P. Deutsch, ZLIB Compressed Data Format Specification version 3.3
+#        https://www.ietf.org/rfc/rfc1950.txt
+#
 #    [RFC 1951]
 #        P. Deutsch, DEFLATE Compressed Data Format Specification version 1.3
 #        https://www.ietf.org/rfc/rfc1951.txt
@@ -360,7 +363,8 @@
 #    [MS-PPT]
 #        Microsoft Corporation, PowerPoint (.ppt) Binary File Format,
 #        (protocol revision 10.1)
-#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-XLS/%5bMS-XLS%5d.pdf
+#        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-PPT/%5bMS-PPT%5d.pdf
+#
 #
 #    [MS-DTYP]
 #        Microsoft Corporation, Windows Data Types
@@ -16228,7 +16232,9 @@ __zlib__inflate__uncompressed_block( \
     #=#     TRACE2("[zip] LEN: %d, NLEN: %d\n", _len, _nlen);
     #=# ')"}'
 
-    stream__copy(istream, ostream, _len);
+    if (_len > 0) {
+        stream__copy(istream, ostream, _len);
+    }
 
     #=# '${__pp_trace__zip_debug2+"$(cut -d\# -f3-<<<'
     #=#     TRACE("[zip] === END BLOCK ===\n\n");
@@ -19624,23 +19630,24 @@ cfb__unpack( \
 # {{{ cfb::unpack_stream
 function \
 cfb__unpack_stream( \
-    istream, store, path, ostream, \
+    istream, store, path, ostream, cfbpath, \
     \
     _start_secno, _sector_no, _sector_size, \
     _mini_secsize, _mini_secno, _mini_stream_cutoff_size, \
     _body_offset, _stream_size, _minifat_per_fat, _id \
 ) {
-    _id = astore__get(store, "/CFB/@FileID" path "/id");
+    _id = astore__get(store, cfbpath "/@FileID" path "/id");
     if (_id == "") {
         E__message = sprintf("CFB file ID for path \"%s\" is not found.", path);
         return cfb__E_UNEXPECTED;
     }
-    _sector_size = num__lshift(1, astore__get(store, "/CFB/Header/Sector Shift"));
-    _mini_secsize = num__lshift(1, astore__get(store, "/CFB/Header/Mini Sector Shift"));
-    _mini_stream_cutoff_size = astore__get(store, "/CFB/Header/Mini Stream Cutoff Size");
+
+    _sector_size = num__lshift(1, astore__get(store, cfbpath "/Header/Sector Shift"));
+    _mini_secsize = num__lshift(1, astore__get(store, cfbpath "/Header/Mini Sector Shift"));
+    _mini_stream_cutoff_size = astore__get(store, cfbpath "/Header/Mini Stream Cutoff Size");
     _minifat_per_fat = _sector_size / _mini_secsize;
-    _start_secno = astore__get(store, "/CFB/Directory Entries/" _id "/Starting Sector Location");
-    _stream_size = astore__get(store, "/CFB/Directory Entries/" _id "/Stream Size");
+    _start_secno = astore__get(store, cfbpath "/Directory Entries/" _id "/Starting Sector Location");
+    _stream_size = astore__get(store, cfbpath "/Directory Entries/" _id "/Stream Size");
     if (_start_secno == "" || _stream_size == "") {
         E__message = sprintf("CFB Directory Entry \"%s\" is not found.", _id);
         return cfb__E_UNEXPECTED;
@@ -19657,14 +19664,14 @@ cfb__unpack_stream( \
         # if stream size < 4096, stored in Mini FAT sectors
         for (_mini_secno = _start_secno; _stream_size > 0; _stream_size -= _mini_secsize) {
             # retrieve FAT sector that contains current Mini FAT sector
-            _sector_no = astore__get(store, "/CFB/MiniFAT/M2F/" _mini_secno);
+            _sector_no = astore__get(store, cfbpath "/MiniFAT/M2F/" _mini_secno);
             _body_offset = (1 + _sector_no) * _sector_size \
                          + _mini_secno % _minifat_per_fat * _mini_secsize;
             stream__iseek(istream, _body_offset);
             stream__copy(istream, ostream, \
                          _stream_size > _mini_secsize ? _mini_secsize: _stream_size);
             # search next Mini FAT chain
-            _mini_secno = astore__get(store, "/CFB/MiniFAT/Chain/" _mini_secno);
+            _mini_secno = astore__get(store, cfbpath "/MiniFAT/Chain/" _mini_secno);
         }
     } else {
         # if stream size >= 4096, stored in FAT sectors
@@ -19674,7 +19681,7 @@ cfb__unpack_stream( \
             stream__copy(istream, ostream, \
                          _stream_size >= _sector_size ? _sector_size: _stream_size);
             # search next FAT chain
-            _sector_no = astore__get(store, "/CFB/FAT/Chain/" _sector_no);
+            _sector_no = astore__get(store, cfbpath "/FAT/Chain/" _sector_no);
         }
     }
 
@@ -20019,7 +20026,7 @@ __cfb__build_fat_chain( \
                 # Next Sector in Chain (variable)
                 _v = stream__read_uint32(stream);
                 _n = _i * _sector_size / _sizeof_sector_no + _j;
-                # save it to "/CFB/FAT/Chain/[n]"
+                # save it to "FAT/Chain/[n]"
                 if (astore__set(store, "FAT/Chain/" _n, _v) < 0) {
                     return cfb__E_UNEXPECTED;
                 }
@@ -20715,7 +20722,7 @@ vba__dirstream__init(    _status) {
 # {{{ vba__dirstream__unpack
 function \
 vba__dirstream__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _store, _path, _r, _istream, _ostream, _vbaroot, _vba \
 ) {
@@ -20723,7 +20730,7 @@ vba__dirstream__unpack( \
     _vba = astore__get(store, "/@VBA Directory");
     _path = _vbaroot "/" _vba "/dir";
 
-    _r = cfb__unpack_stream(stream, store, _path, _istream);
+    _r = cfb__unpack_stream(stream, store, _path, _istream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -23059,13 +23066,13 @@ vba__projectstream__init(    _status) {
 # '}'
 function \
 vba__projectstream__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _path, _store, _stream, _r \
 ) {
     _path = astore__get(store, "/@VBA Root Directory") "/PROJECT";
 
-    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    _r = cfb__unpack_stream(stream, store, _path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -24779,7 +24786,41 @@ vba__ppt__common__init(    _status) {
     # atom declarations
     #
 
-    # {{{ vba::ppt::common::recordtype
+    # [MS-PPT] 2.2.2 bool1
+    #
+    # A 1-byte unsigned integer that specifies a Boolean value. It SHOULD be
+    # 0x00 or 0x01. A value of 0x00 specifies FALSE and all other values
+    # specify TRUE.
+    #
+    _status = atom__declare("" \
+    "atom bool1: uint8 {                                    " \
+    "    map: {                                             " \
+    "       0: `FALSE`                                      " \
+    "       1: `TRUE`                                       " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+    # [MS-PPT] 2.2.21 PersistIdRef
+    #
+    # A 4-byte unsigned integer that specifies a reference to a persist object.
+    # It MUST be 0x00000000 or equal to a persist object identifier specified
+    # by a PersistDirectoryAtom record (section 2.3.4).
+    # The value 0x00000000 specifies a null reference.
+    _status = atom__declare("" \
+    "atom PersistIdRef: uint32 {                            " \
+    "    map: {                                             " \
+    "       0: `null reference`                             " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # {{{ RecordType
     #
     # RecordType (2 bytes)
     #
@@ -25675,16 +25716,66 @@ vba__ppt__common__init(    _status) {
     if (_status < 0) {
         return _status;
     }
+    # }}}
+    # {{{ SlideSizeEnum
+    #
+    # [MS-PPT] 2.13.26 SlideSizeEnum
+    #
+    # An enumeration that specifies types of slide sizes.
+    #
+    # +------------------+--------+--------------------------------------------+
+    # | Name             | Value  | Meaning                                    |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_Screen        | 0x0000 | Slide size ratio is consistent with a      |
+    # |                  |        | computer screen.                           |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_LetterPaper   | 0x0001 | Slide size ratio is consistent with letter |
+    # |                  |        | paper.                                     |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_A4Paper       | 0x0002 | Slide size ratio is consistent with A4     |
+    # |                  |        | paper.                                     |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_35mm          | 0x0003 | Slide size ratio is consistent with 35mm   |
+    # |                  |        | photo slides.                              |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_Overhead      | 0x0004 | Slide size ratio is consistent with        |
+    # |                  |        | overhead projector slides.                 |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_Banner        | 0x0005 | Slide size ratio is consistent with a      |
+    # |                  |        | banner.                                    |
+    # +------------------+--------+--------------------------------------------+
+    # | SS_Custom        | 0x0006 | Slide size ratio that is not consistent    |
+    # |                  |        | with any of the other specified slide      |
+    # |                  |        | sizes in this enumeration.                 |
+    # +------------------+--------+--------------------------------------------+
+    #
+    _status = atom__declare("" \
+    "atom SlideSizeEnum: uint16 {                           " \
+    "    map: {                                             " \
+    "       1: `SS_LetterPaper`                             " \
+    "       2: `SS_A4Paper`                                 " \
+    "       3: `SS_35mm`                                    " \
+    "       4: `SS_Overhead`                                " \
+    "       5: `SS_Banner`                                  " \
+    "       6: `SS_Custom`                                  " \
+    "    }                                                  " \
+    "}                                                      " \
+    "");
+    if (_status < 0) {
+        return _status;
+    }
+    # }}}
 
     __vba__ppt__common__init_guard = 1;
 
     return (0);
 }
-# }}}
-# {{{ vba::ppt::common::recordheader
+# }}} vba::ppt::common::init
+# {{{ vba::ppt::common::unpack__recordheader
 # '${__pp_comment:+'
 #
 # [MS-PPT] 2.3.2 RecordHeader
+#
 # A structure at the beginning of each container record and each atom record
 # in the file. The values in the record header and the context of the record
 # are used to identify and interpret the record data that follows.
@@ -25698,23 +25789,6 @@ vba__ppt__common__init(    _status) {
 # |                            recLen                             |
 # +---------------------------------------------------------------+
 #
-# recVer (4 bits)
-# An unsigned integer that specifies the version of the record data that
-# follows the record header. A value of 0xF specifies that the record is a
-# container record.
-#
-# recInstance (12 bits)
-# An unsigned integer that specifies the record instance data. Interpretation of
-# the value is dependent on the particular record type.
-#
-# recType (2 bytes)
-# A RecordType enumeration (section 2.13.24) that specifies the type of the
-# record data that follows the record header.
-#
-# recLen (4 bytes)
-# An unsigned integer that specifies the length, in bytes, of
-# the record data that follows the record header.
-#
 # '}'
 function \
 vba__ppt__common__unpack_recordheader( \
@@ -25722,32 +25796,202 @@ vba__ppt__common__unpack_recordheader( \
     \
     _v \
 ) {
+    # recVer (4 bits)
+    #
+    # An unsigned integer that specifies the version of the record data that
+    # follows the record header. A value of 0xF specifies that the record is a
+    # container record.
     _v = stream__read_bits(stream, 4);
-    if (astore__set(store, "recVer::bits<4>,mustbe(%)", _v, exp_ver) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    if (exp_ver == "") {
+        if (astore__set(store, "recVer::bits<4>", _v) < 0) {
+            return __vba__ppt__common__E_UNEXPECTED;
+        }
+    } else if (astore__set(store, "recVer::bits<4>,mustbe(%)", _v, exp_ver) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
     }
-
+    # recInstance (12 bits)
+    #
+    # An unsigned integer that specifies the record instance data.
+    # Interpretation of the value is dependent on the particular record type.
     _v = stream__read_bits(stream, 12);
-    if (astore__set(store, "recInstance::bits<12>,mustbe(%)",
-                    _v, exp_instance) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    if (exp_instance == "") {
+        if (astore__set(store, "recInstance::bits<12>", _v) < 0) {
+            return __vba__ppt__common__E_UNEXPECTED;
+        }
+    } else if (astore__set(store, "recInstance::bits<12>,mustbe(%)",
+                           _v, exp_instance) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
     }
-
+    # recType (2 bytes)
+    #
+    # A RecordType enumeration (section 2.13.24) that specifies the type of the
+    # record data that follows the record header.
     _v = stream__read_uint16(stream);
-    if (astore__set(store, "recType::RecordType,mustbe(%)", _v, exp_rectype) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    if (exp_rectype == "") {
+        if (astore__set(store, "recType::RecordType", _v) < 0) {
+            return __vba__ppt__common__E_UNEXPECTED;
+        }
+    } else if (astore__set(store, "recType::RecordType,mustbe(%)", _v, exp_rectype) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
     }
-
-    _v = stream__read_uint32(stream);
+    #
+    # recLen (4 bytes)
+    # An unsigned integer that specifies the length, in bytes, of the record
+    # data that follows the record header.
+    #
+   _v = stream__read_uint32(stream);
     if (astore__set(store, "recLen::uint32" validator_reclen, _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__common__E_UNEXPECTED;
     }
 
     return __vba__ppt__currentuserstream__S_OK;
 }
 # }}}
+# {{{ vba::ppt::common::pointstruct
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.12.5 PointStruct
+#
+# A structure that specifies a rational number.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                               x                               |
+# +---------------------------------------------------------------+
+# |                               y                               |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+vba__ppt__common__unpack_pointstruct( \
+    stream, store, \
+    \
+    _v \
+) {
+    # x (4 bytes)
+    #
+    # A signed integer that specifies the x-coordinate. Positive x increases to
+    # the right.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "x::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+    # y (4 bytes)
+    #
+    # A signed integer that specifies the y-coordinate. Positive y increases to
+    # the bottom.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "y::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__common__S_OK;
+}
 # }}}
+# {{{ vba::ppt::common::ratiostruct
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.12.6 RatioStruct
+#
+# A structure that specifies a rational number.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                             numer                             |
+# +---------------------------------------------------------------+
+# |                             denom                             |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+vba__ppt__common__unpack_ratiostruct( \
+    stream, store, \
+    \
+    _v \
+) {
+    # numer (4 bytes)
+    #
+    # A signed integer that specifies the numerator portion of this ratio.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "numer::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+    # denom (4 bytes)
+    #
+    # A signed integer that specifies the denominator portion of this ratio.
+    # It MUST NOT be 0x00000000.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "denom::int32,gt(0)", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__common__S_OK;
+}
 # }}}
+# {{{ vba::ppt::common::rectstruct
+# '${__pp_comment:+'
+#
+# [MS-PPT] 2.12.7 RectStruct
+#
+# A structure that specifies a rectangle.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              top                              |
+# +---------------------------------------------------------------+
+# |                             left                              |
+# +---------------------------------------------------------------+
+# |                             right                             |
+# +---------------------------------------------------------------+
+# |                             bottom                            |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+vba__ppt__common__unpack_rectstruct( \
+    stream, store, \
+    \
+    _v \
+) {
+    # top (4 bytes)
+    #
+    # A signed integer that specifies the minimum y-value of the rectangle.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "top::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+    # left (4 bytes)
+    #
+    # A signed integer that specifies the minimum x-value of the rectangle.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "top::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+    # right (4 bytes)
+    #
+    # A signed integer that specifies the maximum x-value of the rectangle.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "right::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+    # bottom (4 bytes)
+    #
+    # A signed integer that specifies the maximum y-value of the rectangle.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "bottom::int32", _v) < 0) {
+        return __vba__ppt__common__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__common__S_OK;
+}
+# }}}
+# }}} vba::ppt::common
 # {{{ @module vba::ppt::currentuserstream
 # analysis functions for "Current User" stream
 # {{{ vba::ppt::currentuserstream::init
@@ -25832,13 +26076,13 @@ vba__ppt__currentuserstream__init(    _status) {
 # {{{ vba::ppt::currentuserstream::unpack
 function \
 vba__ppt__currentuserstream__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _r, _stream, _path, _store \
 ) {
     _path = "/Root Entry/Current User";
 
-    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    _r = cfb__unpack_stream(stream, store, _path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -26087,46 +26331,194 @@ vba__ppt__powerpointdocumentstream__init(    _status) {
 # records that comprised any previous user edit, can be made obsolete by the
 # subsequently appended top-level records that comprise the current user edit.
 #
-# Let a live record be specified as any top-level record in this stream,
-# identified by the following process:
-#
-# Part 1: Construct the persist object directory.
-#
-#   1. Read the CurrentUserAtom record (section 2.3.2) from the Current User
-#      Stream (section 2.1.1). All seek operations in the steps that follow
-#      this step are in the PowerPoint Document Stream.
-#
-#   2. Seek, in the PowerPoint Document Stream, to the offset specified by the
-#      offsetToCurrentEdit field of the CurrentUserAtom record identified in
-#      step 1.
-#
-#   3. Read the UserEditAtom record at the current offset. Let this record be
-#      a live record.
-#
 # '}'
 function \
 vba__ppt__powerpointdocumentstream__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
-    _r, _stream, _path, _store, _pos \
+    _r, _stream, _path, _store, _pos, _i, _idref_vba \
 ) {
     _path = "/Root Entry/PowerPoint Document";
 
-    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    _r = cfb__unpack_stream(stream, store, _path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
 
-    _pos = astore__get(_store, "/Current User/CurrentUserAtom/offsetToCurrentEdit");
+    # [MS-PPT] 2.1.2 PowerPoint Document Stream
+    #
+    # Let a live record be specified as any top-level record in this stream,
+    # identified by the following process:
+    #
+    # Part 1: Construct the persist object directory.
+    #
+    #   1. Read the CurrentUserAtom record (section 2.3.2) from the Current
+    #      User Stream (section 2.1.1). All seek operations in the steps that
+    #      follow this step are in the PowerPoint Document Stream.
+    #
+    #   2. Seek, in the PowerPoint Document Stream, to the offset specified by
+    #      the offsetToCurrentEdit field of the CurrentUserAtom record
+    #      identified in step 1.
+    #
+    #   3. Read the UserEditAtom record at the current offset. Let this record
+    #      be a live record.
+    #
+    #   4. Seek to the offset specified by the offsetPersistDirectory field of
+    #      the UserEditAtom record identified in step 3.
+    #
+    #   5. Read the PersistDirectoryAtom record at the current offset. Let this
+    #      record be a live record.
+    #
+    #   6. Seek to the offset specified by the offsetLastEdit field in the
+    #      UserEditAtom record identified in step 3.
+    #
+    #   7. Repeat steps 3 through 6 until offsetLastEdit is 0x00000000.
+    #
+    #   8. Construct the complete persist object directory for this file as
+    #      follows:
+    #
+    #        1. For each PersistDirectoryAtom record previously identified in
+    #           step 5, add the persist object identifier and persist object
+    #           stream offset pairs to the persist object directory starting
+    #           with the PersistDirectoryAtom record last identified, that is,
+    #           the one closest to the beginning of the stream.
+    #
+    #        2. Continue adding these pairs to the persist object directory for
+    #           each PersistDirectoryAtom record in the reverse order that they
+    #           were identified in step 5; that is, the pairs from the
+    #           PersistDirectoryAtom record closest to the end of the stream
+    #           are added last.
+    #
+    #        3. When adding a new pair to the persist object directory, if the
+    #           persist object identifier already exists in the persist object
+    #           directory, the persist object stream offset from the new
+    #
+
+    # Part 1 - step 2
+    _path = "/Current User/CurrentUserAtom/offsetToCurrentEdit"
+    _pos = astore__get(store, _path);
+
+    do {
+        ++ _i;
+        stream__iseek(_stream, _pos);
+
+        # Part 1 - step 3
+        astore__fork(store, "UserEditAtom/" _i, _store);
+        _r = __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
+            _stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+
+        # Part 1 - step 4
+        _pos = astore__get(_store, "offsetPersistDirectory");
+        stream__iseek(_stream, _pos);
+
+        # Part 1 - step 5
+        astore__fork(store, "PersistDirectoryAtom/" _i, _store);
+        _r = __vba__ppt__powerpointdocumentstream__unpack_persistdirectoryatom( \
+            _stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+
+        # Part 1 - step 6
+        _pos = astore__get(_store, "offsetLastEdit");
+
+    } while (_pos > 0);  # Part 1 - step 7
+
+    # [MS-PPT] 2.1.2 PowerPoint Document Stream
+    #
+    # Part 2: Identify the document persist object.
+    #
+    #   1. Read the docPersistIdRef field of the UserEditAtom record first
+    #      identified in step 3 of Part 1, that is, the UserEditAtom record
+    #      closest to the end of the stream.
+    #
+    #   2. Lookup the value of the docPersistIdRef field in the persist object
+    #      directory constructed in step 8 of Part 1 to find the stream offset
+    #      of a persist object.
+    #
+    #   3. Seek to the stream offset specified in step 2.
+    #
+    #   4. Read the DocumentContainer record at the current offset. Let this
+    #      record be a live record.
+    #
+
+    # Part 2 - step 1
+    _entry = astore__get(store, "UserEditAtom/" _i "/docPersistIdRef");
+
+    # Part 2 - step 2
+    if (! astore__has(store, "@PersistObjectDirectory/" _entry)) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    _pos = astore__get(store, "@PersistObjectDirectory/" _entry);
+
+    # Part 2 - step 3
     stream__iseek(_stream, _pos);
 
-    astore__fork(store, "UserEditAtom", _store);
-    _r = __vba__ppt__powerpointdocumentstream__unpack_usereditatom(_stream, _store);
+    astore__fork(store, "DcoumentContainer/", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_documentcontainer( \
+        _stream, _store);
     if (_r < 0) {
         return _r;
     }
 
-    return vba__projectstream__S_OK;
+    # [MS-PPT] 2.1.2 PowerPoint Document Stream
+    #
+    # Part 11: Identify the VBA project persist object.
+    #
+    #   1. Read the DocInfoListContainer record (section 2.4.4), if present,
+    #      specified by the docInfoList field of the DocumentContainer record
+    #      identified in step 4 of Part 2. If not present, skip to step 6.
+    #
+    #   2. Read the VBAInfoContainer (section 2.4.10) child record, if present,
+    #      of the DocInfoListContainer record identified in step 1. If no such
+    #      child record exists, skip to step 6.
+    #
+    #   3. Lookup the value of the vbaInfoAtom.persistIdRef field of the
+    #      VBAInfoContainer record identified in step 2 in the persist object
+    #      directory constructed in step 8 of Part 1 to find the stream offset
+    #      of a persist object.
+    #
+    #   4. Seek to the stream offset specified in step 3.
+    #
+    #   5. Read the VbaProjectStg record at the current offset. Let this record
+    #      be a live record.
+    #
+    #   6. End of process. All live records have been identified.
+    #
+
+    # Part 11 - step 3
+    # jq -r `
+    #   ."PowerPoint Document"
+    #   .DcoumentContainer.docInfoList.rgChildRec[] |
+    #   select(.rh.recType == "1023").vbaInfoAtom.persistIdRef
+    # `
+    _idref_vba = 0;
+    astore__chdir(_store, "docInfoList/rgChildRec");
+    astore__enum_reset(_store);
+    while (! astore__enum_end(_store)) {
+        _i = astore__enum_next(_store);
+        if (astore__get(_store, _i "/rh/recType") == 1023) {
+            _idref_vba = astore__get(_store, _i "/vbaInfoAtom/persistIdRef");
+            break;
+        }
+    }
+    if (_idref_vba == 0) {
+        return vba__powerpointdocumentstream__S_FALSE;
+    }
+
+    _pos = astore__get(store, "@PersistObjectDirectory/" _idref_vba);
+    stream__iseek(_stream, _pos);
+    astore__fork(store, "VbaProjectStg", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
+        _stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    return vba__powerpointdocumentstream__S_OK;
 }
 # }}}
 # {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_usereditatom
@@ -26182,7 +26574,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     #
     _v = stream__read_uint32(stream);
     if (astore__set(store, "lastSlideIdRef::uint32", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # version (16 bits)
@@ -26192,7 +26584,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # ignored.
     _v = stream__read_uint16(stream);
     if (astore__set(store, "version::uint16", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # minorVersion (8 bits)
@@ -26202,7 +26594,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     #
     _v = stream__read_uint8(stream);
     if (astore__set(store, "minorVersion::uint8,mustbe(0)", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # majorVersion (8 bits)
@@ -26212,7 +26604,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     #
     _v = stream__read_uint8(stream);
     if (astore__set(store, "majorVersion::uint8,mustbe(3)", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # offsetLastEdit (4 bytes)
@@ -26225,7 +26617,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     #
     _v = stream__read_uint32(stream);
     if (astore__set(store, "offsetLastEdit::uint32", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # offsetPersistDirectory (4 bytes)
@@ -26237,7 +26629,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # record.
     _v = stream__read_uint32(stream);
     if (astore__set(store, "offsetPersistDirectory::uint32", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # docPersistIdRef (4 bytes)
@@ -26246,8 +26638,8 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # the persist object directory to find the offset of the DocumentContainer
     # record (section 2.4.1). It MUST be 0x00000001.
     _v = stream__read_uint32(stream);
-    if (astore__set(store, "docPersistIdRef::uint32,mustbe(1)", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+    if (astore__set(store, "docPersistIdRef::PersistIdRef,mustbe(1)", _v) < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # persistIdSeed (4 bytes)
@@ -26258,7 +26650,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # records.
     _v = stream__read_uint32(stream);
     if (astore__set(store, "persistIdSeed::uint32", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # lastView (2 bytes)
@@ -26267,7 +26659,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # used to display the file.
     _v = stream__read_uint16(stream);
     if (astore__set(store, "lastView::uint16", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
     #
     # unused (2 bytes)
@@ -26275,7 +26667,7 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     # Undefined and MUST be ignored.
     _v = stream__read_uint16(stream);
     if (astore__set(store, "unused", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
 
     if (stream__available_size(stream) <= 0) {
@@ -26291,8 +26683,1504 @@ __vba__ppt__powerpointdocumentstream__unpack_usereditatom( \
     #
     _v = stream__read_uint32(stream);
     if (astore__set(store, "encryptSessionPersistIdRef::uint32", _v) < 0) {
-        return __vba__ppt__currentuserstream__E_UNEXPECTED;
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_persistdirectoryatom
+#
+# [MS-PPT] 2.3.4 PersistDirectoryAtom
+#
+# An atom record that specifies a persist object directory. Each persist
+# object identifier specified MUST be unique in that persist object
+# directory.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  rgPersistDirEntry (variable)                 |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_persistdirectoryatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _size, _last \
+) {
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        0, 0, "6002:RT_PersistDirectoryAtom");
+    if (_r < 0) {
+        return _r;
+    }
+    #
+    # rgPersistDirEntry (variable)
+    #
+    # An array of PersistDirectoryEntry structures (section 2.3.5) that
+    # specifies persist object identifiers and stream offsets to persist
+    # objects. The size, in bytes, of the array is specified by rh.recLen.
+    _size = astore__get(_store, "recLen");
+    _last = stream__available_size(stream);
+    astore__fork(store, "PersistDirectoryEntry", _store);
+    do {
+        _r = __vba__ppt__powerpointdocumentstream__unpack_persistdirectoryentry( \
+            stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    } while (_last - stream__available_size(stream) < _size);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_persistdirectoryentry
+#
+# [MS-PPT] 2.3.5 PersistDirectoryEntry
+#
+# A structure that specifies a compressed table of sequential persist object
+# identifiers and stream offsets to associated persist objects.
+#
+# Let the corresponding user edit be specified by the UserEditAtom record
+# (section 2.3.3) that most closely follows the PersistDirectoryAtom record
+# (section 2.3.4) that contains this structure.
+#
+# Let the corresponding persist object directory be specified by the
+# PersistDirectoryAtom record that contains this structure.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |              persistId                |       cPersist        |
+# +---------------------------------------+-----------------------+
+# |                   rgPersistOffset (variable)                  |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_persistdirectoryentry( \
+    stream, store, \
+    \
+    _r, _v, _size, _store, _id, _entry_path \
+) {
+    #
+    # persistId (20 bits)
+    #
+    # An unsigned integer that specifies a starting persist object identifier.
+    # It MUST be less than or equal to 0xFFFFE. The first entry in
+    # rgPersistOffset is associated with persistId. The next entry, if
+    # present, is associated with persistId plus 1. Each entry in
+    # rgPersistOffset is associated with a persist object identifier in this
+    # manner, with the final entry associated with persistId + cPersist – 1.
+    _v = _id = stream__read_bits(stream, 20);
+    if (astore__set(store, "persistId::bits<20>", _v) < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    #
+    # cPersist (12 bits)
+    #
+    # An unsigned integer that specifies the count of items in
+    # rgPersistOffset. It MUST be greater than or equal to 0x001.
+    _v = _size = stream__read_bits(stream, 12);
+    if (astore__set(store, "cPersist::bits<12>", _v) < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    #
+    # rgPersistOffset (variable)
+    #
+    # An array of PersistOffsetEntry (section 2.3.6) that specifies stream
+    # offsets to persist objects. The count of items in the array is specified
+    # by cPersist. The value of each item MUST be greater than or equal to
+    # offsetLastEdit in the corresponding user edit and MUST be less than the
+    # offset, in bytes, of the corresponding persist object directory.
+    #
+    # [MS-PPT] 2.3.6 PersistOffsetEntry
+    #
+    # An unsigned 4-byte integer that specifies an offset, in bytes,
+    # from the beginning of the PowerPoint Document Stream (section 2.1.2) to a
+    # persist object.
+    #
+    _entry_path = "/PowerPoint Document/@PersistObjectDirectory/";
+    astore__fork(store, "rgPersistOffset::uint32[]", _store);
+    for (_i = 1; _i <= _size; ++_i) {
+        _v = stream__read_uint32(stream);
+        if (astore__set(_store, _i, _v) < 0) {
+            return __vba__vbaprojectstream__E_UNEXPECTED;
+        }
+        # Part 1 - step 8
+        if (astore__set(store, _entry_path _id++, _v) < 0) {
+            return __vba__vbaprojectstream__E_UNEXPECTED;
+        }
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_docuemntcontainer
+#
+# [MS-PPT] 2.4.1 DocumentContainer
+#
+# A container record that specifies information about the document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    documentAtom (48 bytes)                    |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     exObjList (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  documentTextInfo (variable)                  |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  soundCollection (variable)                   |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    drawingGroup (variable)                    |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     masterList (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    docInfoList (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      slideHF (variable)                       |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      notesHF (variable)                       |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     slideList (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     notesList (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |            slideShowDocInfoAtom (88 byres, optional)          |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     namedShows (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                       summary (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                 docRoutingSlipAtom (variable)                 |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |             printOptionsAtom (13 bytes, optional)             |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------+-----------------------------------------------+
+# |      ...      |      rtCustomTableStylesAtom1 (variable)      |
+# +---------------+-----------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                   endDocumentAtom (variable)                  |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |               rtCustomTableStylesAtom2 (variable)             |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_documentcontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos \
+) {
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "1000:RT_Document");
+    if (_r < 0) {
+        return _r;
+    }
+
+    _pos = stream__pos(stream);
+
+    # documentAtom (48 bytes)
+    #
+    # A DocumentAtom record (section 2.4.2) that specifies size
+    # information for presentation slides and notes slides.
+    astore__fork(store, "documentAtom::DocumentAtom", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_documentatom( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # exObjList (variable)
+    #
+    # An optional ExObjListContainer record (section 2.10.1) that specifies
+    # the list of external objects in the document.
+    astore__fork(store, "exObjList::ExObjListContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_exobjlistcontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # documentTextInfo (variable)
+    #
+    # DocumentTextInfoContainer record (section 2.9.1) that specifies the
+    # default text styles for the document.
+    astore__fork(store, "documentTextInfo::DocumentTextInfoContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_docuemnttextinfocontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # soundCollection (variable)
+    #
+    # An optional SoundCollectionContainer record (section 2.4.16.1) that
+    # specifies the list of sounds in the file.
+    astore__fork(store, "soundCollection::SoundCollectionContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_sourndcollectioncontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # drawingGroup (variable)
+    #
+    # A DrawingGroupContainer record (section 2.4.3) that specifies drawing
+    # information for the document.
+    astore__fork(store, "drawingGroup::DrawingGroupContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_drawinggroupcontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # masterList (variable)
+    #
+    # A MasterListWithTextContainer record (section 2.4.14.1) that specifies
+    # the list of main master slides and title master slides.
+    astore__fork(store, "masterList::MasterListWithTextContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_masterlistwithtextcontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # docInfoList (variable)
+    #
+    # An optional DocInfoListContainer record (section 2.4.4) that specifies
+    # additional document information.
+    astore__fork(store, "docInfoList::DocInfoListContainer", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_docinfolistcontainer( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    # TODO: don`t skip
+    stream__skip( \
+        stream, astore__get(stream, "rh/recLen") - stream__pos(stream) + _pos);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_docuemntatom
+#
+# [MS-PPT] 2.4.2 DocumentAtom
+#
+# An atom record that specifies information about the entire document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                           slideSize                           |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                           notesSize                           |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                          serverZoom                           |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_documentatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _size \
+) {
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header for
+    # this record. Sub-fields are further specified in the following table.
+    #
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0x1.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_DocumentAtom (section 2.13.24).   |
+    # +-----------------+----------------------------------------------+
+    # | rh.recLen       | MUST be 0x00000028.                          |
+    # +-----------------+----------------------------------------------+
+    #
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        1, 0, "1001:RT_DocumentAtom", ",mustbe(40)");
+    if (_r < 0) {
+        return _r;
+    }
+    # slideSize (8 bytes)
+    #
+    # A PointStruct structure (section 2.12.5) that specifies the dimensions
+    # of the presentation slides in master units. Sub-fields are further
+    # specified in the following table.
+    #
+    # +---------------+--------------------------------------------------+
+    # | Field         | Meaning                                          |
+    # +---------------+--------------------------------------------------+
+    # | slideSize.x   | Specifies the width. It MUST be greater than or  |
+    # |               | equal to 0x00000240 and less than or equal to    |
+    # |               | 0x00007E00.                                      |
+    # +---------------+--------------------------------------------------+
+    # | slideSize.y   | Specifies the height. It MUST be greater than or |
+    # |               | equal to 0x00000240 and less than or equal to    |
+    # |               | 0x00007E00.                                      |
+    # +---------------+--------------------------------------------------+
+    #
+    astore__fork(store, "slideSize::PointStruct", _store);
+    _r = vba__ppt__common__unpack_pointstruct(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # notesSize (8 bytes)
+    #
+    # A PointStruct structure that specifies the dimensions of the notes
+    # slides and handout slides in master units. Sub-fields are further
+    # specified in the following table.
+    #
+    # +---------------+--------------------------------------------------+
+    # | Field         | Meaning                                          |
+    # +---------------+--------------------------------------------------+
+    # | notesSize.x   | Specifies the width. It MUST be greater than or  |
+    # |               | equal to 0x00000240 and less than or equal to    |
+    # |               | 0x00007E00.                                      |
+    # +---------------+--------------------------------------------------+
+    # | notesSize.y   | Specifies the height. It MUST be greater than or |
+    # |               | equal to 0x00000240 and less than or equal to    |
+    # |               | 0x00007E00.                                      |
+    # +---------------+--------------------------------------------------+
+    #
+    astore__fork(store, "notesSize::PointStruct", _store);
+    _r = vba__ppt__common__unpack_pointstruct(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # serverZoom (8 bytes)
+    #
+    # A RatioStruct structure (section 2.12.6) that specifies a zoom level for
+    # visual representations of the document in Object Linking and Embedding
+    # (OLE) scenarios. The ratio specified by this field MUST be greater than
+    # zero.
+    astore__fork(store, "serverZoom::RatioStruct", _store);
+    _r = vba__ppt__common__unpack_ratiostruct(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # notesMasterPersistIdRef (4 bytes)
+    #
+    # A PersistIdRef (section 2.2.21) that specifies the value to look up in
+    # the persist object directory to find the offset of a NotesContainer
+    # record (section 2.5.6) that specifies the notes master slide.
+    _v = stream__read_uint32(stream);
+    astore__set(store, "notesMasterPersistIdRef::PersistIdRef", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # handoutMasterPersistIdRef (4 bytes)
+    #
+    # A PersistIdRef that specifies the value to look up in the persist object
+    # directory to find the offset of a HandoutContainer record (section 2.5.8)
+    # that specifies the handout master slide.
+    _v = stream__read_uint32(stream);
+    astore__set(store, "handoutMasterPersistIdRef::PersistIdRef", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # firstSlideNumber (2 bytes)
+    #
+    # An unsigned integer that specifies the starting number for numbering
+    # slides. It MUST be less than 10000.
+    _v = stream__read_uint16(stream);
+    astore__set(store, "firstSlideNumber::uint16", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # slideSizeType (2 bytes)
+    #
+    # A SlideSizeEnum enumeration (section 2.13.26) that specifies the type of
+    # a presentation slide size.
+    _v = stream__read_uint16(stream);
+    astore__set(store, "slideSizeType::SlideSizeEnum," \
+                       "a_kind_of(SlideSizeEnum)", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # fSaveWithFonts (1 byte)
+    #
+    # A bool1 (section 2.2.2) that specifies whether fonts are embedded in the
+    # document.
+    _v = stream__read_uint8(stream);
+    astore__set(store, "fSaveWithFonts::bool1");
+    if (_r < 0) {
+        return _r;
+    }
+    # fOmitTitlePlace (1 byte)
+    #
+    # A bool1 that specifies whether placeholder shapes on the title slide are
+    # not displayed.
+    _v = stream__read_uint8(stream);
+    astore__set(store, "fOmitTitlePlace::bool1");
+    if (_r < 0) {
+        return _r;
+    }
+    # fRightToLeft (1 byte)
+    #
+    # A bool1 that specifies whether the user interface displays the document
+    # optimized for right-to-left languages.
+    _v = stream__read_uint8(stream);
+    astore__set(store, "fRightToLeft::bool1");
+    if (_r < 0) {
+        return _r;
+    }
+    # fShowComments (1 byte)
+    #
+    # A bool1 that specifies whether presentation comments are displayed.
+    _v = stream__read_uint8(stream);
+    astore__set(store, "fShowComments::bool1");
+    if (_r < 0) {
+        return _r;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_exobjlistcontainer
+#
+# [MS-PPT] 2.10.1 ExObjListContainer
+#
+# A container record that specifies a list of external objects in the document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                         exObjListAtom                         |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     rgChildRec (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_exobjlistcontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _size, _i \
+) {
+    _pos = stream__pos(stream);
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header for
+    # this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0xf.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_ExternalObjectList                |
+    # +-----------------+----------------------------------------------+
+    #
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "1033:RT_ExternalObjectList");
+    if (_r < 0) {
+        E__message = "";
+        stream__iseek(stream, _pos);
+        return __vba__ppt__powerpointdocumentstream__S_FALSE;
+    }
+
+    # exObjListAtom (12 bytes)
+    #
+    # An ExObjListAtom record that specifies list-specific properties.
+    #
+    astore__fork(store, "exObjListAtom::ExObjListAtom", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_exobjlistatom(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    # rgChildRec (variable)
+    #
+    # An array of ExObjListSubContainer records that specifies the external
+    # objects. The length, in bytes, of the array is specified by the
+    # following formula:
+    #
+    # rh.recLen - 12.
+    #
+    _size = astore__get(store, "rh/recLen") - 12;
+# TODO: parse ExObjListSubContainer
+#    _pos = stream__pos(stream);
+#    for (_pos = stream__pos(stream); stream__pos(stream) < _pos + _size; ++_i) {
+#        astore__fork(store, "rgChildRec::ExObjListSubContainer[]/" _i, _store);
+#        _r = __vba__ppt__powerpointdocumentstream__unpack_exobjlistsubcontainer( \
+#            stream, _store);
+#        if (_r < 0) {
+#            return _r;
+#        }
+#    }
+    stream__skip(steram, _size + 8);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_exobjlistatom
+#
+# [MS-PPT] 2.10.3 ExObjListAtom
+#
+# A container record that specifies a list of external objects in the document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                          exObjIdSeed                          |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_exobjlistatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _size \
+) {
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header for
+    # this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0xf.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_ExternalObjectListAtom            |
+    # +-----------------+----------------------------------------------+
+    # | rh.recLen       | MUST be 0x00000004.                          |
+    # +-----------------+----------------------------------------------+
+    #
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        0, 0, "1033:RT_ExternalObjectListAtom", 4);
+    if (_r < 0) {
+        return _r;
+    }
+    # exObjIdSeed (4 bytes)
+    #
+    # A signed integer that specifies a seed for creating a new ExObjId
+    # (section 2.2.7) or ExHyperlinkId (section 2.2.5) value. It MUST be
+    # greater than or equal to the largest ExObjId value in the file as
+    # specified by the ExMediaAtom record (section 2.10.6) or ExOleObjAtom
+    # record (section 2.10.12) and MUST be greater than or equal to the largest
+    # ExHyperlinkId value in the file as specified by the ExHyperlinkAtom
+    # record (section 2.10.17).
+    # It MUST be greater than or equal to 0x00000001.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "exObjIdSeed", _v) < 0) {
+        return __vba__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_docuemnttextinfocontainer
+#
+# [MS-PPT] 2.9.1 DocumentTextInfoContainer
+#
+# A container record that specifies default settings and user preferences for
+# text.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      kinsoku (variable)                       |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                   fontCollection (variable)                   |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  textCFDefaultsAtom (variable)                |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  textPFDefaultsAtom (variable)                |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                   defaultRulerAtom (variable)                 |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                  textSIDefaultsAtom (variable)                |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                 textMasterStyleAtom (variable)                |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_docuemnttextinfocontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _size \
+) {
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "1010:RT_Environment");
+    if (_r < 0) {
+        return _r;
+    }
+
+    # TODO: don`t skip
+    _size = astore__get(store, "rh/recLen");
+    stream__skip(stream, _size);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_sourndcollectioncontainer
+#
+# [MS-PPT] 2.4.16.1 SoundCollectionContainer
+#
+# A container record that specifies all embedded sounds in the document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      soundCollectionAtom                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                   rgSoundContainer (variable)                 |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_sourndcollectioncontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _size, _pos \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "2020:RT_SoundCollection");
+    if (_r < 0) {
+        E__message = "";
+        stream__iseek(stream, _pos);
+        return __vba__ppt__powerpointdocumentstream__S_FALSE;
+    }
+
+    # TODO: don`t skip
+    _size = astore__get(store, "rh/recLen");
+    stream__skip(stream, _size);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_drawinggroupcontainer
+#
+# [MS-PPT] 2.4.3 DrawingGroupContainer
+#
+# A container record that specifies drawing information for the document.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    OfficeArtDgg (variable)                    |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_drawinggroupcontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _size, _pos \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header for
+    # this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0xF.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_DrawingGroup                      |
+    # +-----------------+----------------------------------------------+
+    #
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "1035:RT_DrawingGroup");
+    if (_r < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    # TODO: don`t skip
+    _size = astore__get(store, "rh/recLen");
+    stream__skip(stream, _size);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_masterlistwithtextcontainer
+#
+# [MS-PPT] 2.4.14.1 MasterListWithTextContainer
+#
+# A container record that specifies a list of references to main master slides
+# and title master slides.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                 rgMasterPersistAtom (variable)                |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_masterlistwithtextcontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _size, _pos \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header for
+    # this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0xF.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x001.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_SlideListWithText                 |
+    # +-----------------+----------------------------------------------+
+    #
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 1, "4080:RT_SlideListWithText");
+    if (_r < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    # TODO: don`t skip
+    _size = astore__get(store, "rh/recLen");
+    stream__skip(stream, _size);
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_docinfolistcontainer
+#
+# [MS-PPT] 2.4.4 DocInfoListContainer
+#
+# A container record that specifies information about the document and document
+# display settings.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     rgChildRec (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_docinfolistcontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _size \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        15, 0, "2000:RT_List");
+    if (_r < 0) {
+        E__message = "";
+        stream__iseek(stream, _pos);
+        return __vba__ppt__powerpointdocumentstream__S_FALSE;
+    }
+    # rgChildRec (variable)
+    #
+    # An array of DocInfoListSubContainerOrAtom records (section 2.4.5) that
+    # specifies information about the document or how the document is
+    # displayed. The size, in bytes, of the array is specified by rh.recLen.
+    # The rh.recType of the DocInfoListSubcontainerOrAtom items MUST be one of
+    # the following record types: RT_ProgTags (section 2.13.24),
+    # RT_NormalViewSetInfo9 (section 2.13.24), RT_NotesTextViewInfo9 (section
+    # 2.13.24), RT_OutlineViewInfo (section 2.13.24), RT_SlideViewInfo
+    # (section 2.13.24), RT_SorterViewInfo (section 2.13.24), or RT_VbaInfo
+    # (section 2.13.24). Each record type MUST NOT occur more than once, except
+    # for the RT_SlideViewInfo record type, which MUST NOT occur more than
+    # twice. If the RT_SlideViewInfo record type occurs twice, one occurrence
+    # MUST refer to a SlideViewInfoContainer record (section 2.4.21.9) and the
+    # other occurrence MUST refer to a NotesViewInfoContainer record (section
+    # 2.4.21.12).
+    _size = astore__get(store, "rt/recLen");
+    astore__fork(store, "rgChildRec::DocInfoListSubContainerOrAtom", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_docinfolistsubcontaineroratom( \
+        stream, _store, _size);
+    if (_r < 0) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_docinfolistsubcontaineroratom
+#
+# [MS-PPT] 2.4.5 DocInfoListSubContainerOrAtom
+#
+# A variable type record whose type and meaning are dictated by the value of
+# rh.recType, as specified in the following table.
+#
+# +------------------------+--------------------------------------------------+
+# | Value                  | Meaning                                          |
+# +------------------------+--------------------------------------------------+
+# | RT_ProgTags            | A DocProgTagsContainer record (section 2.4.23.1) |
+# |                        | that specifies programmable tags containing      |
+# |                        | additional document data.                        |
+# +------------------------+--------------------------------------------------+
+# | RT_NormalViewSetInfo9  | A NormalViewSetInfoContainer record (section     |
+# |                        | 2.4.21.2) that specifies display preferences for |
+# |                        | a view optimized for the simultaneous display of |
+# |                        | all presentation slides, a specific presentation |
+# |                        | slide, and the text of the notes slide associated|
+# |                        | with that specific presentation slide.           |
+# +------------------------+--------------------------------------------------+
+# | RT_NotesTextViewInfo9  | A NotesTextViewInfoContainer record (section     |
+# |                        | 2.4.21.4) that specifies display preferences for |
+# |                        | a view optimized for the display of the text on  |
+# |                        | the notes slides.                                |
+# +------------------------+--------------------------------------------------+
+# | RT_OutlineViewInfo     | A OutlineViewInfoContainer record (section       |
+# |                        | 2.4.21.6) that specifies display preferences for |
+# |                        | a view optimized for the display of the text on  |
+# |                        | the presentation slides.                         |
+# +------------------------+--------------------------------------------------+
+# | RT_SlideViewInfo       | A SlideViewInfoInstance record (section 2.4.21.8)|
+# |                        | that specifies display preferences for a view    |
+# |                        | optimized for the display of presentation slides |
+# |                        | or notes slides.                                 |
+# +------------------------+--------------------------------------------------+
+# | RT_SorterViewInfo      | A SorterViewInfoContainer record (section        |
+# |                        | 2.4.21.13) that specifies display preferences for|
+# |                        | a view optimized for the simultaneous display of |
+# |                        | multiple presentation slides.                    |
+# +------------------------+--------------------------------------------------+
+# | RT_VbaInfo             | A VBAInfoCo
+# +------------------------+--------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_docinfolistsubcontaineroratom( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _leftsize, _type, _i \
+) {
+    _pos = stream__pos(stream);
+    _leftsize = astore__get(store, "../rh/recLen");
+
+    _leftsize -= 8;  # sizeof(RecordHeader)
+
+    while (_leftsize > 0) {
+        # rh (8 bytes)
+        astore__fork(store, ++_i "/rh::RecordHeader", _store);
+        _r = vba__ppt__common__unpack_recordheader( \
+            stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+
+        _size = astore__get(_store, "recLen");
+        if (_size <= 0) {
+            return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+        }
+
+        _type = astore__get(_store, "recType");
+        if (_type == 1023) {  # RT_VbaInfo
+            astore__fork(store, _i "::VBAInfoContainer", _store2);
+#            stream__rewind(stream, 8);  # sizeof(RecordHeader)
+            _r = __vba__ppt__powerpointdocumentstream__unpack_vbainfocontainer( \
+                stream, _store2);
+            if (_r < 0) {
+                return _r;
+            }
+        } else {
+            stream__skip(stream, _size);
+        }
+
+        _leftsize -= _size;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbainfocontainer
+#
+# [MS-PPT] 2.4.4 DocInfoListContainer
+#
+# A container record that specifies information about the document and document
+# display settings.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    vbaInfoAtom (20 bytes)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_vbainfocontainer( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _size \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0xF.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x001.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_VbaInfo (section 2.13.24).        |
+    # +-----------------+----------------------------------------------+
+    # | rh.recLen       | MUST be 0x00000014.                          |
+    # +-----------------+----------------------------------------------+
+
+    #astore__fork(store, "rh::RecordHeader", _store);
+    #_r = vba__ppt__common__unpack_recordheader( \
+    #    stream, _store, \
+    #    15, 1, "1023:RT_VbaInfo");
+    #if (_r < 0) {
+    #    return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    #}
+    if (astore__get(store, "rh/recVer") != 15) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    if (astore__get(store, "rh/recInstance") != 1) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    if (astore__get(store, "rh/recLen") != 20) {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    # vbaInfoAtom (20 bytes)
+    #
+    # A VBAInfoAtom record that specifies VBA information for this document.
+    astore__fork(store, "vbaInfoAtom::VBAInfoAtom", _store);
+    _r = __vba__ppt__powerpointdocumentstream__unpack_vbainfoatom( \
+        stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbainfoatom
+#
+# [MS-PPT] 2.4.11 VBAInfoAtom
+#
+# An atom record that specifies a reference to the VBA project storage.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                          persistIdRef                         |
+# +---------------------------------------------------------------+
+# |                           fHasMacros                          |
+# +---------------------------------------------------------------+
+# |                            version                            |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_vbainfoatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _size \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header
+    # for this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0x2.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x000.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_VbaInfoAtom.                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recLen       | MUST be 0x0000000C.                          |
+    # +-----------------+----------------------------------------------+
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, \
+        2, 0, "1024:RT_VbaInfoAtom", ",mustbe(12)");
+    if (_r < 0) {
+        return _r;
+    }
+    # persistIdRef (4 bytes)
+    #
+    # A PersistIdRef (section 2.2.21) that specifies the value to look up in
+    # the persist object directory to find the offset of a VbaProjectStg record
+    # (section 2.10.40).
+    _v = stream__read_uint32(stream);
+    astore__set(store, "persistIdRef::PersistIdRef", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # fHasMacros (4 bytes)
+    #
+    # An unsigned integer that specifies whether the VBA project storage
+    # contains data. It MUST be a value from the following table.
+    #
+    # +--------------+------------------------------------+
+    # | Value        | Meaning                            |
+    # +--------------+------------------------------------+
+    # | 0x00000000   | The VBA storage is empty.          |
+    # +--------------+------------------------------------+
+    # | 0x00000001   | The VBA storage contains data.     |
+    # +--------------+------------------------------------+
+    _v = stream__read_uint32(stream);
+    astore__set(store, "fHasMacros::uint32", _v);
+    if (_r < 0) {
+        return _r;
+    }
+    # version (4 bytes)
+    #
+    # An unsigned integer that specifies the VBA runtime version that
+    # generated the VBA project storage. It MUST be 0x00000002.
+    _v = stream__read_uint32(stream);
+    astore__set(store, "version::uint32,mustbe(2)", _v);
+    if (_r < 0) {
+        return _r;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbaprojectstg
+#
+# [MS-PPT] 2.10.40 VbaProjectStg
+#
+# A variable type record whose type and meaning are dictated by the value of
+# the record header member rh.recInstance of the contained storage, as
+# specified in the following table.
+#
+# +----------+---------------------------------------------------------------+
+# | Value    | Meaning                                                       |
+# +----------+---------------------------------------------------------------+
+# | 0x000    | A VbaProjectStgUncompressedAtom record that specifies         |
+# |          | uncompressed storage for a VBA project.                       |
+# +----------+---------------------------------------------------------------+
+# | 0x001    | A VbaProjectStgCompressedAtom record that specifies compressed|
+# |          | storage for a VBA project.                                    |
+# +----------+---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _rec_instance \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+    stream__rewind(stream, 8);  # sizeof(RecordHeader);
+
+    _rec_instance = astore__get(store, "rh/recInstance");
+    if (_rec_instance == 0) {
+        astore__fork(store, "VbaProjectStgUncompressedAtom", _store);
+        _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
+            stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    } else if (_rec_instance == 1) {
+        astore__fork(store, "VbaProjectStgCompressedAtom", _store);
+        _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
+            stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    } else {
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbaprojectstguncompressedatom
+#
+# [MS-PPT] 2.10.40 VbaProjectStg
+#
+# A variable type record whose type and meaning are dictated by the value of
+# the record header member rh.recInstance of the contained storage, as
+# specified in the following table.
+#
+# +----------+---------------------------------------------------------------+
+# | Value    | Meaning                                                       |
+# +----------+---------------------------------------------------------------+
+# | 0x000    | A VbaProjectStgUncompressedAtom record that specifies         |
+# |          | uncompressed storage for a VBA project.                       |
+# +----------+---------------------------------------------------------------+
+# | 0x001    | A VbaProjectStgCompressedAtom record that specifies compressed|
+# |          | storage for a VBA project.                                    |
+# +----------+---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _rec_instance \
+) {
+    _pos = stream__pos(stream);
+
+#    # rh (8 bytes)
+#    astore__fork(store, "rh::RecordHeader", _store);
+#    _r = vba__ppt__common__unpack_recordheader(stream, _store);
+#    if (_r < 0) {
+#        return _r;
+#    }
+
+    return __vba__ppt__powerpointdocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::ppt::powerpointdocumentstream::unpack_vbaprojectstgcompressedatom
+#
+# [MS-PPT] 2.10.42 VbaProjectStgCompressedAtom
+#
+# An atom record that specifies information about the compressed structured
+# storage (described in [MSDN-COM]) for a VBA project.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                              rh                               |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                        decompressedSize                       |
+# +---------------------------------------------------------------+
+# |               pptVbaProjStgCompressed (variable)              |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+function \
+__vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
+    stream, store, \
+    \
+    _r, _v, _store, _pos, _size, _fdict, _no \
+) {
+    _pos = stream__pos(stream);
+
+    # rh (8 bytes)
+    #
+    # A RecordHeader structure (section 2.3.1) that specifies the header
+    # for this record. Sub-fields are further specified in the following table.
+    # +-----------------+----------------------------------------------+
+    # | Field           | Meaning                                      |
+    # +-----------------+----------------------------------------------+
+    # | rh.recVer       | MUST be 0x0.                                 |
+    # +-----------------+----------------------------------------------+
+    # | rh.recInstance  | MUST be 0x001.                               |
+    # +-----------------+----------------------------------------------+
+    # | rh.recType      | MUST be RT_ExternalOleObjectStg.             |
+    # +-----------------+----------------------------------------------+
+    # rh (8 bytes)
+    astore__fork(store, "rh::RecordHeader", _store);
+    _r = vba__ppt__common__unpack_recordheader( \
+        stream, _store, 0, 1, "4113:RT_ExternalOleObjectStg");
+    if (_r < 0) {
+        return _r;
+    }
+    if (astore__get(store, "rh/recVer") != 0) {
+        print "a", astore__get(store, "rh/recVer")
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    if (astore__get(store, "rh/recInstance") != 1) {
+        print "b", astore__get(store, "rh/recInstance")
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    if (astore__get(store, "rh/recType") != 4113) {  # RT_ExternalOleObjectStg20
+        print "c", astore__get(store, "rh/recType")
+        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+    # decompressedSize (4 bytes)
+    #
+    # An unsigned integer that specifies the length of the storage after
+    # decompression.
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "decompressedSize", _v) < 0) {
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    # pptVbaProjStgCompressed (variable)
+    #
+    # An array of bytes that specifies a compressed structured storage
+    # (described in [MSDN-COM]) for the VBA project as specified in [MS-OVBA]
+    # section 2.2.1. The original bytes of the storage are compressed by the
+    # algorithm specified in [RFC 1950] and are decompressed by the algorithm
+    # specified in [RFC 1951]. The length, in bytes, of the field is specified
+    # by the following formula:
+    #
+    #   rh.recLen - 4
+    #
+
+    # [RFC 1950] 2.2. Data format
+    #
+    #      A zlib stream has the following structure:
+    #
+    #           0   1
+    #         +---+---+
+    #         |CMF|FLG|   (more-->)
+    #         +---+---+
+    #
+    #      (if FLG.FDICT set)
+    #
+    #           0   1   2   3
+    #         +---+---+---+---+
+    #         |     DICTID    |   (more-->)
+    #         +---+---+---+---+
+    #
+    #         +=====================+---+---+---+---+
+    #         |...compressed data...|    ADLER32    |
+    #         +=====================+---+---+---+---+
+    #
+    #      Any data which may appear after ADLER32 are not part of the zlib
+    #      stream.
+    #
+    #      CMF (Compression Method and flags)
+    #         This byte is divided into a 4-bit compression method and a 4-
+    #         bit information field depending on the compression method.
+    #
+    #            bits 0 to 3  CM     Compression method
+    #            bits 4 to 7  CINFO  Compression info
+    #
+    #      CM (Compression method)
+    #         This identifies the compression method used in the file. CM = 8
+    #         denotes the "deflate" compression method with a window size up
+    #         to 32K.  This is the method used by gzip and PNG (see
+    #         references [1] and [2] in Chapter 3, below, for the reference
+    #         documents).  CM = 15 is reserved.  It might be used in a future
+    #         version of this specification to indicate the presence of an
+    #         extra field before the compressed data.
+    #
+    #      CINFO (Compression info)
+    #         For CM = 8, CINFO is the base-2 logarithm of the LZ77 window
+    #         size, minus eight (CINFO=7 indicates a 32K window size). Values
+    #         of CINFO above 7 are not allowed in this version of the
+    #         specification.  CINFO is not defined in this specification for
+    #         CM not equal to 8.
+    #
+    #      FLG (FLaGs)
+    #         This flag byte is divided as follows:
+    #
+    #            bits 0 to 4  FCHECK  (check bits for CMF and FLG)
+    #            bit  5       FDICT   (preset dictionary)
+    #            bits 6 to 7  FLEVEL  (compression level)
+    #
+    #         The FCHECK value must be such that CMF and FLG, when viewed as
+    #         a 16-bit unsigned integer stored in MSB order (CMF*256 + FLG),
+    #         is a multiple of 31.
+    #
+    _v = stream__read_bits(stream, 4);
+    if (astore__set(store, "CM::bits<4>,mustbe(8)", _v) < 0) {  # 8:DEFLATE
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    _v = stream__read_bits(stream, 4);
+    if (astore__set(store, "CINFO::bits<4>", _v) < 0) {  # LZ77 window size
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    _v = stream__read_bits(stream, 5);
+    if (astore__set(store, "FCHECK::bits<5>", _v) < 0) {
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    _v = _fdict = stream__read_bits(stream, 1);
+    if (astore__set(store, "FDICT::bits<5>", _v) < 0) {
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    _v = stream__read_bits(stream, 2);
+    if (astore__set(store, "FLEVEL::bits<5>", _v) < 0) {
+        return __vba__vbaprojectstream__E_UNEXPECTED;
+    }
+    if (_fdict) {
+        _v = stream__read_uint32(stream);
+        if (astore__set(store, "DICTID::uint32", _v) < 0) {
+            return __vba__vbaprojectstream__E_UNEXPECTED;
+        }
+    }
+    _no = 0;
+    _pos = stream__pos(stream);
+    _size = astore__get(store, "rh/recLen");
+    stream__new(ostream);
+    do {
+        _r = zlib__inflate(stream, store, ostream, ++_no);
+        if (_r < 0) {
+            return _r;
+        }
+    } while (stream__pos(stream) - _pos < _size - 6);
+
+    _r =  cli__process_vbaproject_binary(ostream, "/CFB_NESTED");
+    if (_r < 0) {
+        __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
+    }
+
     return __vba__ppt__powerpointdocumentstream__S_OK;
 }
 # }}}
@@ -26325,14 +28213,14 @@ vba__vbaprojectstream__init(    _status) {
 
 function \
 vba__vbaprojectstream__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _r, _stream, _path \
 ) {
     _path = astore__get(store, "/@VBA Root Directory") "/" \
             astore__get(store, "/@VBA Directory") "/_VBA_PROJECT";
 
-    _r = cfb__unpack_stream(stream, store, _path, _stream);
+    _r = cfb__unpack_stream(stream, store, _path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -27419,7 +29307,7 @@ vba__modulestream__init(    _status) {
 #
 function \
 vba__modulestream__unpack( \
-    stream, \
+    stream, cfbpath, \
     \
     _stream_name, _offset, \
     _entry_no, \
@@ -27446,7 +29334,7 @@ vba__modulestream__unpack( \
 
         _path = _vbaroot "/" _vba "/" _stream_name;
 
-        _r = cfb__unpack_stream(stream, _store, _path, _istream);
+        _r = cfb__unpack_stream(stream, _store, _path, _istream, cfbpath);
         if (_r < 0) {
             return _r;
         }
@@ -27467,10 +29355,6 @@ vba__modulestream__unpack( \
             _r = vba__modulestream__unpack_pcode(_istream, _store_p);
             if (_r < 0) {
                 return _r;
-            }
-            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-                print "-------------------------------------------------------------------------------";
-                astore__pretty_print(_store, "/P-code/" _stream_name);
             }
         }
 
@@ -27525,12 +29409,7 @@ vba__modulestream__unpack( \
             } else {  # CRLF or LF
                 gsub("\r\n", "\n", _src);
             }
-            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-                print "-------------------------------------------------------------------------------";
-                print _src;
-            } else {
-                astore__set(_store, "/@Source/" _stream_name, _src)
-            }
+            astore__set(_store, "/@Source/" _stream_name, _src)
         }
     }
 
@@ -27942,7 +29821,7 @@ forms20__init(    _status) {
 
 function \
 forms20__unpack( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _stream_name, _entry, _store, _path, _r, _store_p, _vbaroot \
 ) {
@@ -27955,9 +29834,9 @@ forms20__unpack( \
         _stream_name = astore__get(_store, _entry "/StreamNameRecord/StreamName");
         _path = _vbaroot "/" _stream_name;
 
-        if (astore__has(store, "/CFB/@FileID" _path "/\003VBFrame/id")) {  # VBFrame exists
+        if (astore__has(store, cfbpath "/@FileID" _path "/\003VBFrame/id")) {  # VBFrame exists
             astore__new(_store_p, "/Forms");
-            _r = __forms20__unpack_formparts(stream, _store_p, _path);
+            _r = __forms20__unpack_formparts(stream, _store_p, _path, cfbpath);
             if (_r < 0) {
                 return _r;
             }
@@ -27971,11 +29850,11 @@ forms20__unpack( \
 # {{{ [MS-OFORMS] 2.1.2 Control Streams
 function \
 __forms20__unpack_formparts( \
-    stream, store, path, \
+    stream, store, path, cfbpath, \
     \
     _v, _r, _path, _store, _title, _store_c, _entry \
 ) {
-    astore__new(_store_c, "/CFB/@FileID" path);
+    astore__new(_store_c, cfbpath "/@FileID" path);
 
     while (! astore__enum_end(_store_c)) {
         _entry = astore__enum_next(_store_c);
@@ -27988,36 +29867,27 @@ __forms20__unpack_formparts( \
         if (_entry == "\001CompObj") {
             astore__new(_store, "/Forms" _path "/CompObjStream");
             # CompObj stream
-            _r = __forms20__unpack_compobjstream(stream, _store, _path);
+            _r = __forms20__unpack_compobjstream(stream, _store, _path, cfbpath);
             if (_r < 0) {
                 return _r;
             }
-
-            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-                _title = "[File \"" path "/\\001CompObj\"]";
-                printf "-------------------------------------------------------------------------------\n" \
-                       _title "\n" \
-                       "-------------------------------------------------------------------------------\n";
-                astore__pretty_print(_store, ".");
-            }
-
         } else if (_entry == "\003VBFrame") {
             # VBFrame stream
-            _r = forms20__unpack_vbframestream(stream, store, _path);
+            _r = forms20__unpack_vbframestream(stream, store, _path, cfbpath);
             if (_r < 0) {
                 return _r;
             }
         } else if (_entry == "f") {
             # Form stream
-            _r = forms20__unpack_formstream(stream, store, _path);
+            _r = forms20__unpack_formstream(stream, store, _path, cfbpath);
             if (_r < 0) {
                 return _r;
             }
             _v = astore__get(store, "/Forms" _path "/SiteData/CountOfSites");
             _path = __astore__path_canonicalize(_path "/../o");
-            if (astore__has(store, "/CFB/@FileID" _path)) {
+            if (astore__has(store, cfbpath "/@FileID" _path)) {
                 # Object stream
-                _r = forms20__unpack_objectstream(stream, store, _path);
+                _r = forms20__unpack_objectstream(stream, store, _path, cfbpath);
                 if (_r < 0) {
                     return _r;
                 }
@@ -28044,7 +29914,7 @@ __forms20__unpack_formparts( \
             # Values of ID greater than 10 MUST NOT be preceded by a leading zero.
             #
             # '}'
-            _r = __forms20__unpack_formparts(stream, store, _path);
+            _r = __forms20__unpack_formparts(stream, store, _path, cfbpath);
             if (_r < 0) {
                 return _r;
             }
@@ -28105,11 +29975,11 @@ __forms20__unpack_formparts( \
 # '}'
 function \
 __forms20__unpack_compobjstream( \
-    stream, store, path, \
+    stream, store, path, cfbpath, \
     \
     _store, _v, _r, _stream \
 ) {
-    _r = cfb__unpack_stream(stream, store, path, _stream);
+    _r = cfb__unpack_stream(stream, store, path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -28680,13 +30550,13 @@ forms20__unpack_formembeddedactivexcontrolcached( \
 # '}'
 function \
 forms20__unpack_formstream( \
-    stream, store, path, \
+    stream, store, path, cfbpath, \
     \
     _r, _stream, _store \
 ) {
     astore__new(_store, "/Forms" path);
 
-    _r = cfb__unpack_stream(stream, _store, path, _stream);
+    _r = cfb__unpack_stream(stream, _store, path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -28694,13 +30564,6 @@ forms20__unpack_formstream( \
     _r = forms20__unpack_formcontrol(_stream, _store);
     if (_r < 0) {
         return _r;
-    }
-
-    if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-        printf "-------------------------------------------------------------------------------\n" \
-               "[File \"" path "\"]\n" \
-               "-------------------------------------------------------------------------------\n";
-        astore__pretty_print(_store, "/Forms" path);
     }
 
     return forms20__S_OK;
@@ -28721,14 +30584,14 @@ forms20__unpack_formstream( \
 # '}'
 function \
 forms20__unpack_objectstream( \
-    stream, store, path, \
+    stream, store, path, cfbpath, \
     \
     _v, _r, _i, _stream, _store, _size, \
     _count, _index, _store_f, _remain \
 ) {
     astore__new(_store_f, "/Forms" path "/../f");
 
-    _r = cfb__unpack_stream(stream, store, path, _stream);
+    _r = cfb__unpack_stream(stream, store, path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -28753,13 +30616,6 @@ forms20__unpack_objectstream( \
         if (astore__set(_store, "/Forms" path "/@Remained", _v) < 0) {
             return forms20__E_UNEXPECTED;
         }
-    }
-
-    if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-        printf "-------------------------------------------------------------------------------\n" \
-               "[File \"" path "\"]\n" \
-               "-------------------------------------------------------------------------------\n";
-        astore__pretty_print(_store, "/Forms" path);
     }
 
     return forms20__S_OK;
@@ -34205,11 +36061,11 @@ forms20__unpack_variouspropertybits( \
 # '}'
 function \
 forms20__unpack_vbframestream( \
-    stream, store, path, \
+    stream, store, path, cfbpath, \
     \
     _size, _src, _r, _stream, _title, _syskind \
 ) {
-    _r = cfb__unpack_stream(stream, store, path, _stream);
+    _r = cfb__unpack_stream(stream, store, path, _stream, cfbpath);
     if (_r < 0) {
         return _r;
     }
@@ -34291,7 +36147,6 @@ cli__init(    _i, _status, _buf) {
     __cli__S_opt_print = OPT_PRINT_SRC;
 
     __cli__S_filecount = 0;
-    __cli__S_show_header = 1;
 
     cli__E_NOTIMPL      = -16385;
     cli__E_FAIL         = -16389;
@@ -34650,7 +36505,7 @@ cli__process_stream( \
     stream__rewind(stream, 8);
     if (_v == cfb__C_magic_CFB_STORAGE) {
         # input may be raw vbaProject.bin
-        return cli__process_vbaproject_binary(stream);
+        return cli__process_vbaproject_binary(stream, "/CFB");
     } else if (_v == xml__C_magic_XML_DECLARATION) {
         return cli__process_mso_xml(stream);
     }
@@ -34661,28 +36516,10 @@ cli__process_stream( \
         return cli__E_UNEXPECTED;
     }
 
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " ZIP information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/Zip");
-        }
-    }
-
     astore__new(_store, "/ooxml");
     _r = cli__extract_vba(stream, _store);
     if (_r < 0) {
         return _r;
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_OOX)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " OOXML information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/ooxml");
-        }
     }
 
     _vbapath = astore__get(_store, "/ooxml/@VBA Path");
@@ -34694,33 +36531,24 @@ cli__process_stream( \
     }
 
     # process unzipped stream
-    return cli__process_vbaproject_binary(_stream);
+    return cli__process_vbaproject_binary(_stream, "/CFB");
 }
 # }}}
 # {{{ cli::process_vbaproject_binary
 function \
 cli__process_vbaproject_binary( \
-    stream, \
+    stream, cfbpath, \
     \
-    _store, _r, _status, _continue \
+    _store, _r, _status, _continue, _stream_name, _hairline \
 ) {
-    astore__new(_store, "/CFB");
+    astore__new(_store, cfbpath);
     _r = cfb__unpack(stream, _store);
     if (_r < 0) {
         return _r;
     }
 
-    if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " CFB information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/CFB");
-        }
-    }
-
     # detect VBA root directory
-    _r = __cli__detect_vbaroot(stream, _store);
+    _r = __cli__detect_vbaroot(stream, _store, cfbpath);
     if (_r < 0) {
         # may be PowerPoint(*.ppt) or Visio(*.vsd)
         if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
@@ -34730,7 +36558,7 @@ cli__process_vbaproject_binary( \
             if (_r < 0) {
                 return _r;
             }
-            _r = vba__ppt__currentuserstream__unpack(stream, _store);
+            _r = vba__ppt__currentuserstream__unpack(stream, _store, cfbpath);
             if (_r < 0) {
                 return _r;
             }
@@ -34739,16 +36567,18 @@ cli__process_vbaproject_binary( \
             if (_r < 0) {
                 return _r;
             }
-            _r = vba__ppt__powerpointdocumentstream__unpack(stream, _store);
+            _r = vba__ppt__powerpointdocumentstream__unpack(stream, _store, cfbpath);
             if (_r < 0) {
                 return _r;
             }
+
+            return cli__S_OK;
         } else {
             return _r;
         }
     } else {
         astore__new(_store, "/VBA");
-        _r = vba__dirstream__unpack(stream, _store);
+        _r = vba__dirstream__unpack(stream, _store, cfbpath);
         if (_r < 0) {
             return _r;
         }
@@ -34760,7 +36590,7 @@ cli__process_vbaproject_binary( \
             return cli__E_UNEXPECTED;
         }
         astore__new(_store, "/_VBA_PROJECT");
-        _r = vba__vbaprojectstream__unpack(stream, _store);
+        _r = vba__vbaprojectstream__unpack(stream, _store, cfbpath);
         if (_r < 0) {
             return _r;
         }
@@ -34771,7 +36601,7 @@ cli__process_vbaproject_binary( \
         if (_status < 0) {
             return _status;
         }
-        _r = vba__modulestream__unpack(stream);
+        _r = vba__modulestream__unpack(stream, cfbpath);
         if (_r < 0) {
             return _r;
         }
@@ -34780,70 +36610,17 @@ cli__process_vbaproject_binary( \
     if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
         astore__new(_store, "/PROJECT");
         _r = vba__projectstream__init();
+        _r = vba__projectstream__unpack(stream, _store, cfbpath);
         if (_r < 0) {
             return _r;
         }
-        _r = vba__projectstream__unpack(stream, _store);
-        if (_r < 0) {
-            return _r;
-        }
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " PROJECT stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/PROJECT");
-        }
     }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " _VBA_PROJECT stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/_VBA_PROJECT");
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_DIR)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " dir stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/VBA");
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " Current User stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/Current User");
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_PPT)) {
-        if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-            print "-------------------------------------------------------------------------------\n" \
-                  " PowerPoint Document stream information\n" \
-                  "-------------------------------------------------------------------------------\n";
-            astore__pretty_print(_store, "/PowerPoint Document");
-        }
-    }
-
     if (num__and(__cli__S_opt_print, OPT_PRINT_FRM)) {
-        if (__cli__S_show_header) {
-            if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
-                print "-------------------------------------------------------------------------------\n" \
-                      " Forms information\n" \
-                      "-------------------------------------------------------------------------------\n";
-            }
-        }
         _r = forms20__init();
         if (_r < 0) {
             return _r;
         }
-        _r = forms20__unpack(stream, _store);
+        _r = forms20__unpack(stream, _store, cfbpath);
         if (_r < 0) {
             return _r;
         }
@@ -34901,6 +36678,20 @@ cli__process_vbaproject_binary( \
             astore__pretty_print(_store, "/Forms", "Forms");
             _continue = 1;
         }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
+            if (_continue) {
+                printf(", ");
+            }
+            astore__pretty_print(_store, "/PowerPoint Document", "PowerPoint Document");
+            _continue = 1;
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
+            if (_continue) {
+                printf(", ");
+            }
+            astore__pretty_print(_store, "/Current User", "Current User");
+            _continue = 1;
+        }
         if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
             if (_continue) {
                 printf(", ");
@@ -34916,6 +36707,111 @@ cli__process_vbaproject_binary( \
             _continue = 1;
         }
         printf("}");
+    } else if (astore__S_output_mode == astore__C_OUTPUT_CUSTOM) {
+        _hairline = "----------------------------------------";
+
+        if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+            if (astore__has(_store, "/Zip")) {
+                print _hairline;
+                print " ZIP information";
+                print _hairline;
+                astore__pretty_print(_store, "/Zip");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_OOX)) {
+            if (astore__has(_store, "/ooxml")) {
+                print _hairline;
+                print " OOXML information";
+                print _hairline;
+                astore__pretty_print(_store, "/ooxml");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
+            if (astore__has(_store, "/CFB2")) {
+                print _hairline;
+                print " CFB information (PowerPoint)";
+                print _hairline;
+                astore__pretty_print(_store, "/CFB");
+                print _hairline;
+                print " CFB information (Nested CFB)";
+                print _hairline;
+                astore__pretty_print(_store, "/CFB2");
+            } else if (astore__has(_store, "/CFB")) {
+                print _hairline;
+                print " CFB information";
+                print _hairline;
+                astore__pretty_print(_store, "/CFB");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_SRC)) {
+            if (astore__get(_store, "/@Source")) {
+                astore__new(_store, "/@Source");
+                while (! astore__enum_end(_store)) {
+                    _stream_name = astore__enum_next(_store);
+                    _src = astore__get(_store, _stream_name);
+                    print _hairline;
+                    print " File " _stream_name;
+                    print _hairline;
+                    print _src;
+                }
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
+            if (astore__get(_store, "/P-code")) {
+                print _hairline;
+                print " P-Code " _stream_name;
+                print _hairline;
+                astore__pretty_print(_store, "/P-code");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
+            if (astore__get(_store, "/PROJECT")) {
+                print _hairline;
+                print " PROJECT stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/PROJECT");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
+            if (astore__get(_store, "/_VBA_PROJECT")) {
+                print _hairline;
+                print " _VBA_PROJECT stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/_VBA_PROJECT");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_DIR)) {
+            if (astore__get(_store, "/VBA")) {
+                print _hairline;
+                print " dir stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/VBA");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
+            if (astore__get(_store, "/Current User")) {
+                print _hairline;
+                print " Current User stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/Current User");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_PPT)) {
+            if (astore__get(_store, "/PowerPoint Document")) {
+                print _hairline;
+                print " PowerPoint Document stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/PowerPoint Document");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_PPT)) {
+            if (astore__get(_store, "/Forms")) {
+                print _hairline;
+                print " MS Forms 2.0 information";
+                print _hairline;
+                astore__pretty_print(_store, "/Forms");
+            }
+        }
     }
 
     return cli__S_OK;
@@ -35002,7 +36898,7 @@ cli__process_mso_xml( \
         stream__write_uint8(_ostream, _c);
     }
 
-    return cli__process_vbaproject_binary(_ostream);
+    return cli__process_vbaproject_binary(_ostream, "/CFB");
 }
 # }}}
 # {{{ (private)::cli::detect_vbaroot
@@ -35032,7 +36928,7 @@ cli__process_mso_xml( \
 #
 function \
 __cli__detect_vbaroot( \
-    stream, store, \
+    stream, store, cfbpath, \
     \
     _candidates, _i, _vbaroot \
 ) {
@@ -35047,7 +36943,7 @@ __cli__detect_vbaroot( \
 
     for (_i in _candidates) {
         _vbaroot = _candidates[_i];
-        if (astore__has(store, "/CFB/@FileID" _vbaroot "/VBA/dir/id")) {
+        if (astore__has(store, cfbpath "/@FileID" _vbaroot "/VBA/dir/id")) {
             if (astore__set(store, "/@VBA Root Directory", _vbaroot) < 0) {
                 return cli__E_UNEXPECTED;
             }
