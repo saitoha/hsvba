@@ -36181,6 +36181,10 @@ cli__init(    _i, _status, _buf) {
     if (_status < 0) {
         return _status;
     }
+    _status = str__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = astore__init();
     if (_status < 0) {
         return _status;
@@ -36473,13 +36477,57 @@ function \
 cli__read_input( \
     filename, stream, \
     \
-    _line, _res, _size, \
-    _buf, _iit, _command, _cl, _cr \
+    _line, _res, _size, _buf, _iit, _command, _cl, _cr, _pos, _store, \
+    _str, _s, _len, _declen, _namelen, _decompressed_len, _extlen \
 ) {
     if (__feat__is_binary_safe) {   # binary safe
-
         getline < filename;
-        stream__new_from_string(stream, $0);
+        if (index($0, "PK") == 1) {
+            # HACK: quick-and-dirty zip decoding without the zip module
+            _str = $0;
+            do {
+                _pos = index(_str, "xl/vbaProject.bin");
+                if (_pos < 1) {  # wak cannot search binary string
+                    _str = "";
+                    break;
+                } else if (_pos > 31 && substr(_str, _pos - 30, 4) == "PK\003\004") {
+                    _s = substr(_str, _pos - 12, 12);
+                    # compressed size
+                    _len = str__ord[substr(_s, 4, 1)] * 16777216 \
+                         + str__ord[substr(_s, 3, 1)] * 65536 \
+                         + str__ord[substr(_s, 2, 1)] * 256 \
+                         + str__ord[substr(_s, 1, 1)];
+                    # uncompressed size
+                    _declen = str__ord[substr(_s, 8, 1)] * 16777216 \
+                        + str__ord[substr(_s, 7, 1)] * 65536 \
+                        + str__ord[substr(_s, 6, 1)] * 256 \
+                        + str__ord[substr(_s, 5, 1)]
+                    # file name length
+                    _namelen = str__ord[substr(_s, 10, 1)] * 256 \
+                             + str__ord[substr(_s, 9, 1)]
+                    # extra field length
+                    _extlen = str__ord[substr(_s, 12, 1)] * 256 \
+                            + str__ord[substr(_s, 11, 1)]
+                    # get compressed chunk
+                    _str = substr(_str, _pos + _namelen + _extlen, _len);
+                    break;
+                }
+                _str = substr(_str, _pos + 17);
+            } while (_pos > 0);
+            if (! length(_str)) {
+                # fallback if compressed chunk cannot be retrieved
+                stream__new_from_string(stream, $0);
+            } else {
+                astore__new(_store, "/Zip");
+                stream__new_from_string(istream, _str);
+                stream__new(stream, _decompressed_len);
+                if (zlib__inflate(istream, _store, stream) < 0) {
+                    return cli__E_UNEXPECTED;
+                }
+            }
+        } else {
+            stream__new_from_string(stream, $0);
+        }
         if (filename != "/dev/stdin") {
             close(filename);
         }
