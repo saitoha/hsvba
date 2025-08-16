@@ -31,14 +31,19 @@
 #    -p <switch1,switch2,...>
 #    --print=<switches>
 #        Specifies the types of content to be output, separated by commas.
-#            zip: content stored in Zip headers (default: off)
-#            cfb: content stored in Compound File Binary Format (default: off)
-#            dir: content stored in dir stream (default: off)
-#            prj: content stored in PROJECT stream (default: off)
+#            zip: contents stored in Zip headers (default: off)
+#            oox: OOXML DOM tree parsed for loading VBA (default: off)
+#            usr: contents stored in "Current User" stream
+#                 (default: off, only in .ppt/.ppt/.pps)
+#            ppt: contents stored in "PowerPoint Document" stream
+#                 (default: off, only in .ppt/.ppt/.pps)
+#            cfb: contents stored in Compound File Binary Format (default: off)
+#            dir: contents stored in dir stream (default: off)
+#            prj: contents stored in PROJECT stream (default: off)
 #            src: VBA cls/bas/frm module source files (default: on)
 #            frm: VBA Forms and controls (default: off)
 #            all: enables all of the above switch options (default: off)
-#            ids: content stored in _VBA_PROJECT stream (default: off, experimental)
+#            ids: contents stored in _VBA_PROJECT stream (default: off, experimental)
 #            pcd: P-CODE section in VBA modules (default: off, experimental)
 #
 #    -f <format>
@@ -128,9 +133,9 @@
 #      *.potm Microsoft PowerPoint Macro-enabled Template
 #      *.ppsm Microsoft PowerPoint Macro-enabled Slideshow
 #      *.ppam Microsoft PowerPoint add-in
-#      *.ppt Microsoft PowerPoint 97-2003 document
-#      *.pot Microsoft PowerPoint 97-2003 template
-#      *.pos Microsoft PowerPoint 97-2003 template
+#      *.ppt Microsoft PowerPoint 97-2003 Presentation
+#      *.pot Microsoft PowerPoint 97-2003 Template
+#      *.pps Microsoft PowerPoint 97-2003 Slideshow
 #      *.ppa Microsoft PowerPoint 97-2003 Add-in
 #
 #    - Access(*.accdb, *.mdb, *.accde)
@@ -36322,14 +36327,19 @@ cli__usage() {
           "-p <switch1,switch2,...>\n" \
           "--print=<switches>\n" \
           "    Specifies the types of content to be output, separated by commas.\n" \
-          "        zip: content stored in Zip headers (default: off)\n" \
-          "        cfb: content stored in Compound File Binary Format (default: off)\n" \
-          "        dir: content stored in dir stream (default: off)\n" \
-          "        prj: content stored in PROJECT stream (default: off)\n" \
+          "        zip: Content stored in Zip headers (default: off)\n" \
+          "        oox: OOXML DOM tree parsed for loading VBA (default: off)\n" \
+          "        usr: Content stored in \"Current User\" stream\n" \
+          "             (default: off, only in .ppt/.ppt/.pps)\n" \
+          "        ppt: Content stored in \"PowerPoint Document\" stream\n" \
+          "             (default: off, only in .ppt/.ppt/.pps)\n" \
+          "        cfb: Content stored in Compound File Binary Format (default: off)\n" \
+          "        dir: Content stored in dir stream (default: off)\n" \
+          "        prj: Content stored in PROJECT stream (default: off)\n" \
           "        src: VBA cls/bas/frm module source files (default: on)\n" \
           "        frm: VBA Forms and controls (default: off)\n" \
-          "        all: enables all of the above switch options (default: off)\n" \
-          "        ids: content stored in _VBA_PROJECT stream (default: off, experimental)\n" \
+          "        all: Enables all of the above (default: off)\n" \
+          "        ids: Content stored in _VBA_PROJECT stream (default: off, experimental)\n" \
           "        pcd: P-CODE section in VBA modules (default: off, experimental)\n" \
           "\n" \
           "-f <format>\n" \
@@ -36341,7 +36351,7 @@ cli__usage() {
           "\n" \
           "-h\n" \
           "--help\n" \
-          "    show help\n" \
+          "    Shows help\n" \
     ;
 
     return cli__S_OK;
