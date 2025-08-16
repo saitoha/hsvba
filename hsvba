@@ -16092,7 +16092,6 @@ zlib__rfc1950_decompress( \
     # sizeof(Adler-32 checksum) -> 4
     _bodysize = size - 4;
     _pos = stream__pos(istream);
-    stream__new(ostream);
     do {
         _r = zlib__inflate(istream, store, ostream, ++_no);
         if (_r < 0) {
@@ -28203,7 +28202,7 @@ function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     stream, store, \
     \
-    _r, _v, _store, _pos, _size, _ostream \
+    _r, _v, _store, _pos, _size, _ostream, _forecast_size \
 ) {
     _pos = stream__pos(stream);
 
@@ -28231,7 +28230,7 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     #
     # An unsigned integer that specifies the length of the storage after
     # decompression.
-    _v = stream__read_uint32(stream);
+    _v = _forecast_size = stream__read_uint32(stream);
     if (astore__set(store, "decompressedSize::uint32", _v) < 0) {
         return __vba__powerpointdocumentstream__E_UNEXPECTED;
     }
@@ -28250,6 +28249,7 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
 
     astore__fork(store, "pptVbaProjStgCompressed::RFC1950Stream", _store);
 
+    stream__new(_ostream, _forecast_size);
     _r = zlib__rfc1950_decompress(stream, _size, _store, _ostream);
     if (_r < 0) {
         __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
