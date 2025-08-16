@@ -36478,7 +36478,7 @@ cli__read_input( \
     filename, stream, \
     \
     _line, _res, _size, _buf, _iit, _command, _cl, _cr, _pos, _store, \
-    _str, _s, _len, _declen, _namelen, _decompressed_len, _extlen \
+    _str, _s, _len, _declen, _namelen, _extlen, _status \
 ) {
     if (__feat__is_binary_safe) {   # binary safe
         getline < filename;
@@ -36520,10 +36520,15 @@ cli__read_input( \
             } else {
                 astore__new(_store, "/Zip");
                 stream__new_from_string(istream, _str);
-                stream__new(stream, _decompressed_len);
-                if (zlib__inflate(istream, _store, stream) < 0) {
-                    return cli__E_UNEXPECTED;
-                }
+                stream__new(stream, _declen);
+                do {
+                    _status = zlib__inflate(istream, _store, stream)
+                    if (_status < 0) {
+                        return cli__E_UNEXPECTED;
+                    } else if (_status > 0) {  # S_FALSE
+                        break;
+                    }
+                } while (stream__pos(istream) < _declen);
             }
         } else {
             stream__new_from_string(stream, $0);
