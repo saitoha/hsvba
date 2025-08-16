@@ -36477,6 +36477,149 @@ hsvba__cli_optparse( \
     return cli__S_OK;
 }
 # }}}
+# {{{ (private)::cli::dirty_extract_vba_from_zip
+function \
+__cli__dirty_extract_vba_from_zip( \
+    ostream, \
+    \
+    _istream, _status, _stream, _key, _type, \
+    _target, _basedir, _relpath, _vbapath \
+) {
+    _status = __cli__dirty_extract_file_from_zip("_rels/.rels", _stream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    # build a parse tree on astore
+    astore__chdir(store, "/ooxml/" filename);
+    if (ooxml__parse(store, _stream) < 0) {
+        return cli__E_UNEXPECTED;
+    }
+
+    # walk the tree on astore, and find the document which has the following types:
+    # "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+    # "http://schemas.microsoft.com/visio/2010/relationships/document"
+    astore__chdir(store, "@1/Relationships");
+    astore__enum_reset(store);
+    while (! astore__enum_end(store)) {
+         _key = astore__enum_next(store);
+         _type = astore__get(store, _key "/Relationship/Type");
+         if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
+             _type == ooxml__C_schema_VISIODOCUMENT) {
+             _target = astore__get(store, _key "/Relationship/Target");
+             if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
+                 _basedir = substr(_target, 1, RSTART);
+                 _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
+                 break;
+             }
+         }
+    }
+    if (! _relpath) {
+        E__message = sprintf( \
+            "Office document file (type: %s or %s) is not found.", \
+            ooxml__C_schema_OFFICEDOCUMENT, \
+            ooxml__C_schema_VISIODOCUMENT);
+        return cli__E_ACCESSDENIED;
+    }
+
+    # step 2: read next _rels
+    _status = __cli__dirty_extract_file_from_zip(_relpath, _stream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    # read rels
+    astore__chdir(store, "/ooxml/" _relpath);
+    if (ooxml__parse(store, _stream) < 0) {
+        return cli__E_UNEXPECTED;
+    }
+
+    # walk the tree on astore, and find the document which has the following type:
+    # "http://schemas.microsoft.com/office/2006/relationships/vbaProject"
+    astore__chdir(store, "@1/Relationships");
+    astore__enum_reset(store);
+    while (! astore__enum_end(store)) {
+         _key = astore__enum_next(store);
+         _type = astore__get(store, _key "/Relationship/Type");
+         if (_type == ooxml__C_schema_VBAPROJECT) {
+             _target = astore__get(store, _key "/Relationship/Target");
+             _vbapath = _basedir _target;  # VBA path
+             break;
+         }
+    }
+
+    if (! _vbapath) {
+        E__message = "VBA file is not found.";
+        return cli__E_ACCESSDENIED;
+    }
+
+    if (astore__set(store, "/ooxml/@VBA Path", _vbapath) < 0) {
+        return cli__E_UNEXPECTED;
+    }
+
+    # step 3: read vbaProject.bin
+    _status = __cli__dirty_extract_file_from_zip(_vbapath, ostream);
+    if (_status < 0) {
+        return _status;
+    }
+
+    return cli__S_OK;
+}
+# }}}
+# {{{ (private)::cli::dirty_extract_file_from_zip
+function \
+__cli__dirty_extract_file_from_zip( \
+    filename, ostream, \
+    \
+    _istream, _pos, _str, _s, _len, _declen, _namelen, _extlen, \
+    _store, _status, _flen \
+) {
+    # HACK: quick-and-dirty zip decoding without the zip module
+    _str = $0;
+    do {
+        _flen = length(filename);
+        _pos = index(_str, filename);
+        if (_pos < 1) {  # wak cannot search binary string
+            return cli__E_FAIL;
+        }
+        if (_pos > 31 && substr(_str, _pos - 30, 4) == "PK\003\004") {
+            split(substr(_str, _pos - 12, 12), _s, "");
+            # compressed size
+            _len = str__ord[_s[4]] * 16777216 + str__ord[_s[3]] * 65536 \
+                 + str__ord[_s[2]] * 256 + str__ord[_s[1]];
+            # uncompressed size
+            _declen = str__ord[_s[8]] * 16777216 + str__ord[_s[7]] * 65536 \
+                    + str__ord[_s[6]] * 256 + str__ord[_s[5]];
+            # file name length
+            _namelen = str__ord[_s[10]] * 256 + str__ord[_s[9]];
+            # extra field length
+            _extlen = str__ord[_s[12]] * 256 + str__ord[_s[11]];
+            # get compressed chunk
+            _str = substr(_str, _pos + _namelen + _extlen, _len);
+            break;
+        }
+        _str = substr(_str, _pos + _flen);
+    } while (_pos > 0);
+
+    if (! length(_str)) {
+        return cli__E_FAIL;
+    }
+    astore__new(_store, "/Zip");
+    stream__new_from_string(_istream, _str);
+    stream__new(ostream, _declen);
+    do {
+        _status = zlib__inflate(_istream, _store, ostream)
+        if (_status < 0) {
+            return cli__E_UNEXPECTED;
+        } else if (_status > 0) {  # S_FALSE
+            break;
+        }
+    } while ((_pos = stream__pos(_istream)) < _len);
+
+    return cli__S_OK;
+}
+
+# }}}
 # {{{ cli::read_input
 function \
 cli__read_input( \
@@ -36488,52 +36631,10 @@ cli__read_input( \
     if (__feat__is_binary_safe) {   # binary safe
         getline < filename;
         if (index($0, "PK") == 1) {
-            # HACK: quick-and-dirty zip decoding without the zip module
-            _str = $0;
-            do {
-                _pos = index(_str, "xl/vbaProject.bin");
-                if (_pos < 1) {  # wak cannot search binary string
-                    _str = "";
-                    break;
-                } else if (_pos > 31 && substr(_str, _pos - 30, 4) == "PK\003\004") {
-                    _s = substr(_str, _pos - 12, 12);
-                    # compressed size
-                    _len = str__ord[substr(_s, 4, 1)] * 16777216 \
-                         + str__ord[substr(_s, 3, 1)] * 65536 \
-                         + str__ord[substr(_s, 2, 1)] * 256 \
-                         + str__ord[substr(_s, 1, 1)];
-                    # uncompressed size
-                    _declen = str__ord[substr(_s, 8, 1)] * 16777216 \
-                        + str__ord[substr(_s, 7, 1)] * 65536 \
-                        + str__ord[substr(_s, 6, 1)] * 256 \
-                        + str__ord[substr(_s, 5, 1)]
-                    # file name length
-                    _namelen = str__ord[substr(_s, 10, 1)] * 256 \
-                             + str__ord[substr(_s, 9, 1)]
-                    # extra field length
-                    _extlen = str__ord[substr(_s, 12, 1)] * 256 \
-                            + str__ord[substr(_s, 11, 1)]
-                    # get compressed chunk
-                    _str = substr(_str, _pos + _namelen + _extlen, _len);
-                    break;
-                }
-                _str = substr(_str, _pos + 17);
-            } while (_pos > 0);
-            if (! length(_str)) {
+            _status = __cli__dirty_extract_vba_from_zip(stream);
+            if (_status < 0) {
                 # fallback if compressed chunk cannot be retrieved
                 stream__new_from_string(stream, $0);
-            } else {
-                astore__new(_store, "/Zip");
-                stream__new_from_string(istream, _str);
-                stream__new(stream, _declen);
-                do {
-                    _status = zlib__inflate(istream, _store, stream)
-                    if (_status < 0) {
-                        return cli__E_UNEXPECTED;
-                    } else if (_status > 0) {  # S_FALSE
-                        break;
-                    }
-                } while (stream__pos(istream) < _declen);
             }
         } else {
             stream__new_from_string(stream, $0);
@@ -36541,7 +36642,6 @@ cli__read_input( \
         if (filename != "/dev/stdin") {
             close(filename);
         }
-
     } else {   # not binary safe
 
         # escape double quotes (")
