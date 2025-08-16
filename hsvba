@@ -28,22 +28,25 @@
 #    $ hsvba [-p <switches>] < <file>
 #
 #  Options:
+#
 #    -p <switch1,switch2,...>
 #    --print=<switches>
 #        Specifies the types of content to be output, separated by commas.
-#            zip: contents stored in Zip headers (default: off)
+#            zip: Content stored in Zip headers (default: off)
 #            oox: OOXML DOM tree parsed for loading VBA (default: off)
-#            usr: contents stored in "Current User" stream
+#            usr: Content stored in "Current User" stream
 #                 (default: off, only in .ppt/.ppt/.pps)
-#            ppt: contents stored in "PowerPoint Document" stream
+#            ppt: Content stored in "PowerPoint Document" stream
 #                 (default: off, only in .ppt/.ppt/.pps)
-#            cfb: contents stored in Compound File Binary Format (default: off)
-#            dir: contents stored in dir stream (default: off)
-#            prj: contents stored in PROJECT stream (default: off)
+#            acm: Content stored in "ActiveMime" stream
+#                 (default: off, only in Word 2003 XML)
+#            cfb: Content stored in Compound File Binary Format (default: off)
+#            dir: Content stored in dir stream (default: off)
+#            prj: Content stored in PROJECT stream (default: off)
 #            src: VBA cls/bas/frm module source files (default: on)
 #            frm: VBA Forms and controls (default: off)
-#            all: enables all of the above switch options (default: off)
-#            ids: contents stored in _VBA_PROJECT stream (default: off, experimental)
+#            all: Enables all of the above (default: off)
+#            ids: Content stored in _VBA_PROJECT stream (default: off, experimental)
 #            pcd: P-CODE section in VBA modules (default: off, experimental)
 #
 #    -f <format>
@@ -55,7 +58,7 @@
 #
 #    -h
 #    --help
-#        show help
+#        Shows help
 #
 #  This awk script can be interpreted as Bash or Awk.
 #
@@ -36210,6 +36213,7 @@ cli__init(    _i, _status, _buf) {
     OPT_PRINT_FRM    = 64;
     OPT_PRINT_USR    = 128;
     OPT_PRINT_PPT    = 256;
+    OPT_PRINT_ACM    = 512;
     OPT_PRINT_ALL    = 1023;
     # experimental flags
     OPT_PRINT_IDS    = 1024;
@@ -36333,6 +36337,8 @@ cli__usage() {
           "             (default: off, only in .ppt/.ppt/.pps)\n" \
           "        ppt: Content stored in \"PowerPoint Document\" stream\n" \
           "             (default: off, only in .ppt/.ppt/.pps)\n" \
+          "        acm: Content stored in \"ActiveMime\" stream\n" \
+          "             (default: off, only in Word 2003 XML)\n" \
           "        cfb: Content stored in Compound File Binary Format (default: off)\n" \
           "        dir: Content stored in dir stream (default: off)\n" \
           "        prj: Content stored in PROJECT stream (default: off)\n" \
@@ -36434,6 +36440,8 @@ hsvba__cli_optparse( \
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_USR);
                 } else if (_subopt == "ppt") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PPT);
+                } else if (_subopt == "acm") {
+                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ACM);
                 } else if (_subopt == "all") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ALL);
                 } else if (_subopt == "nul") {
@@ -36876,6 +36884,12 @@ cli__process_vbaproject_binary( \
             }
             astore__pretty_print(_store, "/CFB", "CFB");
             _continue = 1;
+
+            if (_continue) {
+                printf(", ");
+            }
+            astore__pretty_print(_store, "/CFB_NESTED", "CFB_NESTED");
+            _continue = 1;
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
             if (_continue) {
@@ -36923,7 +36937,7 @@ cli__process_vbaproject_binary( \
             if (_continue) {
                 printf(", ");
             }
-            astore__pretty_print(_store, "/_VBA_PROJECT", "/_VBA_PROJECT");
+            astore__pretty_print(_store, "/_VBA_PROJECT", "_VBA_PROJECT");
             _continue = 1;
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_PCD)) {
@@ -36954,7 +36968,7 @@ cli__process_vbaproject_binary( \
             }
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_CFB)) {
-            if (astore__has(_store, "/CFB2")) {
+            if (astore__has(_store, "/CFB_NESTED")) {
                 print _hairline;
                 print " CFB information (PowerPoint)";
                 print _hairline;
@@ -36962,7 +36976,7 @@ cli__process_vbaproject_binary( \
                 print _hairline;
                 print " CFB information (Nested CFB)";
                 print _hairline;
-                astore__pretty_print(_store, "/CFB2");
+                astore__pretty_print(_store, "/CFB_NESTED");
             } else if (astore__has(_store, "/CFB")) {
                 print _hairline;
                 print " CFB information";
@@ -37038,6 +37052,14 @@ cli__process_vbaproject_binary( \
                 print " PowerPoint Document stream information";
                 print _hairline;
                 astore__pretty_print(_store, "/PowerPoint Document");
+            }
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_ACM)) {
+            if (astore__has(_store, "/ActiveMime")) {
+                print _hairline;
+                print " ActiveMime Information";
+                print _hairline;
+                astore__pretty_print(_store, "/ActiveMime");
             }
         }
     }
