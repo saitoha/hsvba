@@ -117,16 +117,7 @@
 #      *.dotm Macro-enabled template
 #      *.doc Word 97-2003 document
 #      *.dot Word 97-2003 template
-#
-#      TODO: *.xml, The Word 2003 XML format (WordML) is not supported yet.
-#      It appears to contain a Base64-encoded `ActiveMime` format.
-#
-#      `ActiveMime` is an undocumented format, but its rough structure is
-#      becoming clearer thanks to the outstanding work in the
-#      idiom/activemime-format project.
-#
-#          https://github.com/idiom/activemime-format (MIT License)
-#
+#      *.xml The Word 2003 XML format
 #
 #    - PowerPoint
 #      *.pptm Microsoft PowerPoint Macro-enabled Presentation (Open XML format)
@@ -401,6 +392,10 @@
 #    [pcodedump]
 #        Vesselin Bontchev, A VBA p-code disassembler.
 #        https://github.com/bontchev/pcodedmp
+#
+#    [ActiveMime]
+#        Sean Wilson, ActiveMime File Format
+#        https://github.com/idiom/activemime-format/blob/master/README.md
 #
 #    [UNICODE-MAPPING]
 #        https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP874.TXT
@@ -16103,8 +16098,6 @@ zlib__rfc1950_decompress( \
         if (_r < 0) {
             return _r;
         }
-        astore__set(store, _no "/nread", stream__pos(istream) - _pos) < 0
-        astore__set(store, _no "/size", size) < 0
     } while (stream__pos(istream) - _pos < size);
 
     _v = stream__read_uint32(istream);
@@ -37062,35 +37055,48 @@ function \
 cli__process_mso_xml( \
     istream, \
     \
-    _xmlp, _ev, _end, _begin, _elm, \
-    _path, _path_arr, _level, _target_level, _base64str, \
-    _buf, _size, _iit, _c, _cl, _cr, _ostream \
+    _xmlp, _ev, _end, _begin, _elm, _i, _path, \
+    _paths, _path_arr, _level, _target_level, _base64str, \
+    _buf, _size, _iit, _c, _cl, _cr, _ostream, _pos, _v, \
+    _ostream_uncompressed, _compressed_length, _uncompressed_length, \
+    _compress_type, _status, _store \
 ) {
+    # try the following 2 patterns
+    _paths[1] = "VisioDocument/VBProjectData";
+    _paths[2] = "w:wordDocument/w:docSuppData/w:binData";
+
     xmlp__new(_xmlp);
+    _pos = stream__pos(istream);
 
-#    _path = "w:wordDocument/w:docSuppData/w:binData";
-    _path = "VisioDocument/VBProjectData";
-    split(_path, _path_arr, "/");
-    _level = 0;
-    _target_level = length(_path_arr);
+    for (_i in _paths) {
+        split(_paths[_i], _path_arr, "/");
+        _level = 0;
+        _target_level = length(_path_arr);
 
-    while ((_ev = xmlp__parse(_xmlp, istream)) > 0) {
-        if (_ev == xmlp__C_event_START_ELEMENT) {
-            _end = xmlp__pop(_xmlp);
-            _begin = xmlp__pop(_xmlp);
-            _elm = str__binary_join_with_chr(istream, _begin, _end);
-            if (++_level == _target_level && _elm == _path_arr[_level]) {
-                while (xmlp__parse(_xmlp, istream) != xmlp__C_event_CHARACTERS);
+        while ((_ev = xmlp__parse(_xmlp, istream)) > 0) {
+            if (_ev == xmlp__C_event_START_ELEMENT) {
                 _end = xmlp__pop(_xmlp);
                 _begin = xmlp__pop(_xmlp);
-                _base64str = str__binary_join_with_chr(istream, _begin, _end);
-                break;
+                _elm = str__binary_join_with_chr(istream, _begin, _end);
+                if (++_level == _target_level && _elm == _path_arr[_level]) {
+                    while (xmlp__parse(_xmlp, istream) != xmlp__C_event_CHARACTERS);
+                    _end = xmlp__pop(_xmlp);
+                    _begin = xmlp__pop(_xmlp);
+                    _base64str = str__binary_join_with_chr(istream, _begin, _end);
+                    break;
+                }
+            } else if (_ev == xmlp__C_event_END_ELEMENT) {
+                --_level;
             }
-        } else if (_ev == xmlp__C_event_END_ELEMENT) {
-            --_level;
         }
+        if (_base64str) {
+            break;
+        }
+        stream__iseek(istream, _pos);
     }
-
+    if (_base64str == "") {
+        return cli__E_FAIL;
+    }
     split(_base64str, _buf, "");
     _size = length(_base64str);
     stream__new(_ostream, int(_size / 4 * 3));
@@ -37133,7 +37139,94 @@ cli__process_mso_xml( \
         stream__write_uint8(_ostream, _c);
     }
 
-    return cli__process_vbaproject_binary(_ostream, "/CFB");
+    if (_i == 1) {
+        return cli__process_vbaproject_binary(_ostream, "/CFB");
+    } else if (_i == 2) {
+        #
+        # [ActiveMime]
+        #
+        # `ActiveMime` is an undocumented format, but its rough structure is
+        # becoming clearer thanks to the outstanding work in the
+        # idiom/activemime-format project.
+        #
+        #     https://github.com/idiom/activemime-format/blob/master/README.md
+        #
+        astore__new(_store, "/ActiveMime");
+        _v = stream__read_raw_string(_ostream, 12);
+        if (astore__set(_store, "magic,mustbe(ActiveMime)", _v) < 0) {
+            return (-1);
+        }
+        _v = stream__read_uint16(_ostream);  # Unknown -- always 01f0 -- Version?
+        if (astore__set(_store, "*Unknown1::hexint16", _v) < 0) {
+            return (-1);
+        }
+        _v = stream__read_uint32(_ostream);  # FieldSize?
+        if (astore__set(_store, "*Unknown2::hexint32", _v) < 0) {
+            return (-1);
+        }
+        _v = stream__read_uint32(_ostream);  # Always ffffffff
+        if (astore__set(_store, "*Unknown3::hexint32", _v) < 0) {
+            return (-1);
+        }
+        # {x}0000{y}f0
+        # x observed as {0,1,2,3,4,5,6,B,A}
+        # y observed as {6,7,8} -- Note: Usually 7 other values could
+        #                                indicate a malformed document
+        _v = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*Unknown4::hexint32", _v) < 0) {
+            return (-1);
+        }
+        # Length of zlib compressed data
+        _v = _compressed_length = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*compressed_length::hexint32", _v) < 0) {
+            return (-1);
+        }
+        # FieldSize  -- Observed as 4 or 8..almost always 4
+        _v = _size = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*Unknown5::hexint32", _v) < 0) {
+            return (-1);
+        }
+        # FieldSize  -- Always observed as 04000000
+        _v = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*Unknown6::hexint32", _v) < 0) {
+            return (-1);
+        }
+        # size 4 or 8
+        # 00000000          With size (4)
+        # 00000000 10000000 With Size (8)
+        _v = stream__read_hex_string(_ostream, _size);
+        if (astore__set(_store, "*Unknown7", _v) < 0) {
+            return (-1);
+        }
+        # Seems to indicate if the block includes unencoded vb strings at the end.
+        # 00000000 - Block contains some unencoded VB Project Strings
+        # 02000000 - Block does not contains unencoded VB Project Strings
+        _v = _compress_type = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*Unknown8", _v) < 0) {
+            return (-1);
+        }
+        # Uncompressed Size
+        _v = _uncompressed_length = stream__read_uint32(_ostream);
+        if (astore__set(_store, "*uncompressed_size", _v) < 0) {
+            return (-1);
+        }
+
+        if (_compress_type == 0) {  # uncompressed
+            return cli__process_vbaproject_binary(_ostream, "/CFB");
+        } else if (_compress_type == 2) {  # compressed
+            astore__chdir(_store, "RFC1950");
+            stream__new(_ostream_uncompressed, _uncompressed_length);  # pre-allocation
+            _status = zlib__rfc1950_decompress( \
+                _ostream, _compressed_length, _store, _ostream_uncompressed);
+            if (_status < 0) {
+                return cli__E_UNEXPECTED;
+            }
+            return cli__process_vbaproject_binary(_ostream_uncompressed, "/CFB");
+        } else {
+            return cli__E_UNEXPECTED;
+        }
+    }
+    return cli__E_FAIL;
 }
 # }}}
 # {{{ (private)::cli::detect_vbaroot
