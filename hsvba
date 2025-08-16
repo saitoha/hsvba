@@ -20174,25 +20174,28 @@ __cfb__build_fat_chain( \
     stream, store, \
     \
     _difat, _sector_size, _sizeof_sector_no, \
-    _i, _v, _j, _n \
+    _i, _v, _j, _n, _m \
 ) {
     _sector_size = num__lshift(1, astore__get(store, "Header/Sector Shift"));
     _sizeof_sector_no = 4;
 
+    _m = 0;
     for (_i = 0; _i < 109; ++_i) {
         _difat = astore__get(store, "Header/DIFATS/" _i);
-        if (_difat < __cfb__C_sector_magic_MAXREGSECT) { # != __cfb__C_sector_magic_ENDOFCHAIN
+        # _difat != __cfb__C_sector_magic_ENDOFCHAIN
+        if (_difat < __cfb__C_sector_magic_MAXREGSECT) {
             # (sector number + 1) x Sector Size
             stream__iseek(stream, (_difat + 1) * _sector_size);
             for (_j = 0; _j < _sector_size / _sizeof_sector_no; ++_j) {
                 # Next Sector in Chain (variable)
                 _v = stream__read_uint32(stream);
-                _n = _i * _sector_size / _sizeof_sector_no + _j;
+                _n = _m * _sector_size / _sizeof_sector_no + _j;
                 # save it to "FAT/Chain/[n]"
                 if (astore__set(store, "FAT/Chain/" _n, _v) < 0) {
                     return cfb__E_UNEXPECTED;
                 }
             }
+            ++_m;
         }
     }
 
