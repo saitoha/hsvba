@@ -1172,10 +1172,16 @@ __stream__class_init() {
 # {{{ stream::new
 function \
 stream__new(stream, forecast_size) {
+    # Pre-allocation for performance improvement
     if (forecast_size) {
-        split( \
-            substr($0, 1, forecast_size + __stream__C_header_offset), \
-            stream, "");
+        # In wak, specifying the -b option may trigger a 'bad string split'
+        # error; therefore, pre-allocation is omitted on implementations
+        # lacking support for byte-level splitting.
+        if (__feat__has_split_in_bytes) {
+            split( \
+                substr($0, 1, forecast_size + __stream__C_header_offset), \
+                stream, "");
+        }
     }
     stream[__stream__M_iit]   = __stream__C_header_offset;
     stream[__stream__M_oit]   = __stream__C_header_offset;
