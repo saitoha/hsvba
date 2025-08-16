@@ -1049,6 +1049,7 @@ stream__init(    _status) {
 # - rewind
 # - iseek
 # - pos
+# - search
 # - rsearch
 # - available_size
 # - is_end
@@ -1174,7 +1175,7 @@ function \
 stream__new(stream, forecast_size) {
     # Pre-allocation for performance improvement
     if (forecast_size) {
-        # In wak, specifying the -b option may trigger a 'bad string split'
+        # In wak, specifying the -b option may trigger a "bad string split"
         # error; therefore, pre-allocation is omitted on implementations
         # lacking support for byte-level splitting.
         if (__feat__has_split_in_bytes) {
