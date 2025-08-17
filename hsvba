@@ -36809,7 +36809,7 @@ cli__process_stream( \
 # {{{ cli::print_result
 function \
 cli__print_result( \
-    _continue, _hairline, _src, _store \
+    _continue, _hairline, _src, _store, _stream_name \
 ) {
     astore__new(_store, "/");
 
