@@ -16106,6 +16106,8 @@ zlib__rfc1950_decompress( \
         _r = zlib__inflate(istream, store, ostream, ++_no);
         if (_r < 0) {
             return _r;
+        } else if (_r == 1) {  # S_FALSE
+            break;
         }
     } while (stream__pos(istream) - _pos < size);
 
