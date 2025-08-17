@@ -30268,12 +30268,12 @@ __forms20__unpack_compobjstream_clipboardformatoransistring( \
 
     # MarkerOrLength
     _v = stream__read_uint32(stream);
-    if (astore__set(store, "Length::int32,le(400)", _v) < 0) {
+    if (astore__set(store, "Length::uint32", _v) < 0) {
         return forms20__E_UNEXPECTED;
     }
 
     # FormatOrAnsiString (variable)
-    if (_v >= 4294967294) {  # 0xfffffffe or 0xffffffff
+    if (_v >= 4294967294) {  # 0xfffffffe(-2) or 0xffffffff(-1)
         # a standard clipboard format
         _v = stream__read_uint32(stream);
         if (astore__set(store, "FormatOrAnsiString::ClipboardFormat", _v) < 0) {
@@ -30290,6 +30290,8 @@ __forms20__unpack_compobjstream_clipboardformatoransistring( \
         if (astore__set(store, "FormatOrAnsiString/Terminator::uint8,mustbe(0)", _v) < 0) {
             return forms20__E_UNEXPECTED;
         }
+    } else {  # _v == 0
+        ;  # do nothing
     }
 
     return forms20__S_OK;
