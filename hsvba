@@ -36806,97 +36806,12 @@ cli__process_stream( \
     return cli__process_vbaproject_binary(_stream, "/CFB");
 }
 # }}}
-# {{{ cli::process_vbaproject_binary
+# {{{ cli::print_result
 function \
-cli__process_vbaproject_binary( \
-    stream, cfbpath, \
-    \
-    _store, _r, _status, _continue, _stream_name, _hairline, _src \
+cli__print_result( \
+    _continue, _hairline, _src, _store \
 ) {
-    astore__new(_store, cfbpath);
-    _r = cfb__unpack(stream, _store);
-    if (_r < 0) {
-        return _r;
-    }
-
-    # detect VBA root directory
-    _r = __cli__detect_vbaroot(_store, cfbpath);
-    if (_r < 0) {
-        # may be PowerPoint(*.ppt) or Visio(*.vsd)
-        if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
-            E__message = "";
-            astore__new(_store, "/Current User");
-            _r = vba__ppt__currentuserstream__init();
-            if (_r < 0) {
-                return _r;
-            }
-            _r = vba__ppt__currentuserstream__unpack(stream, _store, cfbpath);
-            if (_r < 0) {
-                return _r;
-            }
-            astore__new(_store, "/PowerPoint Document");
-            _r = vba__ppt__powerpointdocumentstream__init();
-            if (_r < 0) {
-                return _r;
-            }
-            _r = vba__ppt__powerpointdocumentstream__unpack(stream, _store, cfbpath);
-            if (_r < 0) {
-                return _r;
-            }
-
-            return cli__S_OK;
-        } else {
-            return _r;
-        }
-    } else {
-        astore__new(_store, "/VBA");
-        _r = vba__dirstream__unpack(stream, _store, cfbpath);
-        if (_r < 0) {
-            return _r;
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_IDS + OPT_PRINT_PCD)) {
-        _status = vba__vbaprojectstream__init();
-        if (_status < 0) {
-            return cli__E_UNEXPECTED;
-        }
-        astore__new(_store, "/_VBA_PROJECT");
-        _r = vba__vbaprojectstream__unpack(stream, _store, cfbpath);
-        if (_r < 0) {
-            return _r;
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_SRC + OPT_PRINT_PCD)) {
-        _status = vba__modulestream__init();
-        if (_status < 0) {
-            return _status;
-        }
-        _r = vba__modulestream__unpack(stream, cfbpath);
-        if (_r < 0) {
-            return _r;
-        }
-    }
-
-    if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
-        astore__new(_store, "/PROJECT");
-        _r = vba__projectstream__init();
-        _r = vba__projectstream__unpack(stream, _store, cfbpath);
-        if (_r < 0) {
-            return _r;
-        }
-    }
-    if (num__and(__cli__S_opt_print, OPT_PRINT_FRM)) {
-        _r = forms20__init();
-        if (_r < 0) {
-            return _r;
-        }
-        _r = forms20__unpack(stream, _store, cfbpath);
-        if (_r < 0) {
-            return _r;
-        }
-    }
+    astore__new(_store, "/");
 
     if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
         _continue = 0;
@@ -36960,7 +36875,8 @@ cli__process_vbaproject_binary( \
             if (_continue) {
                 printf(", ");
             }
-            astore__pretty_print(_store, "/PowerPoint Document", "PowerPoint Document");
+            astore__pretty_print( \
+                _store, "/PowerPoint Document", "PowerPoint Document");
             _continue = 1;
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
@@ -37070,7 +36986,7 @@ cli__process_vbaproject_binary( \
         if (num__and(__cli__S_opt_print, OPT_PRINT_PCD)) {
             if (astore__has(_store, "/P-code")) {
                 print _hairline;
-                print " P-Code " _stream_name;
+                print " P-Code information";
                 print _hairline;
                 astore__pretty_print(_store, "/P-code");
             }
@@ -37098,6 +37014,107 @@ cli__process_vbaproject_binary( \
                 print _hairline;
                 astore__pretty_print(_store, "/ActiveMime");
             }
+        }
+    }
+
+    return cli__S_OK;
+}
+# }}}
+# {{{ cli::process_vbaproject_binary
+function \
+cli__process_vbaproject_binary( \
+    stream, cfbpath, \
+    \
+    _store, _status \
+) {
+    astore__new(_store, cfbpath);
+
+    _status = cfb__unpack(stream, _store);
+    if (_status < 0) {
+        return _status;
+    }
+
+    # detect VBA root directory
+    _status = __cli__detect_vbaroot(_store, cfbpath);
+    if (_status < 0) {
+        # may be PowerPoint(*.ppt) or Visio(*.vsd)
+        if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
+            E__message = "";
+            astore__new(_store, "/Current User");
+            _status = vba__ppt__currentuserstream__init();
+            if (_status < 0) {
+                return _status;
+            }
+            _status = vba__ppt__currentuserstream__unpack( \
+                stream, _store, cfbpath);
+            if (_status < 0) {
+                return _status;
+            }
+            astore__new(_store, "/PowerPoint Document");
+            _status = vba__ppt__powerpointdocumentstream__init();
+            if (_status < 0) {
+                return _status;
+            }
+            _status = vba__ppt__powerpointdocumentstream__unpack( \
+                stream, _store, cfbpath);
+            if (_status < 0) {
+                return _status;
+            }
+
+            return cli__S_OK;
+        } else {
+            return _status;
+        }
+    } else {
+        astore__new(_store, "/VBA");
+        _status = vba__dirstream__unpack(stream, _store, cfbpath);
+        if (_status < 0) {
+            return _status;
+        }
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_IDS + OPT_PRINT_PCD)) {
+        _status = vba__vbaprojectstream__init();
+        if (_status < 0) {
+            return cli__E_UNEXPECTED;
+        }
+        astore__new(_store, "/_VBA_PROJECT");
+        _status = vba__vbaprojectstream__unpack(stream, _store, cfbpath);
+        if (_status < 0) {
+            return _status;
+        }
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_SRC + OPT_PRINT_PCD)) {
+        _status = vba__modulestream__init();
+        if (_status < 0) {
+            return _status;
+        }
+        _status = vba__modulestream__unpack(stream, cfbpath);
+        if (_status < 0) {
+            return _status;
+        }
+    }
+
+    if (num__and(__cli__S_opt_print, OPT_PRINT_PRJ)) {
+        astore__new(_store, "/PROJECT");
+        _status = vba__projectstream__init();
+        if (_status < 0) {
+            return _status;
+        }
+        _status = vba__projectstream__unpack(stream, _store, cfbpath);
+        if (_status < 0) {
+            return _status;
+        }
+    }
+    if (num__and(__cli__S_opt_print, OPT_PRINT_FRM)) {
+        _status = forms20__init();
+        if (_status < 0) {
+            return _status;
+        }
+        _status = forms20__unpack(stream, _store, cfbpath);
+        if (_status < 0) {
+            return _status;
         }
     }
 
@@ -37413,6 +37430,8 @@ BEGIN {
     }
 }
 END {
+    cli__print_result();
+
     if (E__message) {
         printf "[error] %s\n", E__message > E__file;
         fflush();
