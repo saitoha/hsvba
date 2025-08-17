@@ -35184,7 +35184,7 @@ function \
 forms20__unpack_stdpicture( \
     stream, store, \
     \
-    _v, _maxsize \
+    _v, _maxsize, _size \
 ) {
     # Preamble (4 bytes)
     _v = stream__read_uint32(stream);
@@ -35193,7 +35193,7 @@ forms20__unpack_stdpicture( \
     }
 
     # Size (4 bytes)
-    _v = stream__read_uint32(stream);
+    _v = _size = stream__read_uint32(stream);
     _maxsize = stream__available_size(stream);
     if (astore__set(store, "Size::uint32,le(%)", _v, _maxsize) < 0) {
         return forms20__E_UNEXPECTED;
@@ -35204,7 +35204,7 @@ forms20__unpack_stdpicture( \
         _v = stream__read_hex_string(stream, _v);
     } else {
         _v = stream__read_hex_string(stream, 16) " ...";
-        stream__skip(stream, _v - 16);
+        stream__skip(stream, _size - 16);
     }
     if (astore__set(store, "Picture", _v) < 0) {
         return forms20__E_UNEXPECTED;
