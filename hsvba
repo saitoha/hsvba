@@ -1773,20 +1773,23 @@ stream__read_guid_string( \
 
     _it = stream[__stream__M_iit];
 
-    for (_i = 1; _i <= 4; ++_i) {
-        _o = _o str__hex[stream[++_it]];
+    for (_i = 4; _i >= 1; --_i) {
+        _o = _o str__hex[stream[_it + _i]];
     }
     _o = _o "-";
+    _it += 4;
 
-    for (_i = 1; _i <= 2; ++_i) {
-        _o = _o str__hex[stream[++_it]];
+    for (_i = 2; _i >= 1; --_i) {
+        _o = _o str__hex[stream[_it + _i]];
     }
     _o = _o "-";
+    _it += 2;
 
-    for (_i = 1; _i <= 2; ++_i) {
-        _o = _o str__hex[stream[++_it]];
+    for (_i = 2; _i >= 1; --_i) {
+        _o = _o str__hex[stream[_it + _i]];
     }
     _o = _o "-";
+    _it += 2;
 
     for (_i = 1; _i <= 2; ++_i) {
         _o = _o str__hex[stream[++_it]];
