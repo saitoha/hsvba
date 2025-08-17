@@ -37443,10 +37443,8 @@ END {
 
     if (E__message) {
         printf "[error] %s\n", E__message > E__file;
-        fflush();
         close(E__file);
     }
-    fflush();
 }
 # }}}
 function \
