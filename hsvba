@@ -36778,7 +36778,7 @@ cli__process_vbaproject_binary( \
     }
 
     # detect VBA root directory
-    _r = __cli__detect_vbaroot(stream, _store, cfbpath);
+    _r = __cli__detect_vbaroot(_store, cfbpath);
     if (_r < 0) {
         # may be PowerPoint(*.ppt) or Visio(*.vsd)
         if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
@@ -37248,8 +37248,13 @@ cli__process_mso_xml( \
 # }}}
 # {{{ (private)::cli::detect_vbaroot
 #
-# [MS-XLS] 2.1.7.18 VBA Storage (_VBA_PROJECT_CUR)
+# [MS-OVBA] 2.2.1 Project Root Storage
+#     A single root storage. MUST contain VBA Storage (section 2.2.2) and
+#     PROJECT Stream (section 2.2.7). Optionally contains PROJECTwm Stream
+#     (section 2.2.8), PROJECTlk Stream (section 2.2.9), and Designer
+#     Storages (section 2.2.10).
 #
+# [MS-XLS] 2.1.7.18 VBA Storage (_VBA_PROJECT_CUR)
 #     The VBA Storage is specified in [MS-OVBA].
 #     The name of this storage MUST be "_VBA_PROJECT_CUR".
 #     A file MUST contain at most one VBA Storage.
@@ -37258,9 +37263,6 @@ cli__process_mso_xml( \
 #     The Macros storage is an optional storage that contains the
 #     macros for the file. If present, it MUST be a Project
 #     Root Storage as defined in [MS-OVBA] section 2.2.1.
-#
-# Microsoft Project 2003-(*.mpp)
-#     -> "   29/CVba/2b400008_ffffffff"
 #
 # Microsoft Word (*.doc)
 #     -> "Macros"
@@ -37271,15 +37273,18 @@ cli__process_mso_xml( \
 # Microsoft Publisher (*.pub)
 #     -> "VBA"
 #
+# Microsoft Project 2003-(*.mpp)
+#     -> "   <digits>/CVba/2b400008_ffffffff" (variable?)
+#
 function \
 __cli__detect_vbaroot( \
-    stream, store, cfbpath, \
+    store, cfbpath, \
     \
-    _candidates, _i, _vbaroot \
+    _candidates, _i, _vbaroot, _store, _status \
 ) {
+    # quick-and-dirty way
     split("/Root Entry," \
           "/Root Entry/_VBA_PROJECT_CUR," \
-          "/Root Entry/   29/CVba/2b400008_ffffffff," \
           "/Root Entry/Macros," \
           "/Root Entry/OutlookVbaData," \
           "/Root Entry/VBA", \
@@ -37295,6 +37300,41 @@ __cli__detect_vbaroot( \
             if (astore__set(store, "/@VBA Directory", "VBA") < 0) {
                 return cli__E_UNEXPECTED;
             }
+            return cli__S_OK;
+        }
+    }
+
+	astore__new(_store, cfbpath "/@FileID/Root Entry");
+    _status = __cli__detect_vbaroot_recursively(_store, "/Root Entry");
+    if (_status < 0) {
+        E__message = "VBA stream is not found";
+        return cli__E_UNEXPECTED;
+    }
+    return cli__S_OK;
+}
+# }}}
+# {{{ (private)::cli::detect_vbaroot_recursively
+function \
+__cli__detect_vbaroot_recursively( \
+    store, path, \
+    \
+    _name, _status, _store \
+) {
+    if (astore__has(store, "PROJECT") && astore__has(store, "VBA")) {
+        # TODO: check the vba directory case-insensitively
+        if (astore__set(store, "/@VBA Root Directory", path) < 0) {
+            return cli__E_UNEXPECTED;
+        }
+        if (astore__set(store, "/@VBA Directory", "VBA") < 0) {
+            return cli__E_UNEXPECTED;
+        }
+        return cli__S_OK;
+    }
+    while (! astore__enum_end(store)) {
+        _name = astore__enum_next(store);
+        astore__fork(store, _name, _store);
+        _status = __cli__detect_vbaroot_recursively(_store, path "/" _name);
+        if (_status == cli__S_OK) {
             return cli__S_OK;
         }
     }
