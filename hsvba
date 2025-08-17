@@ -36528,7 +36528,7 @@ __cli__dirty_extract_vba_from_zip( \
     ostream, \
     \
     _istream, _status, _stream, _key, _type, \
-    _target, _basedir, _relpath, _vbapath \
+    _target, _basedir, _relpath, _vbapath, _store \
 ) {
     _status = __cli__dirty_extract_file_from_zip("_rels/.rels", _stream);
     if (_status < 0) {
@@ -36536,22 +36536,22 @@ __cli__dirty_extract_vba_from_zip( \
     }
 
     # build a parse tree on astore
-    astore__chdir(store, "/ooxml/" filename);
-    if (ooxml__parse(store, _stream) < 0) {
+    astore__chdir(_store, "/ooxml/" filename);
+    if (ooxml__parse(_store, _stream) < 0) {
         return cli__E_UNEXPECTED;
     }
 
     # walk the tree on astore, and find the document which has the following types:
     # "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
     # "http://schemas.microsoft.com/visio/2010/relationships/document"
-    astore__chdir(store, "@1/Relationships");
-    astore__enum_reset(store);
-    while (! astore__enum_end(store)) {
-         _key = astore__enum_next(store);
-         _type = astore__get(store, _key "/Relationship/Type");
+    astore__chdir(_store, "@1/Relationships");
+    astore__enum_reset(_store);
+    while (! astore__enum_end(_store)) {
+         _key = astore__enum_next(_store);
+         _type = astore__get(_store, _key "/Relationship/Type");
          if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
              _type == ooxml__C_schema_VISIODOCUMENT) {
-             _target = astore__get(store, _key "/Relationship/Target");
+             _target = astore__get(_store, _key "/Relationship/Target");
              if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
                  _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
@@ -36574,20 +36574,20 @@ __cli__dirty_extract_vba_from_zip( \
     }
 
     # read rels
-    astore__chdir(store, "/ooxml/" _relpath);
-    if (ooxml__parse(store, _stream) < 0) {
+    astore__chdir(_store, "/ooxml/" _relpath);
+    if (ooxml__parse(_store, _stream) < 0) {
         return cli__E_UNEXPECTED;
     }
 
     # walk the tree on astore, and find the document which has the following type:
     # "http://schemas.microsoft.com/office/2006/relationships/vbaProject"
-    astore__chdir(store, "@1/Relationships");
-    astore__enum_reset(store);
-    while (! astore__enum_end(store)) {
-         _key = astore__enum_next(store);
-         _type = astore__get(store, _key "/Relationship/Type");
+    astore__chdir(_store, "@1/Relationships");
+    astore__enum_reset(_store);
+    while (! astore__enum_end(_store)) {
+         _key = astore__enum_next(_store);
+         _type = astore__get(_store, _key "/Relationship/Type");
          if (_type == ooxml__C_schema_VBAPROJECT) {
-             _target = astore__get(store, _key "/Relationship/Target");
+             _target = astore__get(_store, _key "/Relationship/Target");
              _vbapath = _basedir _target;  # VBA path
              break;
          }
@@ -36598,7 +36598,7 @@ __cli__dirty_extract_vba_from_zip( \
         return cli__E_ACCESSDENIED;
     }
 
-    if (astore__set(store, "/ooxml/@VBA Path", _vbapath) < 0) {
+    if (astore__set(_store, "/ooxml/@VBA Path", _vbapath) < 0) {
         return cli__E_UNEXPECTED;
     }
 
