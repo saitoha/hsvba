@@ -431,7 +431,7 @@
 true && echo "$( \
 : $'\042\047'; \
 : ${AWK:=$(which mawk gawk wak goawk bioawk awk 2>/dev/null | head -n1)}; \
-test x${AWK##*/} = xwak && AWKOPT=${AWKOPT}' -b'; \
+test x${AWK##*/} = xwak 2>/dev/null && AWKOPT=${AWKOPT}' -b'; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
 LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042 2>/tmp/hsvba.log; \
 '; \
@@ -446,11 +446,11 @@ eval $(eval echo $( \
     tr \\n  ,                                                          | \
     xargs printf __pp_trace__'{'${HSVBA_TRACE_TOPIC//[^a-z0-9_,]},'}'_'{%s,}'=1\\n \
 ) | tr ' ' \\n); \
-if test x${AWK##*/} = xgawk; then \
+if test x${AWK##*/} = xgawk 2>/dev/null; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
   __pp_feat__has_native_bitwise_shift_functions=1; \
   __pp_feat__has_native_strftime=1; \
-elif test x${AWK} = xbioawk; then \
+elif test x${AWK} = xbioawk 2>/dev/null; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
