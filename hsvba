@@ -20054,44 +20054,10 @@ __cfb__unpack_header( \
     if (astore__set(_store, "First DIFAT Sector Location", _v) < 0) {
         return cfb__E_UNEXPECTED;
     }
-    if (_v != __cfb__C_sector_magic_ENDOFCHAIN) {
-        # '${__pp_comment:+'
-        #
-        # TODO: support loading more than 109 DIFATs.
-        #
-        # reference:
-        # [MS-CFB] 2.5 Compound File DIFAT Sectors
-        #
-        # '}'
-        E__message = sprintf( \
-            "number of DIFAT sectors = %d. " \
-            "parsing VBA Project files larger than " \
-            "6.875 MB is not yet supported.", \
-            _v);
-
-        return cfb__E_NOTIMPL;
-    }
 
     # Number of DIFAT Sectors (4 bytes)
     _v = stream__read_uint32(stream);
     if (astore__set(_store, "Number of DIFAT Sectors", _v) < 0) {
-        return cfb__E_UNEXPECTED;
-    }
-    if (_v != 0) {
-        # '${__pp_comment:+'
-        #
-        # TODO: support loading more than 109 DIFATs.
-        #
-        # reference:
-        # [MS-CFB] 2.5 Compound File DIFAT Sectors
-        #
-        # '}'
-        E__message = sprintf( \
-            "number of DIFAT sectors = %d. " \
-            "parsing VBA Project files larger than " \
-            "6.875 MB is not yet supported.", \
-            _v);
-
         return cfb__E_UNEXPECTED;
     }
 
@@ -20170,20 +20136,49 @@ __cfb__build_fat_chain( \
     stream, store, \
     \
     _difat, _sector_size, _sizeof_sector_no, \
-    _i, _v, _j, _n, _m \
+    _i, _v, _j, _n, _m, _nsect, _difat_sector_no, _difats_cnt \
 ) {
     _sector_size = num__lshift(1, astore__get(store, "Header/Sector Shift"));
     _sizeof_sector_no = 4;
 
+    # read extended DIFATS ( > 109th)
+    # since the first 109 DIFAT entries are already read from the header sector,
+    # load the extended DIFAT entries starting from the 110th (index 109) onward.
+    _nsect = astore__get(store, "Header/Number of DIFAT Sectors");
+    _difat_sector_no = astore__get(store, "Header/First DIFAT Sector Location");
+    _difats_cnt = 109;
+    # traverse _difats_cnt sectors
+    while (_nsect--) {
+        # check whether the next sector number is __cfb__C_sector_magic_ENDOFCHAIN
+        if (_difat_sector_no >= __cfb__C_sector_magic_MAXREGSECT) {
+            break;
+        }
+        # move to the beginning of the next sector
+        stream__iseek(stream, (_difat_sector_no + 1) * _sector_size);
+        # repeat 512 / 4 - 1 = 127 times
+        for (_j = 0; _j < _sector_size / _sizeof_sector_no - 1; ++_j) {
+            # next Sector in Chain (variable)
+            _v = stream__read_uint32(stream);
+            if (astore__set(store, "Header/DIFATS/" _difats_cnt++, _v) < 0) {
+                return cfb__E_UNEXPECTED;
+            }
+        }
+        # read the last 4 bytes of the current sector;
+        # they represent the next sector number
+        _difat_sector_no = stream__read_uint32(stream);
+    }
+
+    # traverse the DIFAT entries and build the FAT chain
     _m = 0;
-    for (_i = 0; _i < 109; ++_i) {
+    for (_i = 0; _i < _difats_cnt; ++_i) {
         _difat = astore__get(store, "Header/DIFATS/" _i);
         # _difat != __cfb__C_sector_magic_ENDOFCHAIN
         if (_difat < __cfb__C_sector_magic_MAXREGSECT) {
             # (sector number + 1) x Sector Size
             stream__iseek(stream, (_difat + 1) * _sector_size);
+            # repeat 512 / 4 = 128 times
             for (_j = 0; _j < _sector_size / _sizeof_sector_no; ++_j) {
-                # Next Sector in Chain (variable)
+                # next Sector in Chain (variable)
                 _v = stream__read_uint32(stream);
                 _n = _m * _sector_size / _sizeof_sector_no + _j;
                 # save it to "FAT/Chain/[n]"
