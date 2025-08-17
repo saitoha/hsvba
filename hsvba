@@ -26580,7 +26580,7 @@ vba__ppt__powerpointdocumentstream__unpack( \
         }
 
         # Part 1 - step 6
-        _pos = astore__get(_store, "offsetLastEdit");
+        _pos = astore__get(store, "UserEditAtom/" _i "/offsetLastEdit");
 
     } while (_pos > 0);  # Part 1 - step 7
 
