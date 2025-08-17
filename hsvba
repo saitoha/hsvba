@@ -33929,8 +33929,12 @@ forms20__unpack_sitepropmask( \
     }
 
     # K - Unused1 (1 bit)
+    #
+    # NOTE: [MS-OFORMS] specifies that this field "MUST be set to zero",
+    # but we have observed non-zero values in real-world files. On read,
+    # ignore and continue; on write, always normalize to 0.
     _v = stream__read_bits(stream, 1);
-    if (astore__set(store, "Unused1::bits<1>,mustbe(0)", _v) < 0) {
+    if (astore__set(store, "Unused1::bits<1>", _v) < 0) {
         return forms20__E_UNEXPECTED;
     }
 
@@ -33967,8 +33971,11 @@ forms20__unpack_sitepropmask( \
     }
 
     # Unused2 (17 bits)
+    #
+    # NOTE: Although [MS-OFORMS] states this field "MUST be set to zero",
+    # we observed non-zero values in real-world files.
     _v = stream__read_bits(stream, 17);
-    if (astore__set(store, "Unused2::bits<17>,mustbe(0)", _v) < 0) {
+    if (astore__set(store, "Unused2::bits<17>", _v) < 0) {
         return forms20__E_UNEXPECTED;
     }
 
