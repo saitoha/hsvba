@@ -20530,8 +20530,31 @@ __cfb__unpack_directorysectors( \
 }
 # }}}
 # }}}
-# {{{ @module vba::lz77
+# {{{ @module vba::lz77, an implementation of VBA`s compression algorithm
 # VBA compressed data decoding functions
+# - init
+# - unpack
+# - pack (not implemented)
+# {{{ vba::lz77::init
+function \
+vba__lz77__init() {
+    if (__vba__lz77__init_guard) {
+        return (1);
+    }
+
+    vba__lz77__E_NOTIMPL      = -16385;
+    vba__lz77__E_FAIL         = -16389;
+    vba__lz77__E_ACCESSDENIED = -458757;
+    vba__lz77__E_UNEXPECTED   = -65535;
+    vba__lz77__S_OK           = 0;
+    vba__lz77__S_FALSE        = 1;
+
+    __vba__lz77__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ vba::lz77::unpack
 # '${__pp_comment:+'
 #
 # [MS-OVBA]
@@ -20541,9 +20564,7 @@ __cfb__unpack_directorysectors( \
 #     2.4.1.3.1 Decompression Algorithm
 #     2.4.1.3.2 Decompressing a CompressedChunk
 #
-# '}'
-# {{{ [MS-OVBA] 2.4.1.1.1 CompressedContainer
-# '${__pp_comment:+'
+# [MS-OVBA] 2.4.1.1.1 CompressedContainer
 #
 # A CompressedContainer is an array of bytes holding the compressed data.
 # The Decompression algorithm (section 2.4.1.3.1) processes a
@@ -20569,24 +20590,8 @@ __cfb__unpack_directorysectors( \
 #
 # '}'
 function \
-vba__lz77__init() {
-    if (__vba__lz77__init_guard) {
-        return (1);
-    }
-
-    vba__lz77__E_NOTIMPL      = -16385;
-    vba__lz77__E_FAIL         = -16389;
-    vba__lz77__E_ACCESSDENIED = -458757;
-    vba__lz77__E_UNEXPECTED   = -65535;
-    vba__lz77__S_OK           = 0;
-    vba__lz77__S_FALSE        = 1;
-
-    __vba__lz77__init_guard = 1;
-}
-
-function \
 vba__lz77__unpack( \
-    istream, store, ostream, \
+    istream, store, ostream, forecast_size, \
     \
     _v, _store, _i, _r \
 ) {
@@ -20609,7 +20614,8 @@ vba__lz77__unpack( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunk
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.4 CompressedChunk
@@ -20654,7 +20660,8 @@ __vba__lz77__unpack_compressed_chunk( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunkheader
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.5 CompressedChunkHeader
@@ -20703,7 +20710,8 @@ __vba__lz77__unpack_compressed_chunkheader( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunk_data
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.6 CompressedChunkData
@@ -20900,7 +20908,8 @@ vba__dirstream__unpack( \
     }
 
     astore__fork(store, "@LZ77CompressedStream" _path, _store);
-    _r = vba__lz77__unpack(_istream, _store, _ostream);
+    # forecast size = 2048
+    _r = vba__lz77__unpack(_istream, _store, _ostream, 2048);
     if (_r < 0) {
         return _r;
     }
