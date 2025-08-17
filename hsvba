@@ -1764,7 +1764,7 @@ stream__read_timestamp( \
     if (_high == 0 && _low == 0) {
         return "NULL";
     }
-    _epoch = (_high * 4294967296 + _low) / 10000000 - 11644473600;
+    _epoch = (_high * 4294967296. + _low) / 10000000 - 11644473600.;
     # '${__pp_feat__has_native_strftime:+$'\nreturn strftime("%Y-%m-%d %H:%M:%S %Z", _epoch);'}'
     # '${__pp_feat__has_native_strftime:-'
     _total_days = int(_epoch / 86400);
@@ -2685,7 +2685,7 @@ cell__init(    _status) {
 function \
 cell__new(tag, head, tail) {
     # tag | head << 9 | tail << 9 + 22
-    return tag + head * 512 + tail * 2147483648;
+    return tag + head * 512 + tail * 2147483648.;
 }
 # }}}
 # {{{ cell::tag
@@ -2703,7 +2703,7 @@ function cell__head(cell) {
 # {{{ cell::tail
 function cell__tail(cell) {
     # cell << 9 + 22
-    return int(cell / 2147483648);
+    return int(cell / 2147483648.);
 }
 # }}}
 # {{{ cell::pair::new
@@ -19304,7 +19304,7 @@ pcode__disasm_function( \
     }
     if (num__and(_flags, 32)) {
         astore__set(store, "fHasAs::bool", 1);
-        if (num__and(_arg_type, 4294901760)) {  # 0xffff0000
+        if (num__and(_arg_type, 4294901760.)) {  # 0xffff0000
             _v = pcode__get_typename(pcode, _arg_type % 256);
             astore__set(_store, "ReturnType", _v);
         } else {
@@ -19340,7 +19340,7 @@ pcode__disasm_function( \
     _text = _text _decl _public _private _friend _static _calltype _funcname "(";
 
     _i = 0;
-    while (_arg_offset != 4294967295 && _arg_offset != 0) {
+    while (_arg_offset != 4294967295. && _arg_offset != 0) {
         ++_i;
         stream__iseek(stream, _idt_offset + 4 + _arg_offset);
 
@@ -19400,7 +19400,7 @@ pcode__disasm_function( \
         if (num__and(_arg_flags, 32)) {
             astore__set(_store, "fHasAs::bool", 1);
             _as = " As ";
-            if (num__and(_arg_type, 4294901760)) {  # 0xffff0000
+            if (num__and(_arg_type, 4294901760.)) {  # 0xffff0000
                 _v = _arg_type % 256;
                 astore__set(_store, "ArgType", _v);
                 _arg_type_name = pcode__get_typename(pcode, _v);
@@ -19748,11 +19748,11 @@ cfb__init(    _status) {
     # +----------------+-------------------------+--------------------------------------+
     #
     # '}'
-    __cfb__C_sector_magic_MAXREGSECT    = 4294967290; # 0xfffffffa
-    __cfb__C_sector_magic_DIFSECT       = 4294967291; # 0xfffffffb
-    __cfb__C_sector_magic_FATSECT       = 4294967293; # 0xfffffffd
-    __cfb__C_sector_magic_ENDOFCHAIN    = 4294967294; # 0xfffffffe
-    __cfb__C_sector_magic_FREESECT      = 4294967295; # 0xffffffff
+    __cfb__C_sector_magic_MAXREGSECT    = 4294967290.; # 0xfffffffa
+    __cfb__C_sector_magic_DIFSECT       = 4294967291.; # 0xfffffffb
+    __cfb__C_sector_magic_FATSECT       = 4294967293.; # 0xfffffffd
+    __cfb__C_sector_magic_ENDOFCHAIN    = 4294967294.; # 0xfffffffe
+    __cfb__C_sector_magic_FREESECT      = 4294967295.; # 0xffffffff
 
     __cfb__init_guard = 1;
 
@@ -30278,7 +30278,7 @@ __forms20__unpack_compobjstream_clipboardformatoransistring( \
     }
 
     # FormatOrAnsiString (variable)
-    if (_v >= 4294967294) {  # 0xfffffffe(-2) or 0xffffffff(-1)
+    if (_v >= 4294967294.) {  # 0xfffffffe(-2) or 0xffffffff(-1)
         # a standard clipboard format
         _v = stream__read_uint32(stream);
         if (astore__set(store, "FormatOrAnsiString::ClipboardFormat", _v) < 0) {
@@ -35233,7 +35233,7 @@ forms20__unpack_countofbyteswithcompressionflag( \
     _v = stream__read_uint32(stream);
 
     # cb (31 bits)
-    if (astore__set(store, "cb", _v % 2147483648) < 0) {  # _v % (2 ^ 31)
+    if (astore__set(store, "cb", _v % 2147483648.) < 0) {  # _v % (2 ^ 31)
         return forms20__E_UNEXPECTED;
     }
 
