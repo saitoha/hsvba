@@ -4862,7 +4862,7 @@ __atom__scan( \
         } else if (_scanner_state == __atom__C_lst_digits) {
             if (_c < 48 || _c > 57) {  # not digits
                 _pos = _stack[_stack[0]--];
-                _s = + str__binary_join(_chars, _pos, _i - 1);
+                _s = 0 + str__binary_join(_chars, _pos, _i - 1);
                 _addr = addr__ref(_s);
                 if (addr__errno < 0) {
                     break;
@@ -5328,7 +5328,7 @@ __atom__parse( \
                     E__message = "logic error: " _v;
                     break;
                 }
-                _v = + substr(_v, 2);
+                _v = 0 + substr(_v, 2);
                 _v = cell__new(__atom__C_tag_ldp, _v);
                 _v = addr__ref(_v);
                 if (_v < 0) {
@@ -5336,7 +5336,7 @@ __atom__parse( \
                 }
                 _stack[++_stack[0]] = _v;
             } else if (_tokid == __atom__C_tok_digits) {
-                _v = + addr__deref(cell__tail(_token));
+                _v = 0 + addr__deref(cell__tail(_token));
                 _v = cell__new(__atom__C_tag_ldi, _v);
                 _v = addr__ref(_v);
                 if (_v < 0) {
@@ -5799,7 +5799,7 @@ __atom__type_apply( \
             type[__atom__type__M_size] = _v;
         } else if (_tokid == __atom__C_tok_digits) {
             _v = cell__tail(_token);
-            _v = + addr__deref(_v);
+            _v = 0 + addr__deref(_v);
             if (_v < 0) {
                 return (-1);
             }
@@ -7897,7 +7897,7 @@ __struct__scan( \
             # {{{
             if (_c < 48 || _c > 57) {  # not digits
                 _pos = _stack[_stack[0]--];
-                _s = + str__binary_join(_chars, _pos, _i - 1);
+                _s = 0 + str__binary_join(_chars, _pos, _i - 1);
                 _addr = addr__ref(_s);
                 if (_addr < 0) {
                     break;
@@ -8238,7 +8238,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                _params[++_params[0]] = + _v;
+                _params[++_params[0]] = 0 + _v;
                 _struct_name = _struct_name _v;
                 _status = struct__type__bind_num(_type, _v);
                 if (_status < 0) {
@@ -8292,7 +8292,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                _params[++_params[0]] = +_v;
+                _params[++_params[0]] = 0 + _v;
                 if (addr__errno < 0) {
                     break;
                 }
@@ -8680,7 +8680,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                __struct__S_type[_key] = + _v;
+                __struct__S_type[_key] = 0 + _v;
                 __struct__S_pst = __struct__C_pst_struct_member;
             } else {
                 break;
@@ -8760,7 +8760,7 @@ __struct__parse( \
                 __struct__S_stack[++__struct__S_sp] = _rmap[_v];
                 __struct__S_pst = __struct__C_pst_struct_must_be;
             } else if (_tokid == __struct__C_digits) {
-                __struct__S_stack[++__struct__S_sp] = + _tail;
+                __struct__S_stack[++__struct__S_sp] = 0 + _tail;
                 __struct__S_pst = __struct__C_pst_struct_must_be;
             } else {
                 break;
@@ -9223,12 +9223,12 @@ struct__unpack( \
 
         if (match(_v, /^[[:digit:]]+$/)) {
             # array size is immediate value, such as typename[10]
-            _count = + _v;
+            _count = 0 + _v;
         } else {
             # array size is path expression, such as typename[../Data/Count]
             _v = astore__get(store, _v);
             if (match(_v, /^[[:digit:]]+$/)) {
-                _count = + _v;
+                _count = 0 + _v;
             } else {
                 E__message = "reference error: " def;
                 return (-1);
@@ -15676,7 +15676,7 @@ zlib__init(    _i, _status) {
           __zlib__C_PERMUTED_ORDERING, /, */);
     for (_i = 1; _i <= 19; ++_i) {
         __zlib__C_PERMUTED_ORDERING[_i] = \
-            + __zlib__C_PERMUTED_ORDERING[_i];
+            0 + __zlib__C_PERMUTED_ORDERING[_i];
     }
 
     # Zip decoding: fixed literal code lengths
@@ -15696,7 +15696,7 @@ zlib__init(    _i, _status) {
     # convert to zero-origin
     for (_i = 1; _i <= 288; ++_i) {
         __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i - 1] = \
-            + __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
+            0 + __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
     }
     delete __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
 
@@ -15709,7 +15709,7 @@ zlib__init(    _i, _status) {
     # convert to zero-origin
     for (_i = 1; _i <= 32; ++_i) {
         __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i - 1] = \
-            + __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i];
+            0 + __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i];
     }
     delete __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i - 1];
 
@@ -15720,7 +15720,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_LENGTH, /, */);
     for (_i = 1; _i <= 29; ++_i) {
         __zlib__C_LZ77_LENGTH[_i] = \
-            + __zlib__C_LZ77_LENGTH[_i];
+            0 + __zlib__C_LZ77_LENGTH[_i];
     }
 
     # Zip decoding: conversion table for code -> extend bits of length
@@ -15729,7 +15729,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_LENGTH_EXTEND_BITS, /, */);
     for (_i = 1; _i <= 29; ++_i) {
         __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i] = \
-            + __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i];
+            0 + __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i];
     }
 
     # Zip decoding: conversion table for code -> base distance
@@ -15738,7 +15738,7 @@ zlib__init(    _i, _status) {
           __zlib__C_DEFLATE_LZ77_DISTANCE, /, */);
     for (_i = 1; _i <= 30; ++_i) {
         __zlib__C_DEFLATE_LZ77_DISTANCE[_i] = \
-            + __zlib__C_DEFLATE_LZ77_DISTANCE[_i];
+            0 + __zlib__C_DEFLATE_LZ77_DISTANCE[_i];
     }
 
     # Zip decoding: conversion table for code -> extend bits of distance
@@ -15747,7 +15747,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_DISTANCE_EXTEND_BITS, /, */);
     for (_i = 1; _i <= 30; ++_i) {
         __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i] = \
-            + __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i];
+            0 + __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i];
     }
 
     __zlib__init_guard = 1;
