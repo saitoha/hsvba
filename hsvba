@@ -7457,16 +7457,14 @@ __astore__pretty_print_custom( \
     }
     _dir = __astore__path_canonicalize(_dir);
     if (indent == "") {
-        split(_dir, _comp, "/");
-        _count = length(_comp);
+        _count = split(_dir, _comp, "/");
         for (_i = 2; _i <= _count; ++_i) {
             printf("%s%s -> (nested array)\n", indent, _comp[_i]);
             indent = "    " indent;
         }
     }
     _index = __astore__S_hash[_dir "/"];
-    split(_index, _keys, "/");
-    _count = length(_keys) - 1;
+    _count = split(_index, _keys, "/") - 1;
     for (_i = 1; _i <= _count; ++_i) {
         _key = _keys[_i];
         _path = _dir "/" _key;
@@ -37261,8 +37259,7 @@ cli__process_mso_xml( \
     if (_base64str == "") {
         return cli__E_FAIL;
     }
-    split(_base64str, _buf, "");
-    _size = length(_base64str);
+    _size = split(_base64str, _buf, "");
     stream__new(_ostream, int(_size / 4 * 3));
     _iit = 0;
 
