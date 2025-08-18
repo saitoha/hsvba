@@ -19872,7 +19872,7 @@ cfb__unpack_stream( \
         return cfb__E_UNEXPECTED;
     }
 
-    if (_stream_size + 0 > 68719476736) {  # 2 ^ 36
+    if (_stream_size + 0 > 68719476736.) {  # 2 ^ 36
         E__message = sprintf("Huge size stream (%s bytes) is detected.", _stream_size);
         return cfb__E_UNEXPECTED;
     }
