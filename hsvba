@@ -1367,8 +1367,15 @@ stream__read_bits( \
         stream[__stream__M_iit] = _it;
     }
     stream[__stream__M_ibit] = _bits;
+
+    # note: jawk int() calls Java`s 32-bit signed int narrowing conversion
+    # e.g., int(38654705664.0) -> 2147483647
+    # therefore ensure values passed to int() stay within the 32-bit range
+    # [-2^31, 2^31-1] in particular, num__rshift() uses int() internally,
+    # so guard inputs accordingly
+    return num__rshift(_bitsbuf % num__pow2[n + _it_bits], _it_bits);
+#    return num__rshift(_bitsbuf, _it_bits) % num__pow2[n];
 #    return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
-    return num__rshift(_bitsbuf, _it_bits) % num__pow2[n];
 }
 function \
 __stream__ut__read_bits__00(    _stream) {
@@ -2717,7 +2724,8 @@ function cell__tag(cell) {
 # {{{ cell::head
 function cell__head(cell) {
     # cell << 9 & (2 ^ 22) - 1
-    return int(cell / 512) % 4194304;
+#    return int(cell / 512) % 4194304;
+    return int(cell % (4194304 * 512) / 512);
 }
 # }}}
 # {{{ cell::tail
