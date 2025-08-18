@@ -428,12 +428,15 @@
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
 #
 # The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
-true && echo "$( \
+true && echo "$$ $( \
 : $'\042\047'; \
-: ${AWK:=$(which mawk gawk wak goawk bioawk awk 2>/dev/null | head -n1)}; \
+: ${AWK:=$(which mawk gawk wak goawk bioawk jawk awk 2>/dev/null | head -n1)}; \
+rm -f /tmp/hsvba-$$.err; \
 test x${AWK##*/} = xwak 2>/dev/null && AWKOPT=${AWKOPT}' -b'; \
+test x${AWK##*/} = xjawk 2>/dev/null || ARGSEP=--; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042 2>/tmp/hsvba.log; \
+LANG=C ${AWK} ${AWKOPT} -f \042${0}\042 ${ARGSEP} \042${@}\042 || touch /tmp/hsvba-$$.err; \
+exit 0; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -454,7 +457,7 @@ elif test x${AWK} = xbioawk 2>/dev/null; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
-  exec ${AWK} ${AWKOPT} -- \042${@}\042 2>/tmp/hsvba.log; \
+  ${AWK} ${AWKOPT} ${ARGSEP} \042${@}\042 || touch /tmp/hsvba-$$.err; \
 }'; \
 LANG=C __rt_exec ' # ";
 # }}}
@@ -37526,7 +37529,7 @@ hsvba__commit_signatures(signed) {
     # Add your signature here.
 }
 # do not erase the following line.
-# '           "$@"       )" && cat /tmp/hsvba.log >&2; ! test -s /tmp/hsvba.log;
+# '           "$@"       )"; [ -e /tmp/hsvba-$$.err ] && { exit 1; }; exit 0;
 # ^           ^          ^
 # |           |          |
 # |           |          the end paren of command substitution.
