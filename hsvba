@@ -2475,7 +2475,7 @@ addr__ref( \
     addr__errno = 0;
 
     # for jawk, explicitly convert to string
-    if (__feat__array_key_is_type_aware) {
+    if (__feat__array_key_is_type_aware || __feat__lenient_string_to_number_comparison) {
         v = v "";
     }
 
@@ -36279,6 +36279,10 @@ cli__init(    _i, _status, _buf, _test, _n, _arr) {
     _n = (1 in _arr);
     if (_n == 0) {
         __feat__array_key_is_type_aware = 1;
+    }
+
+    if ("001" == "1.00") {
+        __feat__lenient_string_to_number_comparison = 1;
     }
 
     if ("PROCINFO" in SYMTAB) {
