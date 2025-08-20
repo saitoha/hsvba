@@ -19695,10 +19695,10 @@ cfb__init(    _status) {
     if (_status < 0) {
         return _status;
     }
-    _status = struct__init();
-    if (_status < 0) {
-        return _status;
-    }
+#    _status = struct__init();
+#    if (_status < 0) {
+#        return _status;
+#    }
 
     cfb__E_NOTIMPL      = -16385;
     cfb__E_FAIL         = -16389;
@@ -36312,10 +36312,10 @@ cli__init(    _i, _status, _buf, _test, _n, _arr) {
     if (_status < 0) {
         return _status;
     }
-    _status = struct__init();
-    if (_status < 0) {
-        return _status;
-    }
+#    _status = struct__init();
+#    if (_status < 0) {
+#        return _status;
+#    }
     _status = xmlp__init();
     if (_status < 0) {
         return _status;
