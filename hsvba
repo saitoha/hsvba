@@ -4609,6 +4609,7 @@ atom__declare( \
     _tokens, _status \
 ) {
     split("", _tokens, "");
+    _tokens[1] = 0;
 
     _status = __atom__scan(definition, _tokens);
     if (_status < 0) {
@@ -4787,10 +4788,8 @@ __atom__scan( \
     src, tokens, \
     \
     _chars, _count, _scanner_state, _c, _stack, \
-    _v, _i, _s, _tn, _pos, _addr, _id \
+    _v, _i, _s, _pos, _addr, _id \
 ) {
-    _tn = 0;  # token counter
-
     _scanner_state = __atom__C_lst_neutral;
 
     # stack
@@ -4807,7 +4806,7 @@ __atom__scan( \
                 # _skip
             } else if (_c == 44) {  # ,
                 _id = __atom__C_tok_comma;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 47) {  # /
                 if (_i == _count) {
                     break;
@@ -4836,10 +4835,10 @@ __atom__scan( \
                 _scanner_state = __atom__C_lst_quote;
             } else if (_c == 123) {  # {
                 _id = __atom__C_tok_lbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 125) {  # }
                 _id = __atom__C_tok_rbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else {
                 break;
             }
@@ -4848,7 +4847,7 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 58) {
                     _id = __atom__C_tok_dblcolon;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else {
                     break;
                 }
@@ -4856,10 +4855,10 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 60) {  # <
                     _id = __atom__C_tok_le;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else if (_c == 62) {  # >
                     _id = __atom__C_tok_ge;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else {
                     break;
                 }
@@ -4867,13 +4866,13 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 58) {  # :
                     _id = __atom__C_tok_colon;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else if (_c == 60) {  # <
                     _id = __atom__C_tok_lt;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else if (_c == 62) {  # >
                     _id = __atom__C_tok_gt;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else {
                     break;
                 }
@@ -4889,10 +4888,10 @@ __atom__scan( \
                     break;
                 }
                 _id = __atom__C_tok_digits;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 if (_c == 62) {  # >
                     _id = __atom__C_tok_rangle;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else {
                     --_i;
                 }
@@ -4906,20 +4905,20 @@ __atom__scan( \
                 # check if current token is a keyword
                 if (_s == "atom") {
                     _id = __atom__C_tok_atom;
-                    tokens[++_tn] = cell__new(_id, _pos, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                 } else {  # identifier
                     _addr = addr__ref(_s);
                     if (_addr < 0) {
                         break;
                     }
                     _id = __atom__C_tok_identifier;
-                    tokens[++_tn] = cell__new(_id, _pos, _addr);
+                    tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                     if (_c == 60) {  # <
                         _id = __atom__C_tok_langle;
-                        tokens[++_tn] = cell__new(_id, _pos, 0);
+                        tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                     } else if (_c == 62) {  # >
                         _id = __atom__C_tok_rangle;
-                        tokens[++_tn] = cell__new(_id, _pos, 0);
+                        tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                     } else {
                         --_i;  # backtrack
                     }
@@ -4936,7 +4935,7 @@ __atom__scan( \
                     break;
                 }
                 _id = __atom__C_tok_quote;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 _scanner_state = __atom__C_lst_neutral;
             } else if (_c == 123) {  # {
                 _pos = _stack[_stack[0]--];
@@ -4946,9 +4945,9 @@ __atom__scan( \
                     break;
                 }
                 _id = __atom__C_tok_quote;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 _id = __atom__C_tok_lbrace;
-                tokens[++_tn] = cell__new(_id, _i, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _i, _addr);
                 _scanner_state = __atom__C_lst_expr;
             }
         } else if (_scanner_state == __atom__C_lst_comment) {
@@ -4966,22 +4965,22 @@ __atom__scan( \
                 # _skip
             } else if (_c == 40) {  # (
                 _id = __atom__C_tok_lparen;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 41) {  # )
                 _id = __atom__C_tok_rparen;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 42) {  # *
                 _id = __atom__C_tok_mul;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 43) {  # +
                 _id = __atom__C_tok_add;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 45) {  # -
                 _id = __atom__C_tok_sub;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 47) {  # /
                 _id = __atom__C_tok_div;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c >= 48 && _c <= 57) {  # digits
                 _stack[++_stack[0]] = _scanner_state;  # push current state
                 _stack[++_stack[0]] = _i;  # push current position
@@ -4997,7 +4996,7 @@ __atom__scan( \
                 _scanner_state = __atom__C_lst_identifier;
             } else if (_c == 125) {  # }
                 _id = __atom__C_tok_rbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 _stack[++_stack[0]] = _i;  # push current position
                 _scanner_state = __atom__C_lst_quote;
             } else {
@@ -5045,7 +5044,7 @@ __atom__parse( \
     split("", _params_map, "");
     split("", _baseparams, "");
 
-    _count = length(tokens);
+    _count = tokens[0];
 
     for (_i = 1; _i <= _count; ++_i) {
         _token = tokens[_i];
@@ -6247,6 +6246,10 @@ astore__init(    _status) {
         type: signed integer                        \
     }                                               \
                                                     \
+    /* TODO: add a workaround (if feasible) for     \
+     * busybox AWK < v1.36, which cannot handle     \
+     * hex literals of 31 bits or more correctly    \
+     */                                             \
     atom hexint<n>: uint<n> {                       \
         format: `&H%0{n * 2}X`                      \
     }                                               \
