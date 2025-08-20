@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+
+user=user
+uid=$(id -u)
+gid=1000
+jawk_download_url=https://sourceforge.net/projects/jawk/files/jawk/1.02/jawk.1_02.jar/download
+pawk_download_url=http://www.math.utah.edu/pub/pawk/pawk-20030606.tar.gz
+wak_download_url=https://github.com/raygard/wak/archive/refs/tags/v24.10.tar.gz
+goawk_repo=github.com/benhoyt/goawk@latest
+
+docker build . -t "${1:-awkbox}" -f - << __Dockerfile__
+FROM debian:bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y sudo make build-essential yacc default-jre-headless curl \
+                                 original-awk mawk gawk bioawk busybox golang
+ENV LC_ALL=C.UTF-8
+ARG USERNAME=${user}
+ARG UID=${uid}
+ARG GID=${gid}
+RUN groupadd -g ${gid} ${user} && \
+    useradd -m -u ${uid} -g ${gid} -s /bin/bash ${user} && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN echo "${user}:changeme" | chpasswd
+
+USER ${user}
+WORKDIR /home/${user}
+
+# busybox
+RUN mkdir -p busybox/bin && \
+    ln -s /bin/busybox busybox/bin/awk
+ENV PATH=/home/${user}/busybox/bin:\$PATH
+
+# goawk
+RUN go install ${goawk_repo}
+ENV PATH=/home/${user}/go/bin:\$PATH
+
+# pawk
+COPY patches patches
+RUN curl -sL ${pawk_download_url} | tar xvz && cd pawk-20030606 && \
+    patch -p0 < ../patches/pawk.patch && \
+        make && mkdir bin && \
+        cp a.out bin/pawk
+ENV PATH=/home/${user}/pawk-20030606/bin:\$PATH
+
+# jawk
+RUN mkdir -p jawk/bin jawk/share
+RUN curl -sL "${jawk_download_url}" > jawk/share/jawk-1.02.jar
+COPY <<-__jawk__ jawk/bin/jawk
+#!/bin/sh
+LC_CTYPE=en_US.ISO8859-1 java \\\\
+    -Dfile.encoding=latin1 \\\\
+    -cp /home/${user}/jawk/share/jawk-1.02.jar \\\\
+    org.jawk.Awk "\\\${@}"
+__jawk__
+RUN sudo chown user:user jawk/bin/jawk && \
+        chmod +x jawk/bin/jawk
+ENV PATH=/home/${user}/jawk/bin:\$PATH
+
+# wak
+RUN curl -sL ${wak_download_url} | tar xvz && \
+        cd wak-24.10 && \
+        make && \
+        sudo make install
+
+RUN sudo apt install -y vim
+RUN mkdir work
+WORKDIR /home/${user}/work
+
+CMD ["/bin/bash"]
+__Dockerfile__
+
+# vim: set et ts=4 sw=0 sts=-1:

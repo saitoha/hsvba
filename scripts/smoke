@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd $(dirname "${0}")/.. && find "${testdir:-testdata}" \
+    -type f ! -name \*.vs[sdt] ! -name [~.]\* |
+sort |
+while read f; do
+    trap break 2
+    echo "*** ${AWK:+AWK=${AWK}} ${AWKOPT:+AWKOPT=${AWKOPT}}: ${f} ***" >&2
+    timeout 10 ./hsvba "${f}" ${HSVBA_OPT:-"-pall"} > /dev/null
+    r="${?}"
+    test "${r}" = 0 || echo "return code: ${r}" >&2
+    echo "${f}" "${r}"
+done
+
+# vim: set ft=awk et ts=4 sw=0 sts=-1:
