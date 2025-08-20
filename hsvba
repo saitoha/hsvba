@@ -7198,7 +7198,9 @@ __astore__path_canonicalize(key) {
     # use it as an alternative by repeatedly applying match() and substr() to a
     # single string.
     #
-    while (match(key, /\/[^\/\.]*\/\.\.(\/|$)|\/\.(\/|$)|\/\/|\/$/)) {
+    while (match( \
+        key, /\057[^\057\.]*\057\.\.(\057|$)|\057\.(\057|$)|\057\057|\057$/)) {
+    #while (match(key, /\/[^\/\.]*\/\.\.(\/|$)|\/\.(\/|$)|\/\/|\/$/)) {
         if (RSTART + RLENGTH - 1 >= length(key)) {
             key = substr(key, 1, RSTART - 1);
         } else {
@@ -7235,7 +7237,7 @@ astore__new( \
     key = __astore__path_canonicalize(key);
 
     # store type qualifiers
-    while (match(key, /::[^\/]+/)) {
+    while (match(key, /::[^\057]+/)) {
         _base = substr(key, 1, RSTART - 1);
         __astore__S_hash[_base "::"] = substr(key, RSTART + 2, RLENGTH - 2);
         key = _base substr(key, RSTART + RLENGTH);
@@ -7285,7 +7287,7 @@ astore__set( \
     _path = __astore__path_canonicalize(_path);
 
     # extract type qualifiers
-    while (match(_path, /::[^\/]+/)) {
+    while (match(_path, /::[^\057]+/)) {
         _target = substr(_path, 1, RSTART - 1);
         _type = substr(_path, RSTART + 2, RLENGTH - 2);
         sub("%", valid_arg, _type);
@@ -7307,7 +7309,7 @@ astore__set( \
         }
     }
 
-    match(_path, /^.*\//);
+    match(_path, /^.*\057/);
     _dir = substr(_path, 1, RLENGTH - 1);
     _leaf = substr(_path, RLENGTH + 1);
     __astore__S_hash[_path] = val;
@@ -7319,7 +7321,7 @@ astore__set( \
     } else {
         __astore__S_hash[_branch_index_path] = _leaf "/";
     }
-    while (match(_dir, /^.*\//)) {
+    while (match(_dir, /^.*\057/)) {
         _leaf = substr(_dir, RLENGTH + 1);
         _dir = substr(_dir, 1, RLENGTH - 1);
         _dir_index_path = _dir "/"
@@ -19644,7 +19646,7 @@ cli__extract_vba( \
          if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
              _type == ooxml__C_schema_VISIODOCUMENT) {
              _target = astore__get(store, _key "/Relationship/Target");
-             if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
+             if (match(_target, /\057[^\057]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
                  _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
                  break;
@@ -23593,11 +23595,11 @@ __vba__projectstream__unpack_projectdocmodule( \
     _v, _ident, _ver \
 ) {
     _v = stream__currentline(stream);
-    if (_v !~ /^Document=.*\/&H[0-9A-F]*$/) {
+    if (_v !~ /^Document=.*\057&H[0-9A-F]*$/) {
         return vba__projectstream__S_FALSE;
     }
 
-    if (! match(_v, /\/&H[0-9A-F]*$/)) {
+    if (! match(_v, /\057&H[0-9A-F]*$/)) {
         return vba__projectstream__E_UNEXPECTED;
     }
 
@@ -36551,8 +36553,8 @@ __cli__dirty_extract_vba_from_zip( \
          _type = astore__get(_store, _key "/Relationship/Type");
          if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
              _type == ooxml__C_schema_VISIODOCUMENT) {
-             _target = astore__get(_store, _key "/Relationship/Target");
-             if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
+             _target = astore__get(store, _key "/Relationship/Target");
+             if (match(_target, /\057[^\057]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
                  _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
                  break;
