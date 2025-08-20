@@ -17063,7 +17063,7 @@ zip__unpack_directories( \
     _store, _count, _status, _offset, _i, \
     _file_name \
 ) {
-    if (stream__rsearch(stream, "PK\005\006") < 0) {
+    if (stream__rsearch(stream, "PK" str__chr[5] str__chr[6]) < 0) {
         E__message = "Zip: cannot find the end of central directory"
         return (-1);
     }
@@ -20389,7 +20389,7 @@ __cfb__unpack_directorysectors( \
     # of the name.
     #
     # \x00\x52 -> \u5200 (UTF16-LE) -> \xe5\x88\x80 (UTF-8)
-    if (id == 0 && _v == "\345\210\200") {
+    if (id == 0 && _v != "Root Entry") {
         _v = "Root Entry";
     }
     if (astore__set(_store, "Directory Entry Name", _v) < 0) {
@@ -24341,7 +24341,12 @@ __vba__projectstream__unpack_hostextenders( \
         _v = substr(_v, _len + 2);
 
         # LibName
-        if (! match(_v, /^(VBE|([!-:<-\177])+);/)) {
+        if (__feat__has_java_style_regexp) {
+            if (! match(_v, "^(VBE|([!-:<-\\0177])+);")) {
+                E__message = sprintf("unexpected LibName: \"%s\"", _v);
+                return vba__projectstream__E_UNEXPECTED;
+            }
+        } else if (! match(_v, /^(VBE|([!-:<-\177])+);/)) {
             E__message = sprintf("unexpected LibName: \"%s\"", _v);
             return vba__projectstream__E_UNEXPECTED;
         }
@@ -37453,10 +37458,17 @@ __cli__detect_vbaroot_recursively( \
 # }}}
 # {{{ entry point
 BEGIN {
-    RS = "^$";       # multicharacter value of RS is a gawk extension
+    E__errno = 0;
+
+    if (length("\041") == 3) {
+        RS = "";  # for jawk
+    } else {
+        RS = "^$";  # multicharacter value of RS is a non-posix extension
+    }
     BINMODE = "r";   # gawk/mawk extension, for Windows
     FS = "^$";
-    CONVFMT = "%.17g";  # Workaround for older versions of mawk
+    CONVFMT = "%.17f";  # Workaround for older versions of mawk
+    #OFMT = "%.17f";
     FIELDWIDTH="*";
 
     E__message = "";
