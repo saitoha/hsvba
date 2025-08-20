@@ -37237,20 +37237,24 @@ cli__process_mso_xml( \
         #     https://github.com/idiom/activemime-format/blob/master/README.md
         #
         astore__new(_store, "/ActiveMime");
-        _v = stream__read_raw_string(_ostream, 12);
+        _v = stream__read_raw_string(_ostream, 10);
         if (astore__set(_store, "magic,mustbe(ActiveMime)", _v) < 0) {
             return (-1);
         }
+        _v = stream__read_uint16(_ostream);
+        if (astore__set(_store, "*Unknown1::hexint16,mustbe(0)", _v) < 0) {
+            return (-1);
+        }
         _v = stream__read_uint16(_ostream);  # Unknown -- always 01f0 -- Version?
-        if (astore__set(_store, "*Unknown1::hexint16", _v) < 0) {
+        if (astore__set(_store, "*Unknown2::hexint16", _v) < 0) {
             return (-1);
         }
         _v = stream__read_uint32(_ostream);  # FieldSize?
-        if (astore__set(_store, "*Unknown2::hexint32", _v) < 0) {
+        if (astore__set(_store, "*Unknown3::hexint32", _v) < 0) {
             return (-1);
         }
         _v = stream__read_uint32(_ostream);  # Always ffffffff
-        if (astore__set(_store, "*Unknown3::hexint32", _v) < 0) {
+        if (astore__set(_store, "*Unknown4::hexint32", _v) < 0) {
             return (-1);
         }
         # {x}0000{y}f0
@@ -37258,7 +37262,7 @@ cli__process_mso_xml( \
         # y observed as {6,7,8} -- Note: Usually 7 other values could
         #                                indicate a malformed document
         _v = stream__read_uint32(_ostream);
-        if (astore__set(_store, "*Unknown4::hexint32", _v) < 0) {
+        if (astore__set(_store, "*Unknown5::hexint32", _v) < 0) {
             return (-1);
         }
         # Length of zlib compressed data
@@ -37268,26 +37272,26 @@ cli__process_mso_xml( \
         }
         # FieldSize  -- Observed as 4 or 8..almost always 4
         _v = _size = stream__read_uint32(_ostream);
-        if (astore__set(_store, "*Unknown5::hexint32", _v) < 0) {
+        if (astore__set(_store, "*Unknown6::hexint32", _v) < 0) {
             return (-1);
         }
         # FieldSize  -- Always observed as 04000000
         _v = stream__read_uint32(_ostream);
-        if (astore__set(_store, "*Unknown6::hexint32", _v) < 0) {
+        if (astore__set(_store, "*Unknown7::hexint32", _v) < 0) {
             return (-1);
         }
         # size 4 or 8
         # 00000000          With size (4)
         # 00000000 10000000 With Size (8)
         _v = stream__read_hex_string(_ostream, _size);
-        if (astore__set(_store, "*Unknown7", _v) < 0) {
+        if (astore__set(_store, "*Unknown8", _v) < 0) {
             return (-1);
         }
         # Seems to indicate if the block includes unencoded vb strings at the end.
         # 00000000 - Block contains some unencoded VB Project Strings
         # 02000000 - Block does not contains unencoded VB Project Strings
         _v = _compress_type = stream__read_uint32(_ostream);
-        if (astore__set(_store, "*Unknown8", _v) < 0) {
+        if (astore__set(_store, "*Unknown9", _v) < 0) {
             return (-1);
         }
         # Uncompressed Size
