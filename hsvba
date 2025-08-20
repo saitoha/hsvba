@@ -36659,7 +36659,7 @@ __cli__dirty_extract_file_from_zip( \
     filename, ostream, \
     \
     _istream, _pos, _str, _s, _len, _declen, _namelen, _extlen, \
-    _store, _status, _flen \
+    _store, _status, _flen, _i, _subs \
 ) {
     # HACK: quick-and-dirty zip decoding without the zip module
     _str = $0;
@@ -36670,7 +36670,14 @@ __cli__dirty_extract_file_from_zip( \
             return cli__E_FAIL;
         }
         if (_pos > 31 && substr(_str, _pos - 30, 4) == "PK\003\004") {
-            split(substr(_str, _pos - 12, 12), _s, "");
+            _subs = substr(_str, _pos - 12, 12);
+            if (__feat__has_split_in_bytes) {
+                split(_subs, _s, "");
+            } else {
+                for (_i = 1; _i <= 12; ++_i) {
+                    _s[_i] = substr(_subs, _i, 1);
+                }
+            }
             # compressed size
             _len = str__ord[_s[4]] * 16777216 + str__ord[_s[3]] * 65536 \
                  + str__ord[_s[2]] * 256 + str__ord[_s[1]];
