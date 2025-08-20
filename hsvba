@@ -250,21 +250,25 @@
 #    +----------------------------+--------------------+--------------------+
 #    | busybox awk                | requires           | works(slow)        |
 #    +----------------------------+--------------------+--------------------+
-#    | pawk                       | requires           | works(slow)        |
+#    | alecthomas/pawk            | requires           | works(slow)        |
 #    +----------------------------+--------------------+--------------------+
 #    | bioawk                     | requires           | works(slow)        |
 #    +----------------------------+--------------------+--------------------+
-#    | jawk(java)                 |                    | error *1           |
+#    | original jawk-1.02 (java)  |                    | works              |
 #    +----------------------------+--------------------+--------------------+
-#    | jawk(rust)                 |                    | error *2           |
+#    | hoijui's jawk-1.03 (java)  |                    | works              |
 #    +----------------------------+--------------------+--------------------+
-#    | ezrosent/frawk             |                    | error *2           |
+#    | jawk(rust)                 |                    | error *1           |
+#    +----------------------------+--------------------+--------------------+
+#    | ezrosent/frawk             |                    | error *1           |
 #    +----------------------------+--------------------+--------------------+
 #    | raygard/wak                | requires           | works              |
 #    +----------------------------+--------------------+--------------------+
 #    | raygard/wak with -b option |                    | works              |
 #    +----------------------------+--------------------+--------------------+
 #    | soerlemans/awx             |                    | error *2           |
+#    +----------------------------+--------------------+--------------------+
+#    | 9 awk (plan9port)          | requires           | works              |
 #    +----------------------------+--------------------+--------------------+
 #
 #    *1 integer overflow
@@ -430,10 +434,13 @@
 # The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
 true && echo "$( \
 : $'\042\047'; \
-: ${AWK:=$(which mawk gawk wak goawk bioawk awk 2>/dev/null | head -n1)}; \
-test x${AWK##*/} = xwak && AWKOPT=${AWKOPT}' -b'; \
+: ${AWK:=$(which mawk gawk wak goawk bioawk jawk awk 2>/dev/null | head -n1)}; \
+rm -f /tmp/hsvba-$$.err; \
+test x${AWK##*/} = xwak 2>/dev/null && AWKOPT=${AWKOPT}' -b'; \
+[[ ${AWK##*/} =~ jawk ]] 2>/dev/null || ARGSEP=--; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
-LANG=C exec ${AWK} ${AWKOPT} -f \042${0}\042 -- \042${@}\042 2>/tmp/hsvba.log; \
+LANG=C ${AWK} ${AWKOPT} -f \042${0}\042 ${ARGSEP} \042${@}\042 || touch /tmp/hsvba-$$.err; \
+exit 0; \
 '; \
 : ${__pp_ut_modules:=$(echo ${HSVBA_UT//,/ })}; \
 : ${HSVBA_ASSERT:+${__pp_debug_assert:=1}}; \
@@ -446,15 +453,15 @@ eval $(eval echo $( \
     tr \\n  ,                                                          | \
     xargs printf __pp_trace__'{'${HSVBA_TRACE_TOPIC//[^a-z0-9_,]},'}'_'{%s,}'=1\\n \
 ) | tr ' ' \\n); \
-if test x${AWK##*/} = xgawk; then \
+if test x${AWK##*/} = xgawk 2>/dev/null; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
   __pp_feat__has_native_bitwise_shift_functions=1; \
   __pp_feat__has_native_strftime=1; \
-elif test x${AWK} = xbioawk; then \
+elif test x${AWK} = xbioawk 2>/dev/null; then \
   __pp_feat__has_native_bitwise_logical_functions=1; \
 fi; \
 eval $'__rt_exec() { \
-  exec ${AWK} ${AWKOPT} -- \042${@}\042 2>/tmp/hsvba.log; \
+  ${AWK} ${AWKOPT} ${ARGSEP} \042${@}\042 || touch /tmp/hsvba-$$.err; \
 }'; \
 LANG=C __rt_exec ' # ";
 # }}}
@@ -508,10 +515,15 @@ LANG=C __rt_exec ' # ";
 #   (num__lossless_add, num__lossless_mul)
 # {{{ num__init
 function \
-num__init() {
+num__init(    _n, _i) {
 
     if (__num__init_guard) {
         return (1);
+    }
+
+    num__pow2[0] = _n = 1;
+    for (_i = 1; _i <= 128; _i++) {
+        num__pow2[_i] = _n = _n * 2;
     }
 
     __num__init_guard = 1;
@@ -575,7 +587,8 @@ function \
 num__lshift(x, n) {
     # '${__pp_feat__has_native_bitwise_shift_functions:+$'\nreturn lshift(x, n)'}';
     # '${__pp_feat__has_native_bitwise_shift_functions:-'
-    return x * (2 ^ n);
+#    return x * 2 ^ n;
+    return x * num__pow2[n];
     # '}'
 }
 # }}}
@@ -584,7 +597,8 @@ function \
 num__rshift(x, n) {
     # '${__pp_feat__has_native_bitwise_shift_functions:+$'\nreturn rshift(x, n)'}';
     # '${__pp_feat__has_native_bitwise_shift_functions:-'
-    return int(x / (2 ^ n));
+#    return int(x / (2 ^ n));
+    return int(x / num__pow2[n]);
     # '}'
 }
 # }}}
@@ -644,9 +658,11 @@ num__lossless_mul( \
 # reverse the bit order of the given integer
 function num__reverse_bits(n, w,    _p, _q, _r) {
     for (_r = _p = 0; w--; ) {
-        _q = 2 ^ w;
+#        _q = 2 ^ w;
+        _q = num__pow2[w];
         if (n >= _q) {
-            _r += 2 ^ _p;
+#            _r += 2 ^ _p;
+            _r += num__pow2[_p];
             n -= _q;
         }
         ++_p;
@@ -668,10 +684,15 @@ str__init(    _c, _i) {
         return (1);
     }
 
-    # build ascii map
+    # build ascii map (str__chr)
     if ("PROCINFO" in SYMTAB) {  # gawk
         # Note that in a UTF-8 environment, gawk`s sprintf("%c", n) works differently from
         # its LC_CTYPE=C counterpart for n in the range 0x80-0xff (GR).
+        #
+        # wak will force all strings to be interpreted as UTF-8 (even in the
+        # C locale), and will abort if it encounters a character during split()
+        # that cannot be interpreted as UTF-8 (such as "\375\376\377").
+        #
         split( \
             "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021" \
             "\022\023\024\025\026\027\030\031\032\033\034\035\036\037\040\041\042" \
@@ -691,147 +712,89 @@ str__init(    _c, _i) {
             str__chr, "");
         str__chr[0] = "\0";
     } else {
-        # wak will force all strings to be interpreted as UTF-8 (even in the
-        # C locale), and will abort if it encounters a character during split()
-        # that cannot be interpreted as UTF-8 (such as "\375\376\377").
-        #
-        # for (_i = 0; _i <= 255; ++_i) {
-        #     str__chr[_i] = sprintf("%c", _i);
-        # }
+        # for characters from \0 (NUL) through \177 (DEL), the following code
+        # behaves the same across all awk implementations we know of...
         for (_i = 0; _i <= 127; ++_i) {
             str__chr[_i] = sprintf("%c", _i);
         }
-        # In wak, sprintf("%c", i) is forced to encode as UTF-8 when i > 128,
-        # returning a result of two or more bytes.
-        str__chr[128] = "\200";
-        str__chr[129] = "\201";
-        str__chr[130] = "\202";
-        str__chr[131] = "\203";
-        str__chr[132] = "\204";
-        str__chr[133] = "\205";
-        str__chr[134] = "\206";
-        str__chr[135] = "\207";
-        str__chr[136] = "\210";
-        str__chr[137] = "\211";
-        str__chr[138] = "\212";
-        str__chr[139] = "\213";
-        str__chr[140] = "\214";
-        str__chr[141] = "\215";
-        str__chr[142] = "\216";
-        str__chr[143] = "\217";
-        str__chr[144] = "\220";
-        str__chr[145] = "\221";
-        str__chr[146] = "\222";
-        str__chr[147] = "\223";
-        str__chr[148] = "\224";
-        str__chr[149] = "\225";
-        str__chr[150] = "\226";
-        str__chr[151] = "\227";
-        str__chr[152] = "\230";
-        str__chr[153] = "\231";
-        str__chr[154] = "\232";
-        str__chr[155] = "\233";
-        str__chr[156] = "\234";
-        str__chr[157] = "\235";
-        str__chr[158] = "\236";
-        str__chr[159] = "\237";
-        str__chr[160] = "\240";
-        str__chr[161] = "\241";
-        str__chr[162] = "\242";
-        str__chr[163] = "\243";
-        str__chr[164] = "\244";
-        str__chr[165] = "\245";
-        str__chr[166] = "\246";
-        str__chr[167] = "\247";
-        str__chr[168] = "\250";
-        str__chr[169] = "\251";
-        str__chr[170] = "\252";
-        str__chr[171] = "\253";
-        str__chr[172] = "\254";
-        str__chr[173] = "\255";
-        str__chr[174] = "\256";
-        str__chr[175] = "\257";
-        str__chr[176] = "\260";
-        str__chr[177] = "\261";
-        str__chr[178] = "\262";
-        str__chr[179] = "\263";
-        str__chr[180] = "\264";
-        str__chr[181] = "\265";
-        str__chr[182] = "\266";
-        str__chr[183] = "\267";
-        str__chr[184] = "\270";
-        str__chr[185] = "\271";
-        str__chr[186] = "\272";
-        str__chr[187] = "\273";
-        str__chr[188] = "\274";
-        str__chr[189] = "\275";
-        str__chr[190] = "\276";
-        str__chr[191] = "\277";
-        str__chr[192] = "\300";
-        str__chr[193] = "\301";
-        str__chr[194] = "\302";
-        str__chr[195] = "\303";
-        str__chr[196] = "\304";
-        str__chr[197] = "\305";
-        str__chr[198] = "\306";
-        str__chr[199] = "\307";
-        str__chr[200] = "\310";
-        str__chr[201] = "\311";
-        str__chr[202] = "\312";
-        str__chr[203] = "\313";
-        str__chr[204] = "\314";
-        str__chr[205] = "\315";
-        str__chr[206] = "\316";
-        str__chr[207] = "\317";
-        str__chr[208] = "\320";
-        str__chr[209] = "\321";
-        str__chr[210] = "\322";
-        str__chr[211] = "\323";
-        str__chr[212] = "\324";
-        str__chr[213] = "\325";
-        str__chr[214] = "\326";
-        str__chr[215] = "\327";
-        str__chr[216] = "\330";
-        str__chr[217] = "\331";
-        str__chr[218] = "\332";
-        str__chr[219] = "\333";
-        str__chr[220] = "\334";
-        str__chr[221] = "\335";
-        str__chr[222] = "\336";
-        str__chr[223] = "\337";
-        str__chr[224] = "\340";
-        str__chr[225] = "\341";
-        str__chr[226] = "\342";
-        str__chr[227] = "\343";
-        str__chr[228] = "\344";
-        str__chr[229] = "\345";
-        str__chr[230] = "\346";
-        str__chr[231] = "\347";
-        str__chr[232] = "\350";
-        str__chr[233] = "\351";
-        str__chr[234] = "\352";
-        str__chr[235] = "\353";
-        str__chr[236] = "\354";
-        str__chr[237] = "\355";
-        str__chr[238] = "\356";
-        str__chr[239] = "\357";
-        str__chr[240] = "\360";
-        str__chr[241] = "\361";
-        str__chr[242] = "\362";
-        str__chr[243] = "\363";
-        str__chr[244] = "\364";
-        str__chr[245] = "\365";
-        str__chr[246] = "\366";
-        str__chr[247] = "\367";
-        str__chr[248] = "\370";
-        str__chr[249] = "\371";
-        str__chr[250] = "\372";
-        str__chr[251] = "\373";
-        str__chr[252] = "\374";
-        str__chr[253] = "\375";
-        str__chr[254] = "\376";
-        str__chr[255] = "\377";
+        if (! __feat__no_octet_escape_chars) {
+            # for characters in the GR range (\200 and above), formatting with
+            # printf("%c") is not portable; behavior likely depends on the libc
+            # environment; on linux-built wak, it returns a 2-byte utf-8 sequence
+            str__chr[128] = "\200"; str__chr[129] = "\201";
+            str__chr[130] = "\202"; str__chr[131] = "\203";
+            str__chr[132] = "\204"; str__chr[133] = "\205";
+            str__chr[134] = "\206"; str__chr[135] = "\207";
+            str__chr[136] = "\210"; str__chr[137] = "\211";
+            str__chr[138] = "\212"; str__chr[139] = "\213";
+            str__chr[140] = "\214"; str__chr[141] = "\215";
+            str__chr[142] = "\216"; str__chr[143] = "\217";
+            str__chr[144] = "\220"; str__chr[145] = "\221";
+            str__chr[146] = "\222"; str__chr[147] = "\223";
+            str__chr[148] = "\224"; str__chr[149] = "\225";
+            str__chr[150] = "\226"; str__chr[151] = "\227";
+            str__chr[152] = "\230"; str__chr[153] = "\231";
+            str__chr[154] = "\232"; str__chr[155] = "\233";
+            str__chr[156] = "\234"; str__chr[157] = "\235";
+            str__chr[158] = "\236"; str__chr[159] = "\237";
+            str__chr[160] = "\240"; str__chr[161] = "\241";
+            str__chr[162] = "\242"; str__chr[163] = "\243";
+            str__chr[164] = "\244"; str__chr[165] = "\245";
+            str__chr[166] = "\246"; str__chr[167] = "\247";
+            str__chr[168] = "\250"; str__chr[169] = "\251";
+            str__chr[170] = "\252"; str__chr[171] = "\253";
+            str__chr[172] = "\254"; str__chr[173] = "\255";
+            str__chr[174] = "\256"; str__chr[175] = "\257";
+            str__chr[176] = "\260"; str__chr[177] = "\261";
+            str__chr[178] = "\262"; str__chr[179] = "\263";
+            str__chr[180] = "\264"; str__chr[181] = "\265";
+            str__chr[182] = "\266"; str__chr[183] = "\267";
+            str__chr[184] = "\270"; str__chr[185] = "\271";
+            str__chr[186] = "\272"; str__chr[187] = "\273";
+            str__chr[188] = "\274"; str__chr[189] = "\275";
+            str__chr[190] = "\276"; str__chr[191] = "\277";
+            str__chr[192] = "\300"; str__chr[193] = "\301";
+            str__chr[194] = "\302"; str__chr[195] = "\303";
+            str__chr[196] = "\304"; str__chr[197] = "\305";
+            str__chr[198] = "\306"; str__chr[199] = "\307";
+            str__chr[200] = "\310"; str__chr[201] = "\311";
+            str__chr[202] = "\312"; str__chr[203] = "\313";
+            str__chr[204] = "\314"; str__chr[205] = "\315";
+            str__chr[206] = "\316"; str__chr[207] = "\317";
+            str__chr[208] = "\320"; str__chr[209] = "\321";
+            str__chr[210] = "\322"; str__chr[211] = "\323";
+            str__chr[212] = "\324"; str__chr[213] = "\325";
+            str__chr[214] = "\326"; str__chr[215] = "\327";
+            str__chr[216] = "\330"; str__chr[217] = "\331";
+            str__chr[218] = "\332"; str__chr[219] = "\333";
+            str__chr[220] = "\334"; str__chr[221] = "\335";
+            str__chr[222] = "\336"; str__chr[223] = "\337";
+            str__chr[224] = "\340"; str__chr[225] = "\341";
+            str__chr[226] = "\342"; str__chr[227] = "\343";
+            str__chr[228] = "\344"; str__chr[229] = "\345";
+            str__chr[230] = "\346"; str__chr[231] = "\347";
+            str__chr[232] = "\350"; str__chr[233] = "\351";
+            str__chr[234] = "\352"; str__chr[235] = "\353";
+            str__chr[236] = "\354"; str__chr[237] = "\355";
+            str__chr[238] = "\356"; str__chr[239] = "\357";
+            str__chr[240] = "\360"; str__chr[241] = "\361";
+            str__chr[242] = "\362"; str__chr[243] = "\363";
+            str__chr[244] = "\364"; str__chr[245] = "\365";
+            str__chr[246] = "\366"; str__chr[247] = "\367";
+            str__chr[248] = "\370"; str__chr[249] = "\371";
+            str__chr[250] = "\372"; str__chr[251] = "\373";
+            str__chr[252] = "\374"; str__chr[253] = "\375";
+            str__chr[254] = "\376"; str__chr[255] = "\377";
+        } else {
+            # however, on environments where the parser does not support
+            # octet-escape sequences (e.g., jawk), we have to use sprintf("%c")
+            for (_i = 128; _i <= 255; ++_i) {
+                str__chr[_i] = sprintf("%c", _i);
+            }
+        }
     }
+
+    # build reverse ascii map (str__ord)
     for (_i = 0; _i <= 255; ++_i) {
         _c = str__chr[_i];
         str__ord[_c] = _i;
@@ -840,7 +803,7 @@ str__init(    _c, _i) {
         str__hexord[sprintf("%02X", _i)] = _i;
     }
 
-    # quick & dirty latin1 -> utf-8 conversion (printable only)
+    # quick & dirty latin1 -> utf-8 conversion map (printable only)
     for (_i = 0; _i <= 255; ++_i) {
         if (_i < 32) {
             # C1 characters
@@ -971,6 +934,11 @@ function \
 stream__init(    _status) {
     if (__stream__init_guard) {
         return (1);
+    }
+
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
     }
 
     _status = str__init();
@@ -1350,7 +1318,15 @@ stream__read_bits( \
         stream[__stream__M_iit] = _it;
     }
     stream[__stream__M_ibit] = _bits;
-    return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
+
+    # note: jawk int() calls Java`s 32-bit signed int narrowing conversion
+    # e.g., int(38654705664.0) -> 2147483647
+    # therefore ensure values passed to int() stay within the 32-bit range
+    # [-2^31, 2^31-1] in particular, num__rshift() uses int() internally,
+    # so guard inputs accordingly
+    return num__rshift(_bitsbuf % num__pow2[n + _it_bits], _it_bits);
+#    return num__rshift(_bitsbuf, _it_bits) % num__pow2[n];
+#    return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
 }
 function \
 __stream__ut__read_bits__00(    _stream) {
@@ -1427,11 +1403,13 @@ function \
 stream__write_bits( \
     stream, n, data, \
     \
-    _it, _bits, _bitsbuf \
+    _it, _bits, _bitsbuf, _pow \
 ) {
     _it = stream[__stream__M_oit];
     _bits = stream[__stream__M_obit]; # _it_bits
-    _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
+#    _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
+    _pow = num__pow2[_bits];
+    _bitsbuf = stream[_it + 1] % _pow + data * _pow;
     _bits += n;
     if (_bits >= 8) {
         do {
@@ -1764,7 +1742,7 @@ stream__read_timestamp( \
     if (_high == 0 && _low == 0) {
         return "NULL";
     }
-    _epoch = (_high * 4294967296 + _low) / 10000000 - 11644473600;
+    _epoch = (_high * 4294967296. + _low) / 10000000 - 11644473600.;
     # '${__pp_feat__has_native_strftime:+$'\nreturn strftime("%Y-%m-%d %H:%M:%S %Z", _epoch);'}'
     # '${__pp_feat__has_native_strftime:-'
     _total_days = int(_epoch / 86400);
@@ -2445,7 +2423,7 @@ addr__init() {
     __addr__S_immutable_block_count = 0;
 
     # block size
-    __addr__C_blocksize = 2 ^ 20;
+    __addr__C_blocksize = 1048576;  # 2 ^ 20
 
     # base offset address
     __addr__C_offset_stack     = 1 * __addr__C_blocksize;
@@ -2498,11 +2476,16 @@ addr__ref( \
 ) {
     addr__errno = 0;
 
+    # for jawk, explicitly convert to string
+    if (__feat__array_key_is_type_aware || __feat__lenient_string_to_number_comparison) {
+        v = v "";
+    }
+
     if (v in __addr__S_RIT) {
         _id = __addr__S_RIT[v];
     } else if (__addr__S_immutable_block_count < __addr__C_max_blockaddr) {
-        __addr__S_immutable_block[_id = __addr__S_RIT[v] = \
-            ++__addr__S_immutable_block_count] = v;
+        _id = __addr__S_RIT[v] = ++__addr__S_immutable_block_count;
+        __addr__S_immutable_block[_id] = v;
     } else {
         E__message = "immutable address overflow";
         return addr__errno = addr__C_err_overflow;
@@ -2685,7 +2668,7 @@ cell__init(    _status) {
 function \
 cell__new(tag, head, tail) {
     # tag | head << 9 | tail << 9 + 22
-    return tag + head * 512 + tail * 2147483648;
+    return tag + head * 512 + tail * 2147483648.;
 }
 # }}}
 # {{{ cell::tag
@@ -2697,13 +2680,14 @@ function cell__tag(cell) {
 # {{{ cell::head
 function cell__head(cell) {
     # cell << 9 & (2 ^ 22) - 1
-    return int(cell / 512) % 4194304;
+#    return int(cell / 512) % 4194304;
+    return int(cell % (4194304 * 512) / 512);
 }
 # }}}
 # {{{ cell::tail
 function cell__tail(cell) {
     # cell << 9 + 22
-    return int(cell / 2147483648);
+    return int(cell / 2147483648.);
 }
 # }}}
 # {{{ cell::pair::new
@@ -4314,6 +4298,10 @@ atom__init(    _status) {
     atom__err = 0;
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = str__init();
     if (_status < 0) {
         return _status;
@@ -4588,6 +4576,7 @@ atom__declare( \
     _tokens, _status \
 ) {
     split("", _tokens, "");
+    _tokens[1] = 0;
 
     _status = __atom__scan(definition, _tokens);
     if (_status < 0) {
@@ -4766,10 +4755,8 @@ __atom__scan( \
     src, tokens, \
     \
     _chars, _count, _scanner_state, _c, _stack, \
-    _v, _i, _s, _tn, _pos, _addr, _id \
+    _v, _i, _s, _pos, _addr, _id \
 ) {
-    _tn = 0;  # token counter
-
     _scanner_state = __atom__C_lst_neutral;
 
     # stack
@@ -4786,7 +4773,7 @@ __atom__scan( \
                 # _skip
             } else if (_c == 44) {  # ,
                 _id = __atom__C_tok_comma;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 47) {  # /
                 if (_i == _count) {
                     break;
@@ -4815,10 +4802,10 @@ __atom__scan( \
                 _scanner_state = __atom__C_lst_quote;
             } else if (_c == 123) {  # {
                 _id = __atom__C_tok_lbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 125) {  # }
                 _id = __atom__C_tok_rbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else {
                 break;
             }
@@ -4827,7 +4814,7 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 58) {
                     _id = __atom__C_tok_dblcolon;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else {
                     break;
                 }
@@ -4835,10 +4822,10 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 60) {  # <
                     _id = __atom__C_tok_le;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else if (_c == 62) {  # >
                     _id = __atom__C_tok_ge;
-                    tokens[++_tn] = cell__new(_id, _i - 1, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i - 1, 0);
                 } else {
                     break;
                 }
@@ -4846,13 +4833,13 @@ __atom__scan( \
                 _c = _stack[_stack[0]--];
                 if (_c == 58) {  # :
                     _id = __atom__C_tok_colon;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else if (_c == 60) {  # <
                     _id = __atom__C_tok_lt;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else if (_c == 62) {  # >
                     _id = __atom__C_tok_gt;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else {
                     break;
                 }
@@ -4862,16 +4849,16 @@ __atom__scan( \
         } else if (_scanner_state == __atom__C_lst_digits) {
             if (_c < 48 || _c > 57) {  # not digits
                 _pos = _stack[_stack[0]--];
-                _s = + str__binary_join(_chars, _pos, _i - 1);
+                _s = 0 + str__binary_join(_chars, _pos, _i - 1);
                 _addr = addr__ref(_s);
                 if (addr__errno < 0) {
                     break;
                 }
                 _id = __atom__C_tok_digits;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 if (_c == 62) {  # >
                     _id = __atom__C_tok_rangle;
-                    tokens[++_tn] = cell__new(_id, _i, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 } else {
                     --_i;
                 }
@@ -4885,20 +4872,20 @@ __atom__scan( \
                 # check if current token is a keyword
                 if (_s == "atom") {
                     _id = __atom__C_tok_atom;
-                    tokens[++_tn] = cell__new(_id, _pos, 0);
+                    tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                 } else {  # identifier
                     _addr = addr__ref(_s);
                     if (_addr < 0) {
                         break;
                     }
                     _id = __atom__C_tok_identifier;
-                    tokens[++_tn] = cell__new(_id, _pos, _addr);
+                    tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                     if (_c == 60) {  # <
                         _id = __atom__C_tok_langle;
-                        tokens[++_tn] = cell__new(_id, _pos, 0);
+                        tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                     } else if (_c == 62) {  # >
                         _id = __atom__C_tok_rangle;
-                        tokens[++_tn] = cell__new(_id, _pos, 0);
+                        tokens[++tokens[0]] = cell__new(_id, _pos, 0);
                     } else {
                         --_i;  # backtrack
                     }
@@ -4915,7 +4902,7 @@ __atom__scan( \
                     break;
                 }
                 _id = __atom__C_tok_quote;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 _scanner_state = __atom__C_lst_neutral;
             } else if (_c == 123) {  # {
                 _pos = _stack[_stack[0]--];
@@ -4925,9 +4912,9 @@ __atom__scan( \
                     break;
                 }
                 _id = __atom__C_tok_quote;
-                tokens[++_tn] = cell__new(_id, _pos, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _pos, _addr);
                 _id = __atom__C_tok_lbrace;
-                tokens[++_tn] = cell__new(_id, _i, _addr);
+                tokens[++tokens[0]] = cell__new(_id, _i, _addr);
                 _scanner_state = __atom__C_lst_expr;
             }
         } else if (_scanner_state == __atom__C_lst_comment) {
@@ -4945,22 +4932,22 @@ __atom__scan( \
                 # _skip
             } else if (_c == 40) {  # (
                 _id = __atom__C_tok_lparen;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 41) {  # )
                 _id = __atom__C_tok_rparen;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 42) {  # *
                 _id = __atom__C_tok_mul;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 43) {  # +
                 _id = __atom__C_tok_add;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 45) {  # -
                 _id = __atom__C_tok_sub;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c == 47) {  # /
                 _id = __atom__C_tok_div;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
             } else if (_c >= 48 && _c <= 57) {  # digits
                 _stack[++_stack[0]] = _scanner_state;  # push current state
                 _stack[++_stack[0]] = _i;  # push current position
@@ -4976,7 +4963,7 @@ __atom__scan( \
                 _scanner_state = __atom__C_lst_identifier;
             } else if (_c == 125) {  # }
                 _id = __atom__C_tok_rbrace;
-                tokens[++_tn] = cell__new(_id, _i, 0);
+                tokens[++tokens[0]] = cell__new(_id, _i, 0);
                 _stack[++_stack[0]] = _i;  # push current position
                 _scanner_state = __atom__C_lst_quote;
             } else {
@@ -5024,7 +5011,7 @@ __atom__parse( \
     split("", _params_map, "");
     split("", _baseparams, "");
 
-    _count = length(tokens);
+    _count = tokens[0];
 
     for (_i = 1; _i <= _count; ++_i) {
         _token = tokens[_i];
@@ -5188,7 +5175,7 @@ __atom__parse( \
                 }
             } while (--_baseparams[0]);
             _s = "<" _s;
-            if (! (_basename _s in __atom__S_type)) {
+            if (! ((_basename _s) in __atom__S_type)) {
                 _status = __atom__type_unpack(_type, _basename);
                 if (_status < 0) {
                     return _status;
@@ -5328,7 +5315,7 @@ __atom__parse( \
                     E__message = "logic error: " _v;
                     break;
                 }
-                _v = + substr(_v, 2);
+                _v = 0 + substr(_v, 2);
                 _v = cell__new(__atom__C_tag_ldp, _v);
                 _v = addr__ref(_v);
                 if (_v < 0) {
@@ -5336,7 +5323,7 @@ __atom__parse( \
                 }
                 _stack[++_stack[0]] = _v;
             } else if (_tokid == __atom__C_tok_digits) {
-                _v = + addr__deref(cell__tail(_token));
+                _v = 0 + addr__deref(cell__tail(_token));
                 _v = cell__new(__atom__C_tag_ldi, _v);
                 _v = addr__ref(_v);
                 if (_v < 0) {
@@ -5687,8 +5674,9 @@ function \
 __atom__type_unpack( \
     type, name, \
     \
-    _v, _base, _head \
+    _v, _base, _head, _n, _q \
 ) {
+if (! __feat__has_off_by_one_nullsplit)
     if (! (name in __atom__S_type)) {
         E__message = "(__atom__type_unpack) unexpected base type: " name;
         return (-1);
@@ -5799,7 +5787,7 @@ __atom__type_apply( \
             type[__atom__type__M_size] = _v;
         } else if (_tokid == __atom__C_tok_digits) {
             _v = cell__tail(_token);
-            _v = + addr__deref(_v);
+            _v = 0 + addr__deref(_v);
             if (_v < 0) {
                 return (-1);
             }
@@ -5911,7 +5899,7 @@ __atom__instantiate( \
     _size, _sizeunit, _encoding, _base, _status \
 ) {
     # test if atomname is a concrete type
-    if (atomname ".base" in __atom__S_type) {
+    if ((atomname ".base") in __atom__S_type) {
         return (1);
     }
 
@@ -5980,7 +5968,7 @@ __atom__instantiate( \
         if (_sizeunit == 0) {
             _size *= 8;
         }
-        __atom__S_type[atomname ".offset"] = 2 ^ (_size - 1);
+        __atom__S_type[atomname ".offset"] = num__pow2[_size - 1];
     }
 
     _v = _type[__atom__type__M_format];
@@ -6226,6 +6214,10 @@ astore__init(    _status) {
         type: signed integer                        \
     }                                               \
                                                     \
+    /* TODO: add a workaround (if feasible) for     \
+     * busybox AWK < v1.36, which cannot handle     \
+     * hex literals of 31 bits or more correctly    \
+     */                                             \
     atom hexint<n>: uint<n> {                       \
         format: `&H%0{n * 2}X`                      \
     }                                               \
@@ -7198,7 +7190,9 @@ __astore__path_canonicalize(key) {
     # use it as an alternative by repeatedly applying match() and substr() to a
     # single string.
     #
-    while (match(key, /\/[^\/\.]*\/\.\.(\/|$)|\/\.(\/|$)|\/\/|\/$/)) {
+    while (match( \
+        key, /\057[^\057\.]*\057\.\.(\057|$)|\057\.(\057|$)|\057\057|\057$/)) {
+    #while (match(key, /\/[^\/\.]*\/\.\.(\/|$)|\/\.(\/|$)|\/\/|\/$/)) {
         if (RSTART + RLENGTH - 1 >= length(key)) {
             key = substr(key, 1, RSTART - 1);
         } else {
@@ -7235,7 +7229,7 @@ astore__new( \
     key = __astore__path_canonicalize(key);
 
     # store type qualifiers
-    while (match(key, /::[^\/]+/)) {
+    while (match(key, /::[^\057]+/)) {
         _base = substr(key, 1, RSTART - 1);
         __astore__S_hash[_base "::"] = substr(key, RSTART + 2, RLENGTH - 2);
         key = _base substr(key, RSTART + RLENGTH);
@@ -7285,7 +7279,7 @@ astore__set( \
     _path = __astore__path_canonicalize(_path);
 
     # extract type qualifiers
-    while (match(_path, /::[^\/]+/)) {
+    while (match(_path, /::[^\057]+/)) {
         _target = substr(_path, 1, RSTART - 1);
         _type = substr(_path, RSTART + 2, RLENGTH - 2);
         sub("%", valid_arg, _type);
@@ -7307,7 +7301,7 @@ astore__set( \
         }
     }
 
-    match(_path, /^.*\//);
+    match(_path, /^.*\057/);
     _dir = substr(_path, 1, RLENGTH - 1);
     _leaf = substr(_path, RLENGTH + 1);
     __astore__S_hash[_path] = val;
@@ -7319,7 +7313,7 @@ astore__set( \
     } else {
         __astore__S_hash[_branch_index_path] = _leaf "/";
     }
-    while (match(_dir, /^.*\//)) {
+    while (match(_dir, /^.*\057/)) {
         _leaf = substr(_dir, RLENGTH + 1);
         _dir = substr(_dir, 1, RLENGTH - 1);
         _dir_index_path = _dir "/"
@@ -7380,12 +7374,12 @@ astore__enum_next(store,    _base, _arr) {
 # }}}
 # {{{ astore::enum_end
 function \
-astore__enum_end(store,    _base, _arr) {
+astore__enum_end(store,    _base, _arr, _n) {
     _base = store[__astore__M_workdir];
     # ex. __astore__S_hash[_base "/"] -> "filea/fileb/filec/"
-    split(__astore__S_hash[_base "/"], _arr, "/");
+    _n = split(__astore__S_hash[_base "/"], _arr, "/");
     # ex. _arr -> "filea", "fileb", "filec", ""
-    return ! (store[__astore__M_enum_it] + 2 in _arr);
+    return store[__astore__M_enum_it] + 2 > _n;
 }
 # }}}
 # {{{ astore::pretty_print
@@ -7420,49 +7414,31 @@ __astore__pretty_print_custom( \
     }
     _dir = __astore__path_canonicalize(_dir);
     if (indent == "") {
-        split(_dir, _comp, "/");
-        _count = length(_comp);
+        _count = split(_dir, _comp, "/");
         for (_i = 2; _i <= _count; ++_i) {
             printf("%s%s -> (nested array)\n", indent, _comp[_i]);
             indent = "    " indent;
         }
     }
     _index = __astore__S_hash[_dir "/"];
-    split(_index, _keys, "/");
-    _count = length(_keys) - 1;
+    _count = split(_index, _keys, "/") - 1;
     for (_i = 1; _i <= _count; ++_i) {
         _key = _keys[_i];
         _path = _dir "/" _key;
         if (_path in __astore__S_hash) {
             _v = __astore__S_hash[_path];
-            if (_path "::" in __astore__S_hash) {
+            if (verbose && ((_path "::") in __astore__S_hash)) {
                 _type = __astore__S_hash[_path "::"];
-                if (verbose) {
-                    if (_type) {
-                        printf( \
-                            "%s[%s::%s] = %s\n", \
-                            indent, _key, _type, atom__tostring(_type, _v));
-                    } else {
-                        printf( \
-                            "%s[%s] = %s\n", \
-                            indent, _key, atom__tostring(_type, _v));
-                    }
-                } else {
-                    printf( \
-                        "%s[%s] = %s\n", \
-                        indent, _key, atom__tostring(_type, _v));
-                }
+                printf( \
+                    "%s[%s::%s] = %s\n", \
+                    indent, _key, _type, atom__tostring(_type, _v));
             } else {
                 printf("%s[%s] = %s\n", indent, _key, _v);
             }
         } else {
-            if (_path "::" in __astore__S_hash) {
-                if (verbose) {
-                    _type = __astore__S_hash[_path "::"];
-                    printf("%s[%s::%s] -> (nested array)\n", indent, _key, _type);
-                } else {
-                    printf("%s[%s] -> (nested array)\n", indent, _key);
-                }
+            if (verbose && ((_path "::") in __astore__S_hash)) {
+                _type = __astore__S_hash[_path "::"];
+                printf("%s[%s::%s] -> (nested array)\n", indent, _key, _type);
             } else {
                 printf("%s[%s] -> (nested array)\n", indent, _key);
             }
@@ -7897,7 +7873,7 @@ __struct__scan( \
             # {{{
             if (_c < 48 || _c > 57) {  # not digits
                 _pos = _stack[_stack[0]--];
-                _s = + str__binary_join(_chars, _pos, _i - 1);
+                _s = 0 + str__binary_join(_chars, _pos, _i - 1);
                 _addr = addr__ref(_s);
                 if (_addr < 0) {
                     break;
@@ -8238,7 +8214,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                _params[++_params[0]] = + _v;
+                _params[++_params[0]] = 0 + _v;
                 _struct_name = _struct_name _v;
                 _status = struct__type__bind_num(_type, _v);
                 if (_status < 0) {
@@ -8292,7 +8268,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                _params[++_params[0]] = +_v;
+                _params[++_params[0]] = 0 + _v;
                 if (addr__errno < 0) {
                     break;
                 }
@@ -8680,7 +8656,7 @@ __struct__parse( \
                 if (addr__errno < 0) {
                     return (-1);
                 }
-                __struct__S_type[_key] = + _v;
+                __struct__S_type[_key] = 0 + _v;
                 __struct__S_pst = __struct__C_pst_struct_member;
             } else {
                 break;
@@ -8760,7 +8736,7 @@ __struct__parse( \
                 __struct__S_stack[++__struct__S_sp] = _rmap[_v];
                 __struct__S_pst = __struct__C_pst_struct_must_be;
             } else if (_tokid == __struct__C_digits) {
-                __struct__S_stack[++__struct__S_sp] = + _tail;
+                __struct__S_stack[++__struct__S_sp] = 0 + _tail;
                 __struct__S_pst = __struct__C_pst_struct_must_be;
             } else {
                 break;
@@ -9223,12 +9199,12 @@ struct__unpack( \
 
         if (match(_v, /^[[:digit:]]+$/)) {
             # array size is immediate value, such as typename[10]
-            _count = + _v;
+            _count = 0 + _v;
         } else {
             # array size is path expression, such as typename[../Data/Count]
             _v = astore__get(store, _v);
             if (match(_v, /^[[:digit:]]+$/)) {
-                _count = + _v;
+                _count = 0 + _v;
             } else {
                 E__message = "reference error: " def;
                 return (-1);
@@ -9810,6 +9786,25 @@ xmlp__parse(xmlp, stream,    _c, _st, _it) {
 # This module has only one static member acp__S_codepage
 # and one public static method build_map_to_u8char().
 #
+# {{{ acp::init
+function \
+acp__init(    _status) {
+
+    if (__acp__init_guard) {
+        return (1);
+    }
+
+    # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    __acp__init_guard = 1;
+
+    return (0);
+}
+# }}}
 # {{{ acp::build_map_to_u8char
 function \
 acp__build_map_to_u8char(codepage) {
@@ -15662,6 +15657,10 @@ zlib__init(    _i, _status) {
     }
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = str__init();
     if (_status < 0) {
         return _status;
@@ -15676,7 +15675,7 @@ zlib__init(    _i, _status) {
           __zlib__C_PERMUTED_ORDERING, /, */);
     for (_i = 1; _i <= 19; ++_i) {
         __zlib__C_PERMUTED_ORDERING[_i] = \
-            + __zlib__C_PERMUTED_ORDERING[_i];
+            0 + __zlib__C_PERMUTED_ORDERING[_i];
     }
 
     # Zip decoding: fixed literal code lengths
@@ -15696,7 +15695,7 @@ zlib__init(    _i, _status) {
     # convert to zero-origin
     for (_i = 1; _i <= 288; ++_i) {
         __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i - 1] = \
-            + __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
+            0 + __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
     }
     delete __zlib__C_FIXED_LITERAL_CODE_LENGTHS[_i];
 
@@ -15709,7 +15708,7 @@ zlib__init(    _i, _status) {
     # convert to zero-origin
     for (_i = 1; _i <= 32; ++_i) {
         __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i - 1] = \
-            + __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i];
+            0 + __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i];
     }
     delete __zlib__C_FIXED_DISTANCE_CODE_LENGTHS[_i - 1];
 
@@ -15720,7 +15719,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_LENGTH, /, */);
     for (_i = 1; _i <= 29; ++_i) {
         __zlib__C_LZ77_LENGTH[_i] = \
-            + __zlib__C_LZ77_LENGTH[_i];
+            0 + __zlib__C_LZ77_LENGTH[_i];
     }
 
     # Zip decoding: conversion table for code -> extend bits of length
@@ -15729,7 +15728,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_LENGTH_EXTEND_BITS, /, */);
     for (_i = 1; _i <= 29; ++_i) {
         __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i] = \
-            + __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i];
+            0 + __zlib__C_LZ77_LENGTH_EXTEND_BITS[_i];
     }
 
     # Zip decoding: conversion table for code -> base distance
@@ -15738,7 +15737,7 @@ zlib__init(    _i, _status) {
           __zlib__C_DEFLATE_LZ77_DISTANCE, /, */);
     for (_i = 1; _i <= 30; ++_i) {
         __zlib__C_DEFLATE_LZ77_DISTANCE[_i] = \
-            + __zlib__C_DEFLATE_LZ77_DISTANCE[_i];
+            0 + __zlib__C_DEFLATE_LZ77_DISTANCE[_i];
     }
 
     # Zip decoding: conversion table for code -> extend bits of distance
@@ -15747,7 +15746,7 @@ zlib__init(    _i, _status) {
           __zlib__C_LZ77_DISTANCE_EXTEND_BITS, /, */);
     for (_i = 1; _i <= 30; ++_i) {
         __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i] = \
-            + __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i];
+            0 + __zlib__C_LZ77_DISTANCE_EXTEND_BITS[_i];
     }
 
     __zlib__init_guard = 1;
@@ -15915,7 +15914,7 @@ zlib__inflate( \
         # initialize it as an array at the next higher level in the call graph
         # and then pass that as an argument.
         #
-        delete _literal_huffman_table[1];
+        delete _literal_huffman_table[1];  # force it to be treated as an array
         delete _distance_huffman_table[1];
 
         _status = __zlib__inflate__fixed_huffman_block( \
@@ -15972,29 +15971,11 @@ zlib__inflate( \
 }
 # '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
 #=# function \
-#=# __zlib__inflate__ut__00( \
+#=# __zlib__rfc1950_decompress__ut__00( \
 #=#     \
 #=#     _status, _istream, _store, _ostream, _size \
 #=# ) {
-#=#     # echo -n test | gzip | LANG=C cut -b11- |
-#=#     # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
-#=#     stream__new_from_string( \
-#=#         _istream, \
-#=#         "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
-#=#     );
-#=#
-#=#     stream__new(_ostream);
-#=#
-#=#     _status = zlib__inflate(_istream, _store, _ostream);
-#=#     if (_status < 0) {
-#=#         return _status;
-#=#     }
-#=#
-#=#     _size = stream__available_size(_ostream);
-#=#     if (stream__read_raw_string(_ostream, _size) != "test") {
-#=#         return (-1);
-#=#     }
-#=#
+#=#     # TODO: test
 #=#     return (0);
 #=# }
 # ')"}'
@@ -16943,7 +16924,7 @@ __zlib__inflate__compressed_content( \
     #=# '${__pp_trace__zip_debug3+"$(cut -d\# -f3-<<<'
     #=#     _st = 0;
     #=# ')"}'
-    while (1) {
+    while (! stream__is_end(istream)) {
         _code = stream__decode_huffman(istream, literal_huffman_table);
         if (_code < 0) {
             return (-1);
@@ -17058,6 +17039,10 @@ zip__init(    _status) {
     }
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = zlib__init();
     if (_status < 0) {
         return _status;
@@ -17080,7 +17065,7 @@ zip__unpack_directories( \
     _store, _count, _status, _offset, _i, \
     _file_name \
 ) {
-    if (stream__rsearch(stream, "PK\005\006") < 0) {
+    if (stream__rsearch(stream, "PK" str__chr[5] str__chr[6]) < 0) {
         E__message = "Zip: cannot find the end of central directory"
         return (-1);
     }
@@ -19304,7 +19289,7 @@ pcode__disasm_function( \
     }
     if (num__and(_flags, 32)) {
         astore__set(store, "fHasAs::bool", 1);
-        if (num__and(_arg_type, 4294901760)) {  # 0xffff0000
+        if (num__and(_arg_type, 4294901760.)) {  # 0xffff0000
             _v = pcode__get_typename(pcode, _arg_type % 256);
             astore__set(_store, "ReturnType", _v);
         } else {
@@ -19340,7 +19325,7 @@ pcode__disasm_function( \
     _text = _text _decl _public _private _friend _static _calltype _funcname "(";
 
     _i = 0;
-    while (_arg_offset != 4294967295 && _arg_offset != 0) {
+    while (_arg_offset != 4294967295. && _arg_offset != 0) {
         ++_i;
         stream__iseek(stream, _idt_offset + 4 + _arg_offset);
 
@@ -19400,7 +19385,7 @@ pcode__disasm_function( \
         if (num__and(_arg_flags, 32)) {
             astore__set(_store, "fHasAs::bool", 1);
             _as = " As ";
-            if (num__and(_arg_type, 4294901760)) {  # 0xffff0000
+            if (num__and(_arg_type, 4294901760.)) {  # 0xffff0000
                 _v = _arg_type % 256;
                 astore__set(_store, "ArgType", _v);
                 _arg_type_name = pcode__get_typename(pcode, _v);
@@ -19644,7 +19629,7 @@ cli__extract_vba( \
          if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
              _type == ooxml__C_schema_VISIODOCUMENT) {
              _target = astore__get(store, _key "/Relationship/Target");
-             if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
+             if (match(_target, /\057[^\057]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
                  _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
                  break;
@@ -19712,10 +19697,10 @@ cfb__init(    _status) {
     if (_status < 0) {
         return _status;
     }
-    _status = struct__init();
-    if (_status < 0) {
-        return _status;
-    }
+#    _status = struct__init();
+#    if (_status < 0) {
+#        return _status;
+#    }
 
     cfb__E_NOTIMPL      = -16385;
     cfb__E_FAIL         = -16389;
@@ -19748,11 +19733,11 @@ cfb__init(    _status) {
     # +----------------+-------------------------+--------------------------------------+
     #
     # '}'
-    __cfb__C_sector_magic_MAXREGSECT    = 4294967290; # 0xfffffffa
-    __cfb__C_sector_magic_DIFSECT       = 4294967291; # 0xfffffffb
-    __cfb__C_sector_magic_FATSECT       = 4294967293; # 0xfffffffd
-    __cfb__C_sector_magic_ENDOFCHAIN    = 4294967294; # 0xfffffffe
-    __cfb__C_sector_magic_FREESECT      = 4294967295; # 0xffffffff
+    __cfb__C_sector_magic_MAXREGSECT    = 4294967290.; # 0xfffffffa
+    __cfb__C_sector_magic_DIFSECT       = 4294967291.; # 0xfffffffb
+    __cfb__C_sector_magic_FATSECT       = 4294967293.; # 0xfffffffd
+    __cfb__C_sector_magic_ENDOFCHAIN    = 4294967294.; # 0xfffffffe
+    __cfb__C_sector_magic_FREESECT      = 4294967295.; # 0xffffffff
 
     __cfb__init_guard = 1;
 
@@ -19812,14 +19797,15 @@ cfb__unpack_stream( \
     _mini_secsize = num__lshift(1, astore__get(store, cfbpath "/Header/Mini Sector Shift"));
     _mini_stream_cutoff_size = astore__get(store, cfbpath "/Header/Mini Stream Cutoff Size");
     _minifat_per_fat = _sector_size / _mini_secsize;
-    _start_secno = astore__get(store, cfbpath "/Directory Entries/" _id "/Starting Sector Location");
-    _stream_size = astore__get(store, cfbpath "/Directory Entries/" _id "/Stream Size");
-    if (_start_secno == "" || _stream_size == "") {
+
+    if (! astore__has(store, cfbpath "/Directory Entries/" _id)) {
         E__message = sprintf("CFB Directory Entry \"%s\" is not found.", _id);
         return cfb__E_UNEXPECTED;
     }
+    _start_secno = astore__get(store, cfbpath "/Directory Entries/" _id "/Starting Sector Location");
+    _stream_size = astore__get(store, cfbpath "/Directory Entries/" _id "/Stream Size");
 
-    if (_stream_size + 0 > 2 ^ 36) {
+    if (_stream_size + 0 > 68719476736.) {  # 2 ^ 36
         E__message = sprintf("Huge size stream (%s bytes) is detected.", _stream_size);
         return cfb__E_UNEXPECTED;
     }
@@ -20363,7 +20349,8 @@ __cfb__unpack_directorysectors( \
     _store, _r, _sector_size \
 ) {
     _v = astore__get(store, "Header/Sector Shift");
-    _sector_size = 2 ^ _v;
+#    _sector_size = 2 ^ _v;
+    _sector_size = num__pow2[_v];
 
     if (astore__has(store, "Directory Entries/" id)) {
         E__message = sprintf( \
@@ -20405,7 +20392,7 @@ __cfb__unpack_directorysectors( \
     # of the name.
     #
     # \x00\x52 -> \u5200 (UTF16-LE) -> \xe5\x88\x80 (UTF-8)
-    if (id == 0 && _v == "\345\210\200") {
+    if (id == 0 && _v != "Root Entry") {
         _v = "Root Entry";
     }
     if (astore__set(_store, "Directory Entry Name", _v) < 0) {
@@ -20530,8 +20517,31 @@ __cfb__unpack_directorysectors( \
 }
 # }}}
 # }}}
-# {{{ @module vba::lz77
+# {{{ @module vba::lz77, an implementation of VBA`s compression algorithm
 # VBA compressed data decoding functions
+# - init
+# - unpack
+# - pack (not implemented)
+# {{{ vba::lz77::init
+function \
+vba__lz77__init() {
+    if (__vba__lz77__init_guard) {
+        return (1);
+    }
+
+    vba__lz77__E_NOTIMPL      = -16385;
+    vba__lz77__E_FAIL         = -16389;
+    vba__lz77__E_ACCESSDENIED = -458757;
+    vba__lz77__E_UNEXPECTED   = -65535;
+    vba__lz77__S_OK           = 0;
+    vba__lz77__S_FALSE        = 1;
+
+    __vba__lz77__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# {{{ vba::lz77::unpack
 # '${__pp_comment:+'
 #
 # [MS-OVBA]
@@ -20541,9 +20551,7 @@ __cfb__unpack_directorysectors( \
 #     2.4.1.3.1 Decompression Algorithm
 #     2.4.1.3.2 Decompressing a CompressedChunk
 #
-# '}'
-# {{{ [MS-OVBA] 2.4.1.1.1 CompressedContainer
-# '${__pp_comment:+'
+# [MS-OVBA] 2.4.1.1.1 CompressedContainer
 #
 # A CompressedContainer is an array of bytes holding the compressed data.
 # The Decompression algorithm (section 2.4.1.3.1) processes a
@@ -20569,24 +20577,8 @@ __cfb__unpack_directorysectors( \
 #
 # '}'
 function \
-vba__lz77__init() {
-    if (__vba__lz77__init_guard) {
-        return (1);
-    }
-
-    vba__lz77__E_NOTIMPL      = -16385;
-    vba__lz77__E_FAIL         = -16389;
-    vba__lz77__E_ACCESSDENIED = -458757;
-    vba__lz77__E_UNEXPECTED   = -65535;
-    vba__lz77__S_OK           = 0;
-    vba__lz77__S_FALSE        = 1;
-
-    __vba__lz77__init_guard = 1;
-}
-
-function \
 vba__lz77__unpack( \
-    istream, store, ostream, \
+    istream, store, ostream, forecast_size, \
     \
     _v, _store, _i, _r \
 ) {
@@ -20609,7 +20601,8 @@ vba__lz77__unpack( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunk
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.4 CompressedChunk
@@ -20654,7 +20647,8 @@ __vba__lz77__unpack_compressed_chunk( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunkheader
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.5 CompressedChunkHeader
@@ -20703,7 +20697,8 @@ __vba__lz77__unpack_compressed_chunkheader( \
 
     return vba__lz77__S_OK;
 }
-
+# }}}
+# {{{ (private)::vba::lz77::unpack_compressed_chunk_data
 # '${__pp_comment:+'
 #
 # [MS-OVBA] 2.4.1.1.6 CompressedChunkData
@@ -20830,6 +20825,10 @@ vba__dirstream__init(    _status) {
     }
 
     # required modules
+    _status = acp__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = cfb__init();
     if (_status < 0) {
         return _status;
@@ -20881,6 +20880,8 @@ vba__dirstream__init(    _status) {
     __vba__dirstream__C_magic_PROJECTTERMINATOR    =    16; # 0x0010
 
     __vba__dirstream__init_guard = 1;
+
+    return (0);
 }
 # }}}
 # {{{ vba__dirstream__unpack
@@ -20900,7 +20901,8 @@ vba__dirstream__unpack( \
     }
 
     astore__fork(store, "@LZ77CompressedStream" _path, _store);
-    _r = vba__lz77__unpack(_istream, _store, _ostream);
+    # forecast size = 2048
+    _r = vba__lz77__unpack(_istream, _store, _ostream, 2048);
     if (_r < 0) {
         return _r;
     }
@@ -23593,11 +23595,11 @@ __vba__projectstream__unpack_projectdocmodule( \
     _v, _ident, _ver \
 ) {
     _v = stream__currentline(stream);
-    if (_v !~ /^Document=.*\/&H[0-9A-F]*$/) {
+    if (_v !~ /^Document=.*\057&H[0-9A-F]*$/) {
         return vba__projectstream__S_FALSE;
     }
 
-    if (! match(_v, /\/&H[0-9A-F]*$/)) {
+    if (! match(_v, /\057&H[0-9A-F]*$/)) {
         return vba__projectstream__E_UNEXPECTED;
     }
 
@@ -24342,7 +24344,12 @@ __vba__projectstream__unpack_hostextenders( \
         _v = substr(_v, _len + 2);
 
         # LibName
-        if (! match(_v, /^(VBE|([!-:<-\177])+);/)) {
+        if (__feat__has_java_style_regexp) {
+            if (! match(_v, "^(VBE|([!-:<-\\0177])+);")) {
+                E__message = sprintf("unexpected LibName: \"%s\"", _v);
+                return vba__projectstream__E_UNEXPECTED;
+            }
+        } else if (! match(_v, /^(VBE|([!-:<-\177])+);/)) {
             E__message = sprintf("unexpected LibName: \"%s\"", _v);
             return vba__projectstream__E_UNEXPECTED;
         }
@@ -24571,10 +24578,10 @@ __vba__projectstream__unpack_projectwindowrecord( \
         return vba__projectstream__E_UNEXPECTED;
     }
 
-    if (astore__set(_store, "ProjectWindow/WindowState", substr(_v, 1, _len = RLENGTH)) < 0) {
+    if (astore__set(_store, "ProjectWindow/WindowState", substr(_v, 1, RLENGTH)) < 0) {
         return vba__projectstream__E_UNEXPECTED;
     }
-    _v = substr(_v, _len);
+    _v = substr(_v, RLENGTH);
 
     return vba__projectstream__S_OK;
 }
@@ -24737,7 +24744,8 @@ vba__projectstream__unpack_encrypteddata( \
         }
 
         _byte = num__xor(_byte_enc, _encrypted_byte2 + _unencrypted_byte1) % 256;
-        _temp_value = 256 ^ _byte_index;
+#        _temp_value = 256 ^ _byte_index;
+        _temp_value = num__pow2[_byte_index * 8];
         _temp_value *= _byte;
         _length += _temp_value;
         _encrypted_byte2 = _encrypted_byte1;
@@ -30278,7 +30286,7 @@ __forms20__unpack_compobjstream_clipboardformatoransistring( \
     }
 
     # FormatOrAnsiString (variable)
-    if (_v >= 4294967294) {  # 0xfffffffe(-2) or 0xffffffff(-1)
+    if (_v >= 4294967294.) {  # 0xfffffffe(-2) or 0xffffffff(-1)
         # a standard clipboard format
         _v = stream__read_uint32(stream);
         if (astore__set(store, "FormatOrAnsiString::ClipboardFormat", _v) < 0) {
@@ -35233,7 +35241,7 @@ forms20__unpack_countofbyteswithcompressionflag( \
     _v = stream__read_uint32(stream);
 
     # cb (31 bits)
-    if (astore__set(store, "cb", _v % 2147483648) < 0) {  # _v % (2 ^ 31)
+    if (astore__set(store, "cb", _v % 2147483648.) < 0) {  # _v % (2 ^ 31)
         return forms20__E_UNEXPECTED;
     }
 
@@ -36209,11 +36217,90 @@ forms20__unpack_vbframestream( \
 # {{{ @module cli, hsvba CLI implementation
 # {{{ cli::init
 function \
-cli__init(    _i, _status, _buf) {
+cli__init(    _i, _status, _buf, _test, _n, _arr) {
 
     if (__cli__init_guard) {
         return (1);
     }
+
+    # quick check if this AWK is binary-safe
+    #
+    # Passing this test means that the current execution environment
+    # satisfies the following three conditions:
+    #
+    #   1. It is null-safe; null is not considered the end of the string,
+    #      but is recognized as one character.
+    #
+    #   2. It is CR-safe; when AWK receives a string from the stdin,
+    #      CR (\r) is not lost due to CRLF->LF conversion.
+    #
+    #   3. One byte per one character; even strings that can be considered
+    #      UTF-8 or MBCS can be recognized one byte at a time.
+    #
+    "printf \\\\0\\\\r\\\\n\\\\343\\\\201\\\\202" | getline _test;
+    _n = length(_test);
+    __feat__is_binary_safe = _n == 6;
+    __feat__use_process_builder = _n == 18;  # jawk
+
+    # flags for optimization and portability
+    _n = split("123", _arr, "");
+    if (_n == 3) {
+        __feat__has_modern_nullsplit = 1;
+        if (split("\342\226\240", _arr, "") == 3) {
+            __feat__has_split_in_bytes = 1;
+        }
+    } else if (_n == 4) {  # jawk
+        __feat__has_modern_nullsplit = 1;
+        __feat__has_off_by_one_nullsplit = 1;
+    }
+
+    _n = length("\041");
+    if (_n == 3) {
+        __feat__no_octet_escape_chars = 1;
+    }
+
+    _n = length("\302\220");
+    if (_n == 1) {
+        __feat__utf8_aware_length = 1;
+    }
+
+    _n = match("!", /\0041/);
+    if (_n == 1) {
+        __feat__has_java_style_regexp = 1;
+    }
+
+    # glitch in jawk-1.03. not present in 1.02
+    _n = ("" == 0);
+    if (_n == 1) {
+        __feat__zero_eq_empty_string = 1;
+    }
+
+    # glitch in jawk-1.02. not present in 1.03
+    delete _arr;
+    _arr["1"] = 1;
+    _n = (1 in _arr);
+    if (_n == 0) {
+        __feat__array_key_is_type_aware = 1;
+    }
+
+    if ("001" == "1.00") {
+        __feat__lenient_string_to_number_comparison = 1;
+    }
+
+    if ("PROCINFO" in SYMTAB) {
+        __feat__has_amortized_growth_strings = 1;
+        __feat__has_cow_strings = 1;
+        __feat__has_native_bitwise_logical_functions = ("and" in FUNCTAB);
+        __feat__has_native_bitwise_shift_functions = ("lshift" in FUNCTAB);
+        __feat__has_native_strftime = ("strftime" in FUNCTAB);
+    }
+    if (split("\343\200\200", _arr, " ") == 0) {  # may be goawk
+        __feat__has_cow_strings = 1;
+    } else if (("FS" in SYMTAB) == 0) {
+        __feat__has_cow_strings = 1;
+        __feat__has_native_strftime = 1;
+    }
+
 
     # required modules
     _status = ooxml__init();
@@ -36229,6 +36316,14 @@ cli__init(    _i, _status, _buf) {
         return _status;
     }
     _status = astore__init();
+    if (_status < 0) {
+        return _status;
+    }
+#    _status = struct__init();
+#    if (_status < 0) {
+#        return _status;
+#    }
+    _status = xmlp__init();
     if (_status < 0) {
         return _status;
     }
@@ -36294,55 +36389,8 @@ cli__init(    _i, _status, _buf) {
 function \
 cli__main( \
     \
-    _i, _stream, _arr, _r, _test, _store \
+    _i, _stream, _r, _store \
 ) {
-    # class initialization
-    if (struct__init() < 0) {
-        return cli__E_UNEXPECTED;
-    }
-    if (xmlp__init() < 0) {
-        return cli__E_UNEXPECTED;
-    }
-
-    # quick check if this AWK is binary-safe
-    #
-    # Passing this test means that the current execution environment
-    # satisfies the following three conditions:
-    #
-    #   1. It is null-safe; null is not considered the end of the string,
-    #      but is recognized as one character.
-    #
-    #   2. It is CR-safe; when AWK receives a string from the stdin,
-    #      CR (\r) is not lost due to CRLF->LF conversion.
-    #
-    #   3. One byte per one character; even strings that can be considered
-    #      UTF-8 or MBCS can be recognized one byte at a time.
-    #
-    "printf \\\\0\\\\r\\\\n\\\\343\\\\201\\\\202" | getline _test;
-    __feat__is_binary_safe = length(_test) == 6;
-
-    # flags for optimization and portability
-    if (split("123", _arr, "") == 3) {
-        __feat__has_modern_nullsplit = 1;
-        if (split("\342\226\240", _arr, "") == 3) {
-            __feat__has_split_in_bytes = 1;
-        }
-    }
-
-    if ("PROCINFO" in SYMTAB) {
-        __feat__has_amortized_growth_strings = 1;
-        __feat__has_cow_strings = 1;
-        __feat__has_native_bitwise_logical_functions = ("and" in FUNCTAB);
-        __feat__has_native_bitwise_shift_functions = ("lshift" in FUNCTAB);
-        __feat__has_native_strftime = ("strftime" in FUNCTAB);
-    }
-    if (split("\343\200\200", _arr, " ") == 0) {  # may be goawk
-        __feat__has_cow_strings = 1;
-    } else if (("FS" in SYMTAB) == 0) {
-        __feat__has_cow_strings = 1;
-        __feat__has_native_strftime = 1;
-    }
-
     _r = hsvba__cli_optparse();
     if (_r < 0) {
         return _r;
@@ -36551,8 +36599,8 @@ __cli__dirty_extract_vba_from_zip( \
          _type = astore__get(_store, _key "/Relationship/Type");
          if (_type == ooxml__C_schema_OFFICEDOCUMENT || \
              _type == ooxml__C_schema_VISIODOCUMENT) {
-             _target = astore__get(_store, _key "/Relationship/Target");
-             if (match(_target, /\/[^\/]*\.[^\.]+$/)) {  # *.xml or *.bin
+             _target = astore__get(store, _key "/Relationship/Target");
+             if (match(_target, /\057[^\057]*\.[^\.]+$/)) {  # *.xml or *.bin
                  _basedir = substr(_target, 1, RSTART);
                  _relpath = _basedir "_rels" substr(_target, RSTART) ".rels";
                  break;
@@ -36617,7 +36665,7 @@ __cli__dirty_extract_file_from_zip( \
     filename, ostream, \
     \
     _istream, _pos, _str, _s, _len, _declen, _namelen, _extlen, \
-    _store, _status, _flen \
+    _store, _status, _flen, _i, _subs \
 ) {
     # HACK: quick-and-dirty zip decoding without the zip module
     _str = $0;
@@ -36628,7 +36676,14 @@ __cli__dirty_extract_file_from_zip( \
             return cli__E_FAIL;
         }
         if (_pos > 31 && substr(_str, _pos - 30, 4) == "PK\003\004") {
-            split(substr(_str, _pos - 12, 12), _s, "");
+            _subs = substr(_str, _pos - 12, 12);
+            if (__feat__has_split_in_bytes) {
+                split(_subs, _s, "");
+            } else {
+                for (_i = 1; _i <= 12; ++_i) {
+                    _s[_i] = substr(_subs, _i, 1);
+                }
+            }
             # compressed size
             _len = str__ord[_s[4]] * 16777216 + str__ord[_s[3]] * 65536 \
                  + str__ord[_s[2]] * 256 + str__ord[_s[1]];
@@ -36673,9 +36728,9 @@ cli__read_input( \
     _line, _res, _size, _buf, _iit, _command, _cl, _cr, _pos, _store, \
     _str, _s, _len, _declen, _namelen, _extlen, _status \
 ) {
-    if (__feat__is_binary_safe) {   # binary safe
+    if (__feat__is_binary_safe || __feat__use_process_builder) {   # binary safe
         getline < filename;
-        if (index($0, "PK") == 1) {
+        if (index($0, "PK") == 1 && __feat__is_binary_safe) {
             _status = __cli__dirty_extract_vba_from_zip(stream);
             if (_status < 0) {
                 # fallback if compressed chunk cannot be retrieved
@@ -36818,6 +36873,10 @@ function \
 cli__print_result( \
     _continue, _hairline, _src, _store, _stream_name \
 ) {
+    if (astore__S_output_mode == "") {
+        return cli__E_FAIL;
+    }
+
     astore__new(_store, "/");
 
     if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
@@ -37152,9 +37211,8 @@ cli__process_mso_xml( \
     _pos = stream__pos(istream);
 
     for (_i in _paths) {
-        split(_paths[_i], _path_arr, "/");
+        _target_level = split(_paths[_i], _path_arr, "/");
         _level = 0;
-        _target_level = length(_path_arr);
 
         while ((_ev = xmlp__parse(_xmlp, istream)) > 0) {
             if (_ev == xmlp__C_event_START_ELEMENT) {
@@ -37180,8 +37238,7 @@ cli__process_mso_xml( \
     if (_base64str == "") {
         return cli__E_FAIL;
     }
-    split(_base64str, _buf, "");
-    _size = length(_base64str);
+    _size = split(_base64str, _buf, "");
     stream__new(_ostream, int(_size / 4 * 3));
     _iit = 0;
 
@@ -37374,7 +37431,8 @@ __cli__detect_vbaroot( \
         }
     }
 
-	astore__new(_store, cfbpath "/@FileID/Root Entry");
+    # fallback: walk CFB directries recursively
+    astore__new(_store, cfbpath "/@FileID/Root Entry");
     _status = __cli__detect_vbaroot_recursively(_store, "/Root Entry");
     if (_status < 0) {
         E__message = "VBA stream is not found";
@@ -37417,10 +37475,17 @@ __cli__detect_vbaroot_recursively( \
 # }}}
 # {{{ entry point
 BEGIN {
-    RS = "^$";       # multicharacter value of RS is a gawk extension
+    E__errno = 0;
+
+    if (length("\041") == 3) {
+        RS = "";  # for jawk
+    } else {
+        RS = "^$";  # multicharacter value of RS is a non-posix extension
+    }
     BINMODE = "r";   # gawk/mawk extension, for Windows
     FS = "^$";
-    CONVFMT = "%.17g";  # Workaround for older versions of mawk
+    CONVFMT = "%.17f";  # Workaround for older versions of mawk
+    #OFMT = "%.17f";
     FIELDWIDTH="*";
 
     E__message = "";
@@ -37433,11 +37498,12 @@ BEGIN {
 #=#     exit;
 # ')"}'
 
-    if (cli__init() < 0) {
-        exit(1);
+    if ((E__errno = cli__init()) < 0) {
+        exit(E__errno);
     }
-    if (cli__main() < 0) {
-        exit(1);
+
+    if ((E__errno = cli__main()) < 0) {
+        exit(E__errno);
     }
 }
 END {
@@ -37445,10 +37511,11 @@ END {
 
     if (E__message) {
         printf "[error] %s\n", E__message > E__file;
-        fflush();
         close(E__file);
     }
-    fflush();
+    if (E__errno != 0) {
+        exit(E__errno);
+    }
 }
 # }}}
 function \
@@ -37458,7 +37525,7 @@ hsvba__commit_signatures(signed) {
     # Add your signature here.
 }
 # do not erase the following line.
-# '           "$@"       )" && cat /tmp/hsvba.log >&2; ! test -s /tmp/hsvba.log;
+# '           "$@"       )"; [ -e /tmp/hsvba-$$.err ] && { exit 1; }; exit 0;
 # ^           ^          ^
 # |           |          |
 # |           |          the end paren of command substitution.

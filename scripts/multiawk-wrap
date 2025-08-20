@@ -1,0 +1,39 @@
+#!/bin/bash
+: "${target:="${1:-scripts/smoke}"}"
+: "${testdir:="${2:-testdata/mso/}"}"
+
+xargs which << __awks__ |
+mawk
+gawk
+wak
+goawk
+bioawk
+jawk        # original jawk 1.02
+jawk-1.03   # hoijui/Jawk
+pawk
+oawk
+original-awk
+bwk
+awk
+busybox
+9
+/bin/awk
+/usr/bin/awk
+/usr/local/bin/awk
+__awks__
+while read f comments; do
+    realpath $f | xargs echo $f;
+done           |
+sort -k2       |
+uniq -f1       |
+cut -f1 -d\    |
+while read -r awk; do
+    trap break 2
+    if [[ "${awk}" =~ busybox|9 ]]; then
+        AWK="${awk}" AWKOPT=awk "${@}"
+    else
+        AWK="${awk}" "${@}"
+    fi
+done
+
+# vim: set et ts=4 sw=0 sts=-1:

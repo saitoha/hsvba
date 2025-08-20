@@ -1,9 +1,47 @@
+
+.PHONY: all check docker-check docker-login smoke progress multiawk awkbox changelog
+
 all:
 
-check: checkvars smoketest
+clean:
+	rm -v scripts/*.log
 
-smoketest:
-	find testdata/mso/ -type f ! -name \*.vss -a ! -name \*.vsd -a ! -name \*.vst -a ! -name ~\* -exec sh -c "./hsvba -pall \"{}\" | wc -c | xargs echo \"{}\"" \;
+check: checkvars multiawk
+
+smoke:
+	@ testdir=testdata \
+	    scripts/smoke 2> scripts/smoke.log
+
+progress:
+	@ testdir=testdata \
+	    scripts/progress-wrap \
+	    scripts/smoke 2> scripts/progress.log
+
+multiawk:
+	@ testdir=testdata \
+	    scripts/multiawk-wrap \
+	    scripts/progress-wrap \
+	    scripts/smoke 2> scripts/multiawk.log
 
 checkvars:
-	AWK=gawk AWKOPT=-d/dev/stdout ./hsvba ./testdata/mso/word_office2007-12.0.6762.5000_dotm_ja-jp_001.dotm | grep ^_[^_] -c | xargs test 0 =
+	@ scripts/vars 2> scripts/vars.log
+
+boxcheck: awkbox
+	@ docker run --rm -it -v "$(PWD):/home/user/work:rw" \
+	    awkbox make check
+
+boxlogin: awkbox
+	@ docker run --rm -it -v "$(PWD):/home/user/work:rw" \
+	    awkbox /bin/bash
+
+awkbox:
+	@ scripts/awkbox awkbox 2> scripts/awkbox.log
+
+changelog:
+	@ scripts/gitlog-to-changelog \
+		--append-dot \
+		--ignore-matching="Merge branch|\\+" \
+		--strip-cherry-pick \
+		--commit-timezone > ChangeLog
+
+# vim: set ft=make
