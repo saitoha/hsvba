@@ -1,0 +1,630 @@
+2025-08-21  Hayaki Saito  <saitoha@me.com>
+
+	Add tests for 9 awk (plan9port)
+
+	jawk: work around comparison operators treating "001" == "1.00" as true.
+
+	minor fixes.
+
+	cli: fix empty json "{}" output with -pnul.
+
+	jawk: enable non-standard zip reading logic.
+
+	goawk: normalize split() with empty third argument;
+	enforce byte-wise splitting instead of utf-8 character splitting
+
+	jawk: avoid parse errors when assignment expressions appear in function arguments
+	(parser does not support them)
+
+	jawk: work around 1.03 issue where 0 == "" evaluates to true.
+
+	init: omit initialization of unused struct module.
+
+	jawk: normalize regex octet-escape behavior;
+	handle jawk’s 4-digit form (e.g., \0177) instead of the 3-digit posix style (\177)+
+
+	goawk: fix infinite loop during inflate processing.
+
+	zlib: fix failing unit tests.
+
+	comment fix.
+
+	makefile: minor fix.
+
+	jawk: address higher-than-standard precedence of in;
+	parenthesize the left-hand operand to normalize behavior
+
+	work around for jawk-1.02 glitch where array keys become type-aware; does not occur in 1.03
+
+	build the `str__chr` map with per-implementation branching to absorb differences
+	observed in printf("%c") and split(), especially for GR-range bytes (\200+)
+
+2025-08-21  Hayaki Saito  <saitoha@me.com>
+
+	makefile: move inline tests into scripts/ and add a docker-based test runner
+	this change extracts the inline tests hardcoded in the makefile into the
+	scripts/ directory and introduces new make targets to run them consistently
+	across environments, including a docker-based test runner
+
+	benefits:
+	- decouples test logic from build rules, reducing makefile noise
+	- enables repeatable runs locally and in ci via a docker-based runner
+	- makes it easier to extend and organize tests across implementations
+
+	no functional changes to the core code
+
+2025-08-21  Hayaki Saito  <saitoha@me.com>
+
+	Add a patch for pawk.
+
+	Add scripts/gitlog-to-changelog (written by Jim Meyering)
+
+	Avoid length(array) which is not yet portable.
+
+	jawk: avoid 32-bit integer overflow caused by int() during intermediate calculations
+
+	jawk: stop using -- as an argument separator.
+
+	jawk: stop using -- as an argument separator.
+
+	makefile: add tests across multiple implementations.
+
+	jawk: avoid integer overflow in parser.
+
+	Suppress warnings when $AWK is set to "busybox awk"
+
+	Avoid length(array) which is not yet portable.
+	Although standardized in POSIX 2024, length(array) is still
+	unsupported in several awk implementations. Replaced with a
+	more portable construct to preserve compatibility.
+
+	Support BusyBox awk without math: replace "^" with precomputed 2^n map.
+	BusyBox awk built without math support lacks the exponent operator.
+	We now compute powers of two ahead of time and look them up instead of using "^".
+
+	speed up dir stream reading by preallocating a 2048-byte output buffer.
+
+	activemime: prevent NUL bytes in header magic from being printed to the terminal
+
+	jawk: remove fflush() call in END block;
+	unnecessary and not supported by jawk
+
+	jawk: replace backslash-escaped '/' in regex.
+	literals with octal escapes, as jawk fails to parse them correctly
+
+	jawk: avoid integer overflow in parser.
+
+2025-08-17  Hayaki Saito  <saitoha@me.com>
+
+	Add Makefile for sanity checks.
+
+	Prevent accidental implicit global variables (store)
+
+	Fix incorrect read length handling for StdPicture.
+
+	Relax validation on some "Unused" fields to read.
+	several test samples
+
+	Fixed a missing local variable definitions (_stream_name)
+
+	awk: move result output logic into the END block.
+	so partial results are printed even if processing
+	aborts due to an error
+
+	zlib: in zlib__rfc1950_decompress(), stop decoding.
+	if the last-read DEFLATE block has BFINAL=1, even if
+	the output stream size hasn’t reached the target
+
+	fix missing return statement.
+
+	testdata: normalize file permissions to 644.
+
+	[MS-OLEDS] fix incorrect type information in.
+	MarkerOrLength read logic for ClipboardFormatOrAnsiString
+
+	[MS-OFORMS] implement FontGUID-based branching in GuidAndFont parsing.
+
+	fix reversed endianness in the first three components.
+	of GUID strings produced by stream__read_guid_string()
+
+	testdata: exclude MS Publisher 98/2000 .pub files.
+	since these formats never contained VBA
+
+	make VBA root storage path detection more robust;
+	previous logic failed on files created by some MS Project versions
+
+	ppt: fix failure to read UserEditAtom.offsetLastEdit,
+	breaking construction of the Persist Object Directory
+
+	Enabled reading CFB files larger than 6.875 MB by.
+	loading DIFAT entries beyond the initial 109 from DIFAT sectors.
+
+	CLI: add -p acm (ActiveMime) flag.
+
+2025-08-16  Hayaki Saito  <saitoha@me.com>
+
+	Add initial support for Word 2003 XML format (*.xml)
+
+	Fixed non-standard Zip parsing, which only worked.
+	for Excel files, by reading _rels/.rels so it now
+	supports all Office 2007+ formats.
+
+	CLI: add hidden -p nul flag.
+
+	cfb: fix incorrect FAT chain indexing when DIFAT contains invalid sector numbers
+
+	Fix bug that read only a single DEFLATE block.
+
+	Enable a non-standard Zip parsing mode for mawk and gawk.
+	Instead of reading the central directory or even parsing OOXML .rels,
+	this approach directly targets the local file header corresponding to
+	xl/vbaProject.bin. While unconventional, it reliably works for
+	Office 2007+ files produced by Microsoft Office, and is therefore
+	enabled by default when applicable. This change dramatically reduces
+	parsing time for very large Office 2007+ documents.
+
+	Add descriptions for the new switch options oox, usr, and ppt.
+	to the output of the -h option.
+
+	Don't use single quote in comment block.
+
+	Pre-allocation for nested CFB storage of powerpoint.
+
+	workaroud: wak with -b option may cause "bad string split"
+
+	Remove unused local variables.
+
+	Refactor to extract RFC1950 decompression process into a separate function
+
+	Fix broken behavior of -p.
+
+	Fix broken behavior of -p src.
+
+	Initial draft implementation of a *.ppt parser.
+
+	Fix bug in gt() validator.
+
+2025-08-14  Hayaki Saito  <saitoha@me.com>
+
+	Add a parser for UserEditAtom.
+
+2025-08-13  Hayaki Saito  <saitoha@me.com>
+
+	Add [MS-PPT] to the references.
+
+	Initial implementation for Current User stream parser (for PPT)
+
+	stream__read_ansi_string: Advance the input iterator.
+	by the specified length, even if the string begins with '\0'.
+
+	Raise an error when an invalid option argument is.
+	specified for the -p / --print option.
+
+	Use StreamNameUnicode instead of StreamName when searching for the.
+	file corresponding to the module name in the CFB entries.
+
+	Fix a bug where Mac Roman could not be decoded correctly in environments other than gawk.
+
+	Fix the error that occurs when using the -b option in wak.
+
+	Minor fix: corrected several unintended global variable assignments.
+
+	Fixed to correctly return the exit code when run in bash mode.
+
+	Update comment: add reference URL for Mac Roman in unicode.org.
+
+2025-08-12  Hayaki Saito  <saitoha@me.com>
+
+	Initialize atom__err in atom__init()
+
+	Fix bug: The first argument of __map__fixup was using the wrong variable.
+
+2025-08-11  Hayaki Saito  <saitoha@me.com>
+
+	Remove unnecessary mktemp call.
+
+	We now fully support wak.
+
+	Fix multibyte output issue during JSON encoding.
+
+	Add workarounds for wak.
+
+	Updated comment: add the test result with awx.
+
+	Combine the BEGIN blocks into one.
+
+	Updated comment: revised test results with wak.
+
+	Workaround for the Bash 3 parser.
+
+	Fixed missing local variable definitions (_p, _c, _syskind).
+
+	Remove unused preprocessing function __pp_ut__()
+
+	Force execution with LANG=C.
+
+	Remove unnecessary newline output.
+
+	Updated the output of the -h option.
+
+	Attach type information by default to custom-format output.
+
+	Remove spaces and newlines from JSON output.
+
+	Header comment update: revised description of execution results on mawk.
+
+	Fix uninitialized array issue and floating-point.
+	conversion precision issue in older mawk (1.3.4 20200120)
+
+	Fix a bug where the script was always executed with gawk.
+
+2025-08-10  Hayaki Saito  <saitoha@me.com>
+
+	Update the Basic usage section to match the shebang change.
+
+	Switch the output timing according to astore::S_output_mode.
+
+	Add str__utf16_escape() for json encode.
+
+	A rough first pass at JSON support.
+
+2025-08-09  Hayaki Saito  <saitoha@me.com>
+
+	Trivial comment fixes.
+
+	Convert CR line breaks in the Mac version of Office to LF line breaks.
+
+	Comment fix: Added CP10000 – Mac OS Roman to the list of supported encodings
+
+	Fixed a bug in astore__pretty_print to ensure that.
+	the explanation of the magic number is displayed.
+
+	Related to #5, the shebang was changed to the more portable /bin/bash.
+
+	Make the NameUnicode structure optional,
+	as it is absent in some versions of Mac Office.
+
+	Add support for a new code page: CP10000 (Mac Roman)
+
+2025-08-08  Hayaki Saito  <saitoha@me.com>
+
+	Fixed the handling of CFB files generated by Mac Office 2004.
+	that contain a corrupted root directory name, allowing them to be read correctly.
+
+	Relocated the Vim modeline from the end of the file to the top,
+	as Vim does not recognize modelines that are more than six lines
+	away from the file’s end.
+
+2025-08-06  Hayaki Saito  <saitoha@me.com>
+
+	Since multibyte characters in AWK source code are still not guaranteed to be safe, I replaced them with ASCII-range characters.
+
+	Merge pull request #7 from akinomyoga/localvar-sus.
+	Fix uses of local variables
+
+2025-08-05  Hayaki Saito  <saitoha@me.com>
+
+	Merge pull request #4 from akinomyoga/chore.
+	Add Emacs file variables
+
+	Since some AWK implementations raise errors on non-ASCII characters, the banner in the comment that contained multibyte characters was removed.
+
+	To avoid the infinite loop in the shebang reported in #5, the shebang was changed to #!/usr/bin/awk.
+
+2025-08-04  Koichi Murase  <myoga.murase@gmail.com>
+
+	Fix a typo.
+
+	Add line-continuation backslash in the argument list.
+
+	Add Emacs file variables.
+
+2025-08-04  Hayaki Saito  <saitoha@me.com>
+
+	Merge pull request #6 from akinomyoga/localvar-cleanup.
+	Remove unused local variables
+
+2025-08-03  Koichi Murase  <myoga.murase@gmail.com>
+
+	Remove local var assigned as "_v = *_name* = ..." but unused later.
+
+	Remove unused variables.
+
+	Remove unused localvar decl inside #=#
+
+	Remove unused localvar decl.
+
+	Use addr__deref(w) instead of piece[w]
+	The variable "piece" has never been initialized elsewhere.  From the
+	surrounding codes, I naively guess that they can be replaced by
+	addr__deref(w), but I am actually unsure.
+
+	Use new stores which has never been used after the creation.
+	The variables "_store" and "_store_p" have been initialized but never
+	been used.  The "store_p" referenced on the next line is never
+	initialized elsewhere.  I suspect the next lines intended to use the
+	initialized variables "_store" and "_store_p".
+
+	Use the args of the same name instead of uninitialized localvars.
+
+	Fix the return value of __list__clone_impl.
+	The local variable "_v" is assigned to but never used.  The local
+	variable "_p" is never assigned to but referenced for the return
+	value.  I suspect "_v" is a typo of "_p".
+
+	Remove unused "_result" (__atom__eval does not take 3 arguments)
+
+	Fix a defined but unused variable "_value"
+	The variable "_value" is defined and assigned to, but its value is
+	never reference.  I guess the retrieved value is intended to be
+	printed.
+
+2025-08-03  Hayaki Saito  <saitoha@me.com>
+
+	Add support for the Visio 2003 XML file format.
+
+	Avoid accidental global variables.
+
+	Update header comments.
+
+	Introduce new environment variable for bash preprocessing: $HSVBA_UT.
+
+	Update zlib__deflate, use sliding window.
+
+	Introduce new function stream::search.
+
+	Initial Deflate implementation: no LZ77 sliding window, literals only.
+
+	Add new function num__reverse_bits(), which reverses the bit order of given integer
+
+	Update comments: add TODOs.
+
+	Drop extra candidate when detecting VBA root directory.
+
+2025-08-01  Hayaki Saito  <saitoha@me.com>
+
+	Merge pull request #3 from akinomyoga/localize.
+	Update the lists of local variables of functions
+
+2025-08-01  Koichi Murase  <myoga.murase@gmail.com>
+
+	Remove unused local variables of new functions.
+
+	Add signature as a memento.
+
+2025-08-01  Koichi Murase  <myoga.murase@gmail.com>
+
+	Localize globalvars based on static analysis.
+	Basically, when all the occurrences of a global variable "gvar" in
+	functions are in a form "<set gvar>; ...; <reference gvar>" or "<set
+	gvar> (unreferenced later)", where it is ensured that "..." does not
+	touch the global variable, the global variable "gvar" can be localized
+	in each function.
+
+	* "_count": The global variable "_count" is used by
+	  "pcode__unpack_headers" (A) and
+	  "__vba__vbaprojectstream__unpack_cache" (B).  In these functions,
+	  "_count" is first set and then referenced later in the function.  If
+	  anything happens, "_count" might be modified between the setting and
+	  referencing of "_count" by another call to a function modifying
+	  "_count".
+
+	  In the first function (A), the following functions may be directly
+	  called between setting and referencing "_count": `astore__chdir`,
+	  `astore__set`, `pcode__getid`, `stream__read_hex_string`,
+	  `stream__read_uint16`.  Furthermore, indirectly called functions are
+	  `__astore__path_canonicalize`, `__atom__eval`,
+	  `__atom__instantiate`, `__atom__type__specialize`,
+	  `__atom__type_pack`, `__atom__type_unpack`, `addr__deref`,
+	  `addr__ref`, `astore__get`, `atom__tostring`, `atom__validate`,
+	  `cell__head`, `cell__new`, `cell__tag`, `cell__tail`, `num__rshift`,
+	  `pcode__vba_version`.  These functions do not touch the global
+	  "_count", so it is safe to localize "_count" in (A).
+
+	  In the second function (B), the following functions may be directly
+	  called between setting and referencing "_count":
+	  `__vba__vbaprojectstream__unpack_cachedmodule`
+	  `__vba__vbaprojectstream__unpack_cachedreference`, `astore__fork`,
+	  `astore__set`, `stream__read_hex_string`, `stream__read_uint16`.
+	  Indirectly called functions are `__astore__path_canonicalize`,
+	  `__atom__eval`, `__atom__instantiate`, `__atom__type__specialize`,
+	  `__atom__type_pack`, `__atom__type_unpack`,
+	  `__vba__vbaprojectstream__unpack_cachedstreamtime`, `addr__deref`,
+	  `addr__ref`, `astore__get`, `astore__new`, `atom__tostring`,
+	  `atom__validate`, `cell__head`, `cell__new`, `cell__tag`,
+	  `cell__tail`, `num__and`, `num__or`, `num__rshift`,
+	  `str__binary_join_with_chr`, `stream__read_raw_string`,
+	  `stream__read_uint32`, `stream__read_utf16le_string`.  These
+	  functions do not touch the global "_count", so it is safe to
+	  localize "_count" in (B).
+
+	* "_blocksize" is similar to "_count".  The global variable
+	  "_blocksize" is used by the following two functions, where no direct
+	  and indirect dependency touch the global "_count".
+
+	  * pcode__unpack_headers
+	    * Direct: stream__read_hex_string astore__set
+	    * Indirect: __astore__path_canonicalize __atom__eval
+	      __atom__instantiate __atom__type__specialize __atom__type_pack
+	      __atom__type_unpack addr__deref addr__ref atom__tostring
+	      atom__validate cell__head cell__new cell__tag cell__tail
+	      num__rshift
+
+	  * vba__modulestream__unpack_pcode
+	    * Direct: astore__get stream__read_hex_string astore__set
+	    * Indirect: __astore__path_canonicalize __atom__eval
+	      __atom__instantiate __atom__type__specialize __atom__type_pack
+	      __atom__type_unpack addr__deref addr__ref atom__tostring
+	      atom__validate cell__head cell__new cell__tag cell__tail
+	      num__rshift
+
+	* "_size": The global variable "_size" is also similar and is used by
+	  the following functions:
+
+	  * __vba__dirstream__unpack_project_information_lcid
+	    This function sets "_size" but does not use it.
+
+	  * __vba__vbaprojectstream__unpack_cache
+	    * Direct: astore__set
+	    * Indirect: __astore__path_canonicalize __atom__eval
+	      __atom__instantiate __atom__type__specialize __atom__type_pack
+	      __atom__type_unpack addr__deref addr__ref atom__tostring
+	      atom__validate cell__head cell__new cell__tag cell__tail
+	      num__rshift
+
+	  * pcode__unpack_headers
+	  * vba__modulestream__unpack_pcode
+	    * Direct: stream__read_hex_string astore__set
+	    * Indirect: __astore__path_canonicalize __atom__eval
+	      __atom__instantiate __atom__type__specialize __atom__type_pack
+	      __atom__type_unpack addr__deref addr__ref atom__tostring
+	      atom__validate cell__head cell__new cell__tag cell__tail
+	      num__rshift
+
+	* "_version": The global variable "_size" is also similar and is used
+	  by the following functions:
+
+	  * pcode__unpack_headers
+	    * Direct: astore__chdir astore__set pcode__getid
+	      stream__read_guid_string stream__read_hex_string
+	      stream__read_uint16 stream__read_uint32
+	    * Indirect: __astore__path_canonicalize __atom__eval
+	      __atom__instantiate __atom__type__specialize __atom__type_pack
+	      __atom__type_unpack addr__deref addr__ref astore__get
+	      atom__tostring atom__validate cell__head cell__new cell__tag
+	      cell__tail num__rshift pcode__vba_version
+
+	  * __vba__vbaprojectstream__unpack_cachedmodule
+	    No functions are called between setting and referencing "_version".
+
+2025-07-31  Koichi Murase  <myoga.murase@gmail.com>
+
+	Localize globalvars based on its usage pattern.
+	* "_i", "_r", "_v": It is hard to assume that anything specific
+	  meanings are given to global variables of a single letter. In fact,
+	  throughout the codebase, "_i" is used for the loop counter, "_r" is
+	  used to receive an exit statuses as the return values of function
+	  calls, and "_v" is used to receive other return values from function
+	  calls.  It is the case for all the functions that touch the global
+	  "_i", "_r", and "_v"; they assign a value to the variable and use
+	  the value immediately after that.  No function seems to use the
+	  value of these variables set before the function starts.  Therefore,
+	  we can localize those single letter variables.
+
+	* "_status": Global variable "_status" is accessed from four
+	  functions, but they are used in a similar way as "_r".  In
+	  particular, in all the four functions, "_status" is first used to
+	  receive the return values of function calls, and the value is always
+	  immediately without calling any other functions.  Therefore, we can
+	  safely localize "_status" in these four functions.
+
+	* "_buf": Global "_buf" is used by two functions
+	  "__acp__decode_charmap" and "cli__init".  In both functions, "_buf"
+	  is used to obtain the result of "split()" function, and the contents
+	  of "_buf" is used immediately after calling "split()" (without
+	  calling other user functions).  Therefore, we can assume that these
+	  "_buf"s in two functions are independent from each other.  We can
+	  safely localize "_buf" in two functions.
+
+	* "_text": Global "_text" is accessed by two functions,
+	  "vba__modulestream__unpack_pcode" (A) and "pcode__disasm_function"
+	  (B).  Structurally, the latter function sets "_text" as `function
+	  B() { _text = "bar"; return _text; }` and the former function calls
+	  it as `function A() { _text = "foo"; _text = _text B(); }`.  In
+	  existing implementations of awk (gawk, mawk, nawk, busybox), this
+	  seems to result in "foobar". This is the same result as the case
+	  where two "_text" are local variables, so it is safe to localize
+	  "_text" in the two functions.
+
+2025-07-31  Koichi Murase  <myoga.murase@gmail.com>
+
+	Localize globalvars used only in one function.
+	Each of these global variables is accessed from only one function, so
+	we can safely localize those variables.  However, if any of these
+	variables are supposed to be accessed from other functions in the
+	future, we should not localize them. Confirmation is required.
+
+	Update localvar decl names.
+
+	Remove unused localvar decls.
+
+2025-07-31  Koichi Murase  <myoga.murase@gmail.com>
+
+	Use existing arguments instead of reading global variables.
+	* The gloval variables "_optype" and "_store_args" are used by two
+	  functions "vba__modulestream__unpack_pcode" and
+	  "pcode__disasm_function".  The former function sets "_optype" and
+	  "_store_args" and the latter function uses it.  However, those
+	  variables are also passed as argument "optype" and "store" of
+	  "pcode__disasm_function".  It is natural to use the arguments
+	  instead of the global variables.  We rewrite
+	  "pcode__disasm_function" to use the arguments and localize the
+	  "_optype" and "_store_args" in "vba__modulestream__unpack_pcode".
+
+	* Similarly, the global variable "_word" is used by two functions
+	  "vba__modulestream__unpack_pcode" and "pcode__disasm_vararg".  The
+	  former sets the variable and the latter reads it, but the variable
+	  is also passed as an argument "word".  We should use the argument.
+
+2025-07-31  Hayaki Saito  <saitoha@me.com>
+
+	Add new MS-Office test files.
+
+	Adjust subtle wording in comment header block.
+
+	Fix issue reading .mpp/.otm files.
+
+2025-07-30  Hayaki Saito  <saitoha@me.com>
+
+	Add linguist-language git attribute to hsvba.
+
+	Add testdata.
+
+	Remove unnecessary "w" flag from BINMODE.
+
+	Apply CRLF-to-LF conversion when outputting module source code.
+
+	__vba__projectstream__unpack_projectdocmodule():  correct bug in string splitting logic
+
+	Introduce new function prototype zlib__deflate() and test scaffold.
+
+	Rename __cell__map__walk_impl -> __map__walk_impl.
+
+	Add new stream api stream__write_bits(), rename stream__seek() -> stream__iseek()
+
+	Add new trace topic: "vbalz", LZ77-based source compression used internally in VBA (without Huffman coding)
+
+	Support Microsoft Outlook VBA Project File (*.otm)
+
+	Add Office2003 testdata.
+
+2025-07-27  Hayaki Saito  <saitoha@me.com>
+
+	Merge pull request #2 from akinomyoga/fix-spelling-nontrivial.
+	Fix spelling mistakes that may affect the behavior
+
+	Merge pull request #1 from akinomyoga/fix-spelling-trivial.
+	Fix spelling mistakes and remove trailing whitespaces
+
+2025-07-26  Koichi Murase  <myoga.murase@gmail.com>
+
+	Remove currently unsupported variable from the usage.
+
+	Correct variable names.
+
+	Fix spelling of store keys.
+	* "{R => Re}served"
+	* "VariousPropert{y => ies}Bit{filed => field}"
+	* "Un{kown => known}"
+
+	Fix spelling in string literals.
+
+	Fix spelling "{bind => bound}ed"
+
+	Fix spelling in comments.
+
+	Delete trailing whitespaces.
+
+2025-07-26  Hayaki Saito  <saitoha@me.com>
+
+	initial commit.

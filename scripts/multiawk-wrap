@@ -16,6 +16,7 @@ original-awk
 bwk
 awk
 busybox
+9
 /bin/awk
 /usr/bin/awk
 /usr/local/bin/awk
@@ -28,7 +29,7 @@ uniq -f1       |
 cut -f1 -d\    |
 while read -r awk; do
     trap break 2
-    if [[ "${awk}" = busybox ]]; then
+    if [[ "${awk}" =~ busybox|9 ]]; then
         AWK="${awk}" AWKOPT=awk "${@}"
     else
         AWK="${awk}" "${@}"
