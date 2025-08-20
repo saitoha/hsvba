@@ -16922,7 +16922,7 @@ __zlib__inflate__compressed_content( \
     #=# '${__pp_trace__zip_debug3+"$(cut -d\# -f3-<<<'
     #=#     _st = 0;
     #=# ')"}'
-    while (1) {
+    while (! stream__is_end(istream)) {
         _code = stream__decode_huffman(istream, literal_huffman_table);
         if (_code < 0) {
             return (-1);
