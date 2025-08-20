@@ -433,7 +433,7 @@ true && echo "$$ $( \
 : ${AWK:=$(which mawk gawk wak goawk bioawk jawk awk 2>/dev/null | head -n1)}; \
 rm -f /tmp/hsvba-$$.err; \
 test x${AWK##*/} = xwak 2>/dev/null && AWKOPT=${AWKOPT}' -b'; \
-test x${AWK##*/} = xjawk 2>/dev/null || ARGSEP=--; \
+[[ ${AWK##*/} =~ jawk ]] 2>/dev/null || ARGSEP=--; \
 echo ${!HSVBA_*} | tr ' ' _ | xargs test -z && eval $' \
 LANG=C ${AWK} ${AWKOPT} -f \042${0}\042 ${ARGSEP} \042${@}\042 || touch /tmp/hsvba-$$.err; \
 exit 0; \
