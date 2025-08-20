@@ -5171,7 +5171,7 @@ __atom__parse( \
                 }
             } while (--_baseparams[0]);
             _s = "<" _s;
-            if (! (_basename _s in __atom__S_type)) {
+            if (! ((_basename _s) in __atom__S_type)) {
                 _status = __atom__type_unpack(_type, _basename);
                 if (_status < 0) {
                     return _status;
@@ -5894,7 +5894,7 @@ __atom__instantiate( \
     _size, _sizeunit, _encoding, _base, _status \
 ) {
     # test if atomname is a concrete type
-    if (atomname ".base" in __atom__S_type) {
+    if ((atomname ".base") in __atom__S_type) {
         return (1);
     }
 
@@ -7369,12 +7369,12 @@ astore__enum_next(store,    _base, _arr) {
 # }}}
 # {{{ astore::enum_end
 function \
-astore__enum_end(store,    _base, _arr) {
+astore__enum_end(store,    _base, _arr, _n) {
     _base = store[__astore__M_workdir];
     # ex. __astore__S_hash[_base "/"] -> "filea/fileb/filec/"
-    split(__astore__S_hash[_base "/"], _arr, "/");
+    _n = split(__astore__S_hash[_base "/"], _arr, "/");
     # ex. _arr -> "filea", "fileb", "filec", ""
-    return ! (store[__astore__M_enum_it] + 2 in _arr);
+    return store[__astore__M_enum_it] + 2 > _n;
 }
 # }}}
 # {{{ astore::pretty_print
@@ -7422,34 +7422,18 @@ __astore__pretty_print_custom( \
         _path = _dir "/" _key;
         if (_path in __astore__S_hash) {
             _v = __astore__S_hash[_path];
-            if (_path "::" in __astore__S_hash) {
+            if (verbose && ((_path "::") in __astore__S_hash)) {
                 _type = __astore__S_hash[_path "::"];
-                if (verbose) {
-                    if (_type) {
-                        printf( \
-                            "%s[%s::%s] = %s\n", \
-                            indent, _key, _type, atom__tostring(_type, _v));
-                    } else {
-                        printf( \
-                            "%s[%s] = %s\n", \
-                            indent, _key, atom__tostring(_type, _v));
-                    }
-                } else {
-                    printf( \
-                        "%s[%s] = %s\n", \
-                        indent, _key, atom__tostring(_type, _v));
-                }
+                printf( \
+                    "%s[%s::%s] = %s\n", \
+                    indent, _key, _type, atom__tostring(_type, _v));
             } else {
                 printf("%s[%s] = %s\n", indent, _key, _v);
             }
         } else {
-            if (_path "::" in __astore__S_hash) {
-                if (verbose) {
-                    _type = __astore__S_hash[_path "::"];
-                    printf("%s[%s::%s] -> (nested array)\n", indent, _key, _type);
-                } else {
-                    printf("%s[%s] -> (nested array)\n", indent, _key);
-                }
+            if (verbose && ((_path "::") in __astore__S_hash)) {
+                _type = __astore__S_hash[_path "::"];
+                printf("%s[%s::%s] -> (nested array)\n", indent, _key, _type);
             } else {
                 printf("%s[%s] -> (nested array)\n", indent, _key);
             }
