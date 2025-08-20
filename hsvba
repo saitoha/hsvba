@@ -508,10 +508,15 @@ LANG=C __rt_exec ' # ";
 #   (num__lossless_add, num__lossless_mul)
 # {{{ num__init
 function \
-num__init() {
+num__init(    _n, _i) {
 
     if (__num__init_guard) {
         return (1);
+    }
+
+    num__pow2[0] = _n = 1;
+    for (_i = 1; _i <= 128; _i++) {
+        num__pow2[_i] = _n = _n * 2;
     }
 
     __num__init_guard = 1;
@@ -575,7 +580,8 @@ function \
 num__lshift(x, n) {
     # '${__pp_feat__has_native_bitwise_shift_functions:+$'\nreturn lshift(x, n)'}';
     # '${__pp_feat__has_native_bitwise_shift_functions:-'
-    return x * (2 ^ n);
+#    return x * 2 ^ n;
+    return x * num__pow2[n];
     # '}'
 }
 # }}}
@@ -584,7 +590,8 @@ function \
 num__rshift(x, n) {
     # '${__pp_feat__has_native_bitwise_shift_functions:+$'\nreturn rshift(x, n)'}';
     # '${__pp_feat__has_native_bitwise_shift_functions:-'
-    return int(x / (2 ^ n));
+#    return int(x / (2 ^ n));
+    return int(x / num__pow2[n]);
     # '}'
 }
 # }}}
@@ -644,9 +651,11 @@ num__lossless_mul( \
 # reverse the bit order of the given integer
 function num__reverse_bits(n, w,    _p, _q, _r) {
     for (_r = _p = 0; w--; ) {
-        _q = 2 ^ w;
+#        _q = 2 ^ w;
+        _q = num__pow2[w];
         if (n >= _q) {
-            _r += 2 ^ _p;
+#            _r += 2 ^ _p;
+            _r += num__pow2[_p];
             n -= _q;
         }
         ++_p;
@@ -971,6 +980,11 @@ function \
 stream__init(    _status) {
     if (__stream__init_guard) {
         return (1);
+    }
+
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
     }
 
     _status = str__init();
@@ -1350,7 +1364,8 @@ stream__read_bits( \
         stream[__stream__M_iit] = _it;
     }
     stream[__stream__M_ibit] = _bits;
-    return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
+#    return num__rshift(_bitsbuf, _it_bits) % (2 ^ n);
+    return num__rshift(_bitsbuf, _it_bits) % num__pow2[n];
 }
 function \
 __stream__ut__read_bits__00(    _stream) {
@@ -1427,11 +1442,13 @@ function \
 stream__write_bits( \
     stream, n, data, \
     \
-    _it, _bits, _bitsbuf \
+    _it, _bits, _bitsbuf, _pow \
 ) {
     _it = stream[__stream__M_oit];
     _bits = stream[__stream__M_obit]; # _it_bits
-    _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
+#    _bitsbuf = stream[_it + 1] % (2 ^ _bits) + data * (2 ^ _bits);
+    _pow = num__pow2[_bits];
+    _bitsbuf = stream[_it + 1] % _pow + data * _pow;
     _bits += n;
     if (_bits >= 8) {
         do {
@@ -2445,7 +2462,7 @@ addr__init() {
     __addr__S_immutable_block_count = 0;
 
     # block size
-    __addr__C_blocksize = 2 ^ 20;
+    __addr__C_blocksize = 1048576;  # 2 ^ 20
 
     # base offset address
     __addr__C_offset_stack     = 1 * __addr__C_blocksize;
@@ -4314,6 +4331,10 @@ atom__init(    _status) {
     atom__err = 0;
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = str__init();
     if (_status < 0) {
         return _status;
@@ -5980,7 +6001,7 @@ __atom__instantiate( \
         if (_sizeunit == 0) {
             _size *= 8;
         }
-        __atom__S_type[atomname ".offset"] = 2 ^ (_size - 1);
+        __atom__S_type[atomname ".offset"] = num__pow2[_size - 1];
     }
 
     _v = _type[__atom__type__M_format];
@@ -9812,6 +9833,25 @@ xmlp__parse(xmlp, stream,    _c, _st, _it) {
 # This module has only one static member acp__S_codepage
 # and one public static method build_map_to_u8char().
 #
+# {{{ acp::init
+function \
+acp__init(    _status) {
+
+    if (__acp__init_guard) {
+        return (1);
+    }
+
+    # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    __acp__init_guard = 1;
+
+    return (0);
+}
+# }}}
 # {{{ acp::build_map_to_u8char
 function \
 acp__build_map_to_u8char(codepage) {
@@ -15664,6 +15704,10 @@ zlib__init(    _i, _status) {
     }
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = str__init();
     if (_status < 0) {
         return _status;
@@ -17060,6 +17104,10 @@ zip__init(    _status) {
     }
 
     # required modules
+    _status = num__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = zlib__init();
     if (_status < 0) {
         return _status;
@@ -19821,7 +19869,7 @@ cfb__unpack_stream( \
         return cfb__E_UNEXPECTED;
     }
 
-    if (_stream_size + 0 > 2 ^ 36) {
+    if (_stream_size + 0 > 68719476736) {  # 2 ^ 36
         E__message = sprintf("Huge size stream (%s bytes) is detected.", _stream_size);
         return cfb__E_UNEXPECTED;
     }
@@ -20365,7 +20413,8 @@ __cfb__unpack_directorysectors( \
     _store, _r, _sector_size \
 ) {
     _v = astore__get(store, "Header/Sector Shift");
-    _sector_size = 2 ^ _v;
+#    _sector_size = 2 ^ _v;
+    _sector_size = num__pow2[_v];
 
     if (astore__has(store, "Directory Entries/" id)) {
         E__message = sprintf( \
@@ -20840,6 +20889,10 @@ vba__dirstream__init(    _status) {
     }
 
     # required modules
+    _status = acp__init();
+    if (_status < 0) {
+        return _status;
+    }
     _status = cfb__init();
     if (_status < 0) {
         return _status;
@@ -20891,6 +20944,8 @@ vba__dirstream__init(    _status) {
     __vba__dirstream__C_magic_PROJECTTERMINATOR    =    16; # 0x0010
 
     __vba__dirstream__init_guard = 1;
+
+    return (0);
 }
 # }}}
 # {{{ vba__dirstream__unpack
@@ -24748,7 +24803,8 @@ vba__projectstream__unpack_encrypteddata( \
         }
 
         _byte = num__xor(_byte_enc, _encrypted_byte2 + _unencrypted_byte1) % 256;
-        _temp_value = 256 ^ _byte_index;
+#        _temp_value = 256 ^ _byte_index;
+        _temp_value = num__pow2[_byte_index * 8];
         _temp_value *= _byte;
         _length += _temp_value;
         _encrypted_byte2 = _encrypted_byte1;
@@ -36243,6 +36299,14 @@ cli__init(    _i, _status, _buf) {
     if (_status < 0) {
         return _status;
     }
+    _status = struct__init();
+    if (_status < 0) {
+        return _status;
+    }
+    _status = xmlp__init();
+    if (_status < 0) {
+        return _status;
+    }
 
     # '${__pp_comment:+'
     #
@@ -36307,14 +36371,6 @@ cli__main( \
     \
     _i, _stream, _arr, _r, _test, _store \
 ) {
-    # class initialization
-    if (struct__init() < 0) {
-        return cli__E_UNEXPECTED;
-    }
-    if (xmlp__init() < 0) {
-        return cli__E_UNEXPECTED;
-    }
-
     # quick check if this AWK is binary-safe
     #
     # Passing this test means that the current execution environment
