@@ -36722,9 +36722,9 @@ cli__read_input( \
     _line, _res, _size, _buf, _iit, _command, _cl, _cr, _pos, _store, \
     _str, _s, _len, _declen, _namelen, _extlen, _status \
 ) {
-    if (__feat__is_binary_safe) {   # binary safe
+    if (__feat__is_binary_safe || __feat__use_process_builder) {   # binary safe
         getline < filename;
-        if (index($0, "PK") == 1) {
+        if (index($0, "PK") == 1 && __feat__is_binary_safe) {
             _status = __cli__dirty_extract_vba_from_zip(stream);
             if (_status < 0) {
                 # fallback if compressed chunk cannot be retrieved
