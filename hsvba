@@ -36867,6 +36867,10 @@ function \
 cli__print_result( \
     _continue, _hairline, _src, _store, _stream_name \
 ) {
+    if (astore__S_output_mode == "") {
+        return cli__E_FAIL;
+    }
+
     astore__new(_store, "/");
 
     if (astore__S_output_mode == astore__C_OUTPUT_JSON) {
@@ -37201,9 +37205,8 @@ cli__process_mso_xml( \
     _pos = stream__pos(istream);
 
     for (_i in _paths) {
-        split(_paths[_i], _path_arr, "/");
+        _target_level = split(_paths[_i], _path_arr, "/");
         _level = 0;
-        _target_level = length(_path_arr);
 
         while ((_ev = xmlp__parse(_xmlp, istream)) > 0) {
             if (_ev == xmlp__C_event_START_ELEMENT) {
