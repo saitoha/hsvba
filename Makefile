@@ -35,7 +35,7 @@ boxlogin: awkbox
 	    awkbox /bin/bash
 
 awkbox:
-	@ scripts/awkbox awkbox
+	@ scripts/awkbox awkbox 2> scripts/awkbox.log
 
 changelog:
 	@ scripts/gitlog-to-changelog \
