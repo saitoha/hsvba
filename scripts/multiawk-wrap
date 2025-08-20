@@ -8,7 +8,8 @@ gawk
 wak
 goawk
 bioawk
-jawk
+jawk        # original jawk 1.02
+jawk-1.03   # hoijui/Jawk
 pawk
 oawk
 original-awk
@@ -19,7 +20,7 @@ busybox
 /usr/bin/awk
 /usr/local/bin/awk
 __awks__
-while read f; do
+while read f comments; do
     realpath $f | xargs echo $f;
 done           |
 sort -k2       |

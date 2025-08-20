@@ -2472,11 +2472,16 @@ addr__ref( \
 ) {
     addr__errno = 0;
 
+    # for jawk, explicitly convert to string
+    if (__feat__array_key_is_type_aware) {
+        v = v "";
+    }
+
     if (v in __addr__S_RIT) {
         _id = __addr__S_RIT[v];
     } else if (__addr__S_immutable_block_count < __addr__C_max_blockaddr) {
-        __addr__S_immutable_block[_id = __addr__S_RIT[v] = \
-            ++__addr__S_immutable_block_count] = v;
+        _id = __addr__S_RIT[v] = ++__addr__S_immutable_block_count;
+        __addr__S_immutable_block[_id] = v;
     } else {
         E__message = "immutable address overflow";
         return addr__errno = addr__C_err_overflow;
@@ -36235,11 +36240,86 @@ forms20__unpack_vbframestream( \
 # {{{ @module cli, hsvba CLI implementation
 # {{{ cli::init
 function \
-cli__init(    _i, _status, _buf) {
+cli__init(    _i, _status, _buf, _test, _n, _arr) {
 
     if (__cli__init_guard) {
         return (1);
     }
+
+    # quick check if this AWK is binary-safe
+    #
+    # Passing this test means that the current execution environment
+    # satisfies the following three conditions:
+    #
+    #   1. It is null-safe; null is not considered the end of the string,
+    #      but is recognized as one character.
+    #
+    #   2. It is CR-safe; when AWK receives a string from the stdin,
+    #      CR (\r) is not lost due to CRLF->LF conversion.
+    #
+    #   3. One byte per one character; even strings that can be considered
+    #      UTF-8 or MBCS can be recognized one byte at a time.
+    #
+    "printf \\\\0\\\\r\\\\n\\\\343\\\\201\\\\202" | getline _test;
+    _n = length(_test);
+    __feat__is_binary_safe = _n == 6;
+    __feat__use_process_builder = _n == 18;  # jawk
+
+    # flags for optimization and portability
+    _n = split("123", _arr, "");
+    if (_n == 3) {
+        __feat__has_modern_nullsplit = 1;
+        if (split("\342\226\240", _arr, "") == 3) {
+            __feat__has_split_in_bytes = 1;
+        }
+    } else if (_n == 4) {  # jawk
+        __feat__has_modern_nullsplit = 1;
+        __feat__has_off_by_one_nullsplit = 1;
+    }
+
+    _n = length("\041");
+    if (_n == 3) {
+        __feat__no_octet_escape_chars = 1;
+    }
+
+    _n = length("\302\220");
+    if (_n == 1) {
+        __feat__utf8_aware_length = 1;
+    }
+
+    _n = match("!", /\0041/);
+    if (_n == 1) {
+        __feat__has_java_style_regexp = 1;
+    }
+
+    # glitch in jawk-1.03. not present in 1.02
+    _n = ("" == 0);
+    if (_n == 1) {
+        __feat__zero_eq_empty_string = 1;
+    }
+
+    # glitch in jawk-1.02. not present in 1.03
+    delete _arr;
+    _arr["1"] = 1;
+    _n = (1 in _arr);
+    if (_n == 0) {
+        __feat__array_key_is_type_aware = 1;
+    }
+
+    if ("PROCINFO" in SYMTAB) {
+        __feat__has_amortized_growth_strings = 1;
+        __feat__has_cow_strings = 1;
+        __feat__has_native_bitwise_logical_functions = ("and" in FUNCTAB);
+        __feat__has_native_bitwise_shift_functions = ("lshift" in FUNCTAB);
+        __feat__has_native_strftime = ("strftime" in FUNCTAB);
+    }
+    if (split("\343\200\200", _arr, " ") == 0) {  # may be goawk
+        __feat__has_cow_strings = 1;
+    } else if (("FS" in SYMTAB) == 0) {
+        __feat__has_cow_strings = 1;
+        __feat__has_native_strftime = 1;
+    }
+
 
     # required modules
     _status = ooxml__init();
@@ -36328,47 +36408,8 @@ cli__init(    _i, _status, _buf) {
 function \
 cli__main( \
     \
-    _i, _stream, _arr, _r, _test, _store \
+    _i, _stream, _r, _store \
 ) {
-    # quick check if this AWK is binary-safe
-    #
-    # Passing this test means that the current execution environment
-    # satisfies the following three conditions:
-    #
-    #   1. It is null-safe; null is not considered the end of the string,
-    #      but is recognized as one character.
-    #
-    #   2. It is CR-safe; when AWK receives a string from the stdin,
-    #      CR (\r) is not lost due to CRLF->LF conversion.
-    #
-    #   3. One byte per one character; even strings that can be considered
-    #      UTF-8 or MBCS can be recognized one byte at a time.
-    #
-    "printf \\\\0\\\\r\\\\n\\\\343\\\\201\\\\202" | getline _test;
-    __feat__is_binary_safe = length(_test) == 6;
-
-    # flags for optimization and portability
-    if (split("123", _arr, "") == 3) {
-        __feat__has_modern_nullsplit = 1;
-        if (split("\342\226\240", _arr, "") == 3) {
-            __feat__has_split_in_bytes = 1;
-        }
-    }
-
-    if ("PROCINFO" in SYMTAB) {
-        __feat__has_amortized_growth_strings = 1;
-        __feat__has_cow_strings = 1;
-        __feat__has_native_bitwise_logical_functions = ("and" in FUNCTAB);
-        __feat__has_native_bitwise_shift_functions = ("lshift" in FUNCTAB);
-        __feat__has_native_strftime = ("strftime" in FUNCTAB);
-    }
-    if (split("\343\200\200", _arr, " ") == 0) {  # may be goawk
-        __feat__has_cow_strings = 1;
-    } else if (("FS" in SYMTAB) == 0) {
-        __feat__has_cow_strings = 1;
-        __feat__has_native_strftime = 1;
-    }
-
     _r = hsvba__cli_optparse();
     if (_r < 0) {
         return _r;
