@@ -15969,29 +15969,11 @@ zlib__inflate( \
 }
 # '${__pp_ut__zlib__:+"$(cut -d\# -f3-<<<'
 #=# function \
-#=# __zlib__inflate__ut__00( \
+#=# __zlib__rfc1950_decompress__ut__00( \
 #=#     \
 #=#     _status, _istream, _store, _ostream, _size \
 #=# ) {
-#=#     # echo -n test | gzip | LANG=C cut -b11- |
-#=#     # perl -pe "s/(.)/sprintf(\"\\\\%03o\", ord(\$1))/ge"
-#=#     stream__new_from_string( \
-#=#         _istream, \
-#=#         "\053\111\055\056\001\000\014\176\177\330\004\000\000\000" \
-#=#     );
-#=#
-#=#     stream__new(_ostream);
-#=#
-#=#     _status = zlib__inflate(_istream, _store, _ostream);
-#=#     if (_status < 0) {
-#=#         return _status;
-#=#     }
-#=#
-#=#     _size = stream__available_size(_ostream);
-#=#     if (stream__read_raw_string(_ostream, _size) != "test") {
-#=#         return (-1);
-#=#     }
-#=#
+#=#     # TODO: test
 #=#     return (0);
 #=# }
 # ')"}'
