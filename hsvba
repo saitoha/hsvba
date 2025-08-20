@@ -254,11 +254,13 @@
 #    +----------------------------+--------------------+--------------------+
 #    | bioawk                     | requires           | works(slow)        |
 #    +----------------------------+--------------------+--------------------+
-#    | jawk(java)                 |                    | error *1           |
+#    | original jawk-1.02 (java)  |                    | works              |
 #    +----------------------------+--------------------+--------------------+
-#    | jawk(rust)                 |                    | error *2           |
+#    | hoijui's jawk-1.03 (java)  |                    | works              |
 #    +----------------------------+--------------------+--------------------+
-#    | ezrosent/frawk             |                    | error *2           |
+#    | jawk(rust)                 |                    | error *1           |
+#    +----------------------------+--------------------+--------------------+
+#    | ezrosent/frawk             |                    | error *1           |
 #    +----------------------------+--------------------+--------------------+
 #    | raygard/wak                | requires           | works              |
 #    +----------------------------+--------------------+--------------------+
@@ -428,7 +430,7 @@
 # it. The original idea for this approach was inspired by [Nakashima, 2021].
 #
 # The command : $'\042\047'; is a magical workaround for the Bash 3 parser.
-true && echo "$$ $( \
+true && echo "$( \
 : $'\042\047'; \
 : ${AWK:=$(which mawk gawk wak goawk bioawk jawk awk 2>/dev/null | head -n1)}; \
 rm -f /tmp/hsvba-$$.err; \
@@ -5670,8 +5672,9 @@ function \
 __atom__type_unpack( \
     type, name, \
     \
-    _v, _base, _head \
+    _v, _base, _head, _n, _q \
 ) {
+if (! __feat__has_off_by_one_nullsplit)
     if (! (name in __atom__S_type)) {
         E__message = "(__atom__type_unpack) unexpected base type: " name;
         return (-1);
@@ -15909,7 +15912,7 @@ zlib__inflate( \
         # initialize it as an array at the next higher level in the call graph
         # and then pass that as an argument.
         #
-        delete _literal_huffman_table[1];
+        delete _literal_huffman_table[1];  # force it to be treated as an array
         delete _distance_huffman_table[1];
 
         _status = __zlib__inflate__fixed_huffman_block( \
@@ -37424,7 +37427,8 @@ __cli__detect_vbaroot( \
         }
     }
 
-	astore__new(_store, cfbpath "/@FileID/Root Entry");
+    # fallback: walk CFB directries recursively
+    astore__new(_store, cfbpath "/@FileID/Root Entry");
     _status = __cli__detect_vbaroot_recursively(_store, "/Root Entry");
     if (_status < 0) {
         E__message = "VBA stream is not found";
