@@ -24576,10 +24576,10 @@ __vba__projectstream__unpack_projectwindowrecord( \
         return vba__projectstream__E_UNEXPECTED;
     }
 
-    if (astore__set(_store, "ProjectWindow/WindowState", substr(_v, 1, _len = RLENGTH)) < 0) {
+    if (astore__set(_store, "ProjectWindow/WindowState", substr(_v, 1, RLENGTH)) < 0) {
         return vba__projectstream__E_UNEXPECTED;
     }
-    _v = substr(_v, _len);
+    _v = substr(_v, RLENGTH);
 
     return vba__projectstream__S_OK;
 }
