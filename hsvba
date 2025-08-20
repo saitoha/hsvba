@@ -19795,12 +19795,13 @@ cfb__unpack_stream( \
     _mini_secsize = num__lshift(1, astore__get(store, cfbpath "/Header/Mini Sector Shift"));
     _mini_stream_cutoff_size = astore__get(store, cfbpath "/Header/Mini Stream Cutoff Size");
     _minifat_per_fat = _sector_size / _mini_secsize;
-    _start_secno = astore__get(store, cfbpath "/Directory Entries/" _id "/Starting Sector Location");
-    _stream_size = astore__get(store, cfbpath "/Directory Entries/" _id "/Stream Size");
-    if (_start_secno == "" || _stream_size == "") {
+
+    if (! astore__has(store, cfbpath "/Directory Entries/" _id)) {
         E__message = sprintf("CFB Directory Entry \"%s\" is not found.", _id);
         return cfb__E_UNEXPECTED;
     }
+    _start_secno = astore__get(store, cfbpath "/Directory Entries/" _id "/Starting Sector Location");
+    _stream_size = astore__get(store, cfbpath "/Directory Entries/" _id "/Stream Size");
 
     if (_stream_size + 0 > 68719476736.) {  # 2 ^ 36
         E__message = sprintf("Huge size stream (%s bytes) is detected.", _stream_size);
