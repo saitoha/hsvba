@@ -1,0 +1,46 @@
+#!/bin/bash
+: "${_bar:=$(printf '%.s#' {1..60})}" \
+  "${_start:=$(date +%s)}" \
+  "${_sgr0:=$(tput sgr0)}" \
+  "${_bold:=$(tput bold)}" \
+  "${_sc:=$(tput sc)}" \
+  "${_rc:=$(tput rc)}" \
+  "${_el:=$(tput el)}" \
+  "${_dl1:=$(tput dl1)}" \
+  "${_ind:=$(tput ind)}" \
+  "${_cuu5:=$(tput cuu 5)}" \
+  "${_civis:=$(tput civis)}" \
+  "${_cnorm:=$(tput cnorm)}" \
+  "${_ed:=$(tput ed)}" \
+;
+# minimum fallback
+: "${_sc:=$'\0337'}" \
+  "${_rc:=$'\0338'}" \
+  "${_ind:=$'\n'}" \
+  "${_cuu5:=$'\033[5A'}" \
+  "${_ed:=$'\033[J'}" \
+;
+: "${date_bin:=date}" \
+  "${date_arg:=+%s}"
+
+cd "$(dirname "${0}")"/.. && {
+    : "${_cnt:="$(find "${testdir:-testdata}" -type f ! -name \*.vs[dst] ! -name [~.]\* | wc -l)"}";
+    trap 'echo "${_ed} ${_cnorm}"; exit 130;' 2 && { \
+        printf "${_civis}${_ind}${_ind}${_ind}${_ind}${_ind}${_cuu5}${_sc}"; 
+        "${@}" | while read -r file r; do \
+            test "${r}" = 0 && : $((++i)); \
+            printf "${_rc}%s${_el}\n[%-${#_bar}s] %3s${_el}\n[%2d / %2d] %s${_ed}" \
+                "[${_bold}${AWK:=auto detected AWK}${_sgr0}]" \
+                "${_bar:0:$((i * ${#_bar} / _cnt))}" \
+                "${_bold}$(($("${date_bin}" "${date_arg}") - _start))s${_sgr0}" \
+                "${i}" "${_cnt}" "${file}"; \
+            test $((++n)) = ${_cnt} && \
+                printf "%s %d errors, ${_bold}%ds${_sgr0}${_ed}\n" \
+                "${_rc}${_dl1}[${_bold}${AWK}${_sgr0}]" \
+                "$((_cnt - i))" \
+                "$(($(date +%s) - _start))"; \
+        done; \
+    }
+    printf "${_cnorm}${_ed}"
+}
+# vim: set et ts=4 sw=0 sts=-1:
