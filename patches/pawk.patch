@@ -1,0 +1,48 @@
+--- tran.c.orig	2025-08-19 14:10:20.099506837 +0000
++++ tran.c	2025-08-19 14:10:38.228730396 +0000
+@@ -329,10 +329,10 @@
+ 		donerec = 1;
+ 	}
+ 	t = tostring(s);	/* in case it's self-assign */
+-	vp->tval &= ~NUM;
+-	vp->tval |= STR;
+ 	if (freeable(vp))
+ 		xfree(vp->sval);
++	vp->tval &= ~NUM;
++	vp->tval |= STR;
+ 	vp->tval &= ~DONTFREE;
+ 	   dprintf( ("setsval %p: %s = \"%s (%p)\", t=%o\n", vp, vp->nval, t,t, vp->tval) );
+ 	return(vp->sval = t);
+--- run.c.orig	2025-08-19 14:15:03.311959415 +0000
++++ run.c	2025-08-19 13:14:55.771356096 +0000
+@@ -429,7 +429,7 @@
+ 	return 0;	/* not reached */
+ }
+
+-Cell *getline(Node **a, int n)	/* get next line from specific input */
++Cell *awk_getline(Node **a, int n)	/* get next line from specific input */
+ {		/* a[0] is variable, a[1] is operator, a[2] is filename */
+ 	Cell *r, *x;
+ 	extern Cell **fldtab;
+--- maketab.c.orig	2025-08-19 14:13:20.672736790 +0000
++++ maketab.c	2025-08-19 14:13:36.935621481 +0000
+@@ -102,7 +102,7 @@
+ 	{ CALL, "call", "call" },
+ 	{ ARG, "arg", "arg" },
+ 	{ VARNF, "getnf", "NF" },
+-	{ GETLINE, "getline", "getline" },
++	{ GETLINE, "awk_getline", "getline" },
+ 	{ 0, "", "" },
+ };
+
+--- proto.h.orig	2025-08-19 14:16:29.134984431 +0000
++++ proto.h	2025-08-19 13:14:55.771545347 +0000
+@@ -149,7 +149,7 @@
+ extern	Cell	*copycell(Cell *);
+ extern	Cell	*arg(Node **, int);
+ extern	Cell	*jump(Node **, int);
+-extern	Cell	*getline(Node **, int);
++extern	Cell	*awk_getline(Node **, int);
+ extern	Cell	*getnf(Node **, int);
+ extern	Cell	*array(Node **, int);
+ extern	Cell	*awkdelete(Node **, int);
