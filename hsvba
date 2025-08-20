@@ -37492,11 +37492,12 @@ BEGIN {
 #=#     exit;
 # ')"}'
 
-    if (cli__init() < 0) {
-        exit(1);
+    if ((E__errno = cli__init()) < 0) {
+        exit(E__errno);
     }
-    if (cli__main() < 0) {
-        exit(1);
+
+    if ((E__errno = cli__main()) < 0) {
+        exit(E__errno);
     }
 }
 END {
@@ -37505,6 +37506,9 @@ END {
     if (E__message) {
         printf "[error] %s\n", E__message > E__file;
         close(E__file);
+    }
+    if (E__errno != 0) {
+        exit(E__errno);
     }
 }
 # }}}
