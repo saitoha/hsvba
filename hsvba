@@ -219,8 +219,8 @@
 #    https://en.wikipedia.org/wiki/Windows_code_page
 #
 #
-#  requirements, compatibility
-#  ===========================
+#  Compatibility
+#  =============
 #
 #    We have tested this script on several AWK environments, and the
 #    results are shown below.
@@ -231,50 +231,64 @@
 #    If hsvba detects a binary-unsafe environment, it invokes the external
 #    command `base64`.
 #
-#    +======================================================================+
-#    | AWK implementation         | base64 requirement | result             |
-#    +======================================================================+
-#    | bwk(nawk,onetrueawk)       | requires           | works(slow)        |
-#    +----------------------------+--------------------+--------------------+
-#    | gawk with LC_CTYPE=C       |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | gawk with -b option        |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | gawk with LC_CTYPE=UTF-8   | requires           | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | mawk 1.3.4 20200120        |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | mawk 1.3.4 20250131        |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | goawk                      |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | busybox awk                | requires           | works(slow)        |
-#    +----------------------------+--------------------+--------------------+
-#    | alecthomas/pawk            | requires           | works(slow)        |
-#    +----------------------------+--------------------+--------------------+
-#    | bioawk                     | requires           | works(slow)        |
-#    +----------------------------+--------------------+--------------------+
-#    | original jawk-1.02 (java)  |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | hoijui's jawk-1.03 (java)  |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | jawk(rust)                 |                    | error *1           |
-#    +----------------------------+--------------------+--------------------+
-#    | ezrosent/frawk             |                    | error *1           |
-#    +----------------------------+--------------------+--------------------+
-#    | raygard/wak                | requires           | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | raygard/wak with -b option |                    | works              |
-#    +----------------------------+--------------------+--------------------+
-#    | soerlemans/awx             |                    | error *2           |
-#    +----------------------------+--------------------+--------------------+
-#    | 9 awk (plan9port)          | requires           | works              |
-#    +----------------------------+--------------------+--------------------+
+#    +========================================================================+
+#    | AWK implementation           | base64 requirement | result             |
+#    +========================================================================+
+#    | bwk(nawk,onetrueawk)         | requires           | works(slow)        |
+#    +------------------------------+--------------------+--------------------+
+#    | gawk with LC_CTYPE=C         |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | gawk with -b option          |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | gawk with LC_CTYPE=UTF-8     | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | mawk 1.3.4 20200120          |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | mawk 1.3.4 20250131          |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | goawk                        |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | busybox awk                  | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | pawk *1                      | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | bioawk                       | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | original jawk-1.02 (java)    |                    | works *2           |
+#    +------------------------------+--------------------+--------------------+
+#    | hoijui's jawk-1.03 (java)    |                    | works *2           |
+#    +------------------------------+--------------------+--------------------+
+#    | raygard/wak                  | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | raygard/wak with -b option   |                    | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | soerlemans/awx               |                    | error *3           |
+#    +------------------------------+--------------------+--------------------+
+#    | 9 awk (plan9port)            | requires           | works              |
+#    +------------------------------+--------------------+--------------------+
+#    | awka-0.75                    |                    | error *4           |
+#    +------------------------------+--------------------+--------------------+
+#    | noyesno/awka (Revived Awka)  |                    | error *4           |
+#    +------------------------------+--------------------+--------------------+
 #
-#    *1 integer overflow
-#    *2 parse error
+#    *1 Written by Nelson H.F. Beebe.
+#       http://www.math.utah.edu/pub/pawk/pawk-20030606.tar.gz
+#       This version contained a memory deallocation bug, which we fix with
+#       patches/pawk.patch.
+#       Not to be confused with pawk, the awk-like language implemented in
+#       Python. This project is unrelated.
 #
-#  integration
+#    *2 Interpreter-only execution. jawk (Java) can compile AWK code to JVM
+#       bytecode, but compiling a large AWK program like hsvba produces a class
+#       file with a single method that exceeds the 65,535-byte per-method
+#       limit, so it cannot run on the JVM.
+#
+#    *3 parse error
+#
+#    *4 segmentation fault during compilation; fails when attempting a realloc
+#       of nearly 4 GB.
+#
+#  Integration
 #  ===========
 #
 #    You can view VBA source code differences using the output of `git show` or `git diff`.
@@ -293,7 +307,7 @@
 #
 #    A sample .gitattributes file is present in the testdata/ directory.
 #
-#  references
+#  References
 #  ==========
 #
 #    [APPNOTE.TXT]
@@ -423,7 +437,110 @@
 #
 #    [Nakashima, 2021]
 #        Koichi Nakashima, Techniques for using awk as a programming language
-#        https://qiita.com/ko1nksm/items/16ca4f4546c1ea8e97d7
+#
+#  Appendix 1. a field guide to reading this AWK script
+#  ====================================================
+#
+#    This is a hands-on field guide for reading the AWK code in hsvba. It
+#    explains the formats the script speaks (CFB, ZIP, XML, zlib/DEFLATE, the
+#    quirky [MS-OVBA] LZ77), why they matter, and how to stay oriented in a
+#    very large single-file codebase with unapologetically long function
+#    names.
+#
+#    To pull VBA project data out of Office files with pure AWK, you need
+#    a mental map of containers and compression. The sections below recap
+#    the formats and the specific bits hsvba leans on, with pointers to
+#    specs you will want open on a second screen.
+#
+#    - CFB (Compound File Binary) -- see [MS-CFB]
+#
+#        CFB is the gatekeeper. Windows has IStorage/IStream; AWK does not,
+#        so hsvba reimplements the logic. Major Version 3 uses 512-byte
+#        sectors with 32-bit indices to model storages (dirs) and streams
+#        (files). The first sector packs the header and the first 109 DIFAT
+#        (Double-Indirect FAT) entries; those lead to FAT sectors and from
+#        there to stream chains.
+#
+#        Streams under 4096 bytes live in the mini stream as 64-byte
+#        mini-sectors managed by the Mini FAT; larger ones use normal
+#        512-byte sectors via the regular FAT. Reading thus branches by size.
+#        Names, sizes, CLSIDs, and friends come from 128-byte directory
+#        entries. hsvba's "cfb" pieces wrap this so you can extract bytes
+#        without drama.
+#
+#    - ZIP (OOXML) -- see [APPNOTE.TXT]
+#
+#        OOXML is ZIP. The classic flow is EOCD to central directory to
+#        local headers. Payloads are mostly DEFLATE (method 8), with the
+#        occasional "store" (method 0). The VBA project lives in
+#        "vbaProject.bin", which is itself a CFB. Yes, you unzip a ZIP to
+#        open a CFB to read more CFB.
+#
+#        Because AWK cannot magically seek on stdin, hsvba takes a portable
+#        route: load bytes into a stream-like buffer, scan backward for
+#        EOCD, and fan out from there. If your AWK has binary-safe
+#        index() and substr() (some mawk builds do), hsvba can enable a
+#        forward-scanning fast path. It is non-canonical but saves time
+#        on huge files.
+#
+#    - XML
+#
+#        Word 2003 ".xml" and Visio 2003 ".vdx/.vtx/.vsx" are straight
+#        XML. hsvba ships a small "xmlp" parser to keep things civil. After
+#        unpacking OOXML, parts are XML too, and you will parse relationships
+#        to find the part that carries "vbaProject.bin".
+#        In Visio 2003 XML, the VBA project may be embedded as base64-encoded
+#        CFB data, which again requires CFB expansion.
+#        In Word 2003 XML, the embedded data is base64-encoded ActiveMime
+#        (see below).
+#
+#    - ActiveMime -- see [ActiveMime]
+#
+#        Word 2003 XML sometimes embeds ActiveMime: There’s no official spec,
+#        but [ActiveMime] write-ups explain the basics:a tiny header followed
+#        by [RFC 1950] (zlib) data which inflates to a CFB containing the
+#        VBA project. The recipe is "zlib first, then CFB".
+#
+#    - RFC-1950 (zlib) -- see [RFC 1950]
+#
+#        zlib is a 2-byte header, a DEFLATE body, and a trailing ADLER32.
+#        You will meet it inside ActiveMime and sometimes inside legacy
+#        ".ppt" "PowerPoint Document" streams. hsvba's
+#        "vba::ppt::powerpointdocumentstream" knows how to peel that onion.
+#
+#    - DEFLATE -- see [RFC 1951]
+#
+#        DEFLATE is a sequence of blocks: a 3-bit header, Huffman-coded
+#        payload, and the end-of-block symbol 256. Codes 0 to 255 are
+#        literal bytes; 257 and above pair with distances for LZ77
+#        back-references. Bit-level I O is not AWK's happy place, so
+#        hsvba's stream layer exposes helpers like "read_bits()" and
+#        "write_bits()" to keep implementations in sync.
+#
+#    - MS-OVBA LZ77 (module streams) -- see [MS-OVBA] 2.4.1
+#
+#        VBA module streams (the source text) are stored in a Microsoft-
+#        specific LZ77 variant without Huffman coding. The layout begins
+#        with a signature byte "0x01", then a run of chunks. Each chunk
+#        starts with a 2-byte header (size plus compressed or uncompressed;
+#        in practice, compressed). The body repeats token sequences: one
+#        flag byte declares whether the next eight items are literals
+#        (1 byte) or copy tokens (2 bytes). Copy tokens encode length and
+#        distance in 16 bits.
+#
+#        One subtlety from [MS-OVBA] 2.4.1.3.19 "CopyToken Algorithms":
+#        the bit budget shifts as more bytes are decoded. Early on, fewer
+#        bits go to length and more to distance (about 4 plus 12), sliding
+#        toward more for length and fewer for distance (ending near 12 plus
+#        4). hsvba's "vba::lz77" mirrors that behavior.
+#
+#    - ANSI Code Pages -- see [UNICODE-MAPPING]
+#
+#        After decompression, VBA source text is encoded in an ANSI code
+#        page. The chosen code page is declared by the "PROJECTCODEPAGE"
+#        record in the "dir" stream as defined in [MS-OVBA] 2.3.4.2.1.5.
+#        hsvba's "acp" module handles the mapping so comments stop looking
+#        like cryptography.
 #
 # {{{ bash preprocessing
 # If no environment variables starting with HSVBA_* are defined, pass the
@@ -17071,7 +17188,7 @@ zip__unpack_directories( \
     }
 
     #
-    # [APPNOTE.TXT] 4.3.16  End of central directory record:
+    # [APPNOTE.TXT] 4.3.16  End of central directory record (EOCD)
     #
     _status = __zip__unpack_end_of_central_directory_record(stream, store);
     if (_status < 0) {
