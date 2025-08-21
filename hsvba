@@ -7586,8 +7586,7 @@ __astore__pretty_print_json( \
     }
     _dir = __astore__path_canonicalize(_dir);
     _index = __astore__S_hash[_dir "/"];
-    split(_index, _keys, "/");
-    _count = length(_keys) - 1;
+    _count = split(_index, _keys, "/") - 1;
     for (_i = 1; _i <= _count; ++_i) {
         _key = _keys[_i];
         _path = _dir "/" _key;
