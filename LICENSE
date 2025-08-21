@@ -1,0 +1,42 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+Copyright (C) 2025 Hayaki Saito
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+----------------------------------------------------------------------
+Additional Notices
+----------------------------------------------------------------------
+
+This project includes the following components derived from external
+sources, all of which are licensed under the GNU General Public
+License version 3 (GPLv3) or later:
+
+1. **pcode module**  
+   Portions of the "pcode" module (functions prefixed with `pcode__*`
+   or `__pcode__`) are derived from
+   [pcodedmp](https://github.com/bontchev/pcodedmp) by Vesselin Bontchev.
+   These portions have been ported to AWK for use in this project.
+
+2. **gitlog-to-changelog tool**  
+   The script located at `scripts/gitlog-to-changelog` is included in
+   this project. It originates from the
+   [GNOME libgee project](https://gitlab.gnome.org/GNOME/libgee),
+   where it is distributed under the GNU General Public License,
+   version 3 or later (GPLv3+).
+
+----------------------------------------------------------------------
+End of License
+----------------------------------------------------------------------
