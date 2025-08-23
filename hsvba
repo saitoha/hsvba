@@ -8,6 +8,21 @@
 #
 # 2025-03-31: Initial version, written by Hayaki Saito
 #
+# This AWK script mixes original code with portions derived from:
+#   - libvisio (MPL-2.0) -> relicensed to GPL-3.0-only under MPL-2.0 section 3.3 ("Secondary License")
+#   - pcodedmp (GPL-3.0) -> included here under GPL-3.0-only
+#
+# Derived regions are marked inline:
+#   BEGIN: libvisio-derived (MPL-2.0), file <upstream-file>, tag <tagname>
+#     ... ported logic ...
+#   END: libvisio-derived
+#   BEGIN: pcodedmp-derived (GPL-3.0), file <upstream-file>, commit <commit-id>
+#     ... adapted logic ...
+#   END: pcodedmp-derived
+#
+# Original upstream notice lines are preserved. No libvisio files marked
+# "Incompatible With Secondary Licenses" were used.
+#
 #  alt shebang
 #  ===========
 #
@@ -38,6 +53,8 @@
 #                 (default: off, only in .ppt/.ppt/.pps)
 #            ppt: Content stored in "PowerPoint Document" stream
 #                 (default: off, only in .ppt/.ppt/.pps)
+#            vsd: Content stored in "VisioDocument" stream
+#                 (default: off, only in .vsd/.vst/.vss)
 #            acm: Content stored in "ActiveMime" stream
 #                 (default: off, only in Word 2003 XML)
 #            cfb: Content stored in Compound File Binary Format (default: off)
@@ -154,13 +171,12 @@
 #      *.vsdm Microsoft Visio Macro-enabled Drawing (Open XML format)
 #      *.vstm Microsoft Visio Macro-enabled Template
 #      *.vssm Microsoft Visio Macro-enabled Stencil
+#      *.vsd Microsoft Visio 2003-2010 Drawing
+#      *.vst Microsoft Visio 2003-2010 Template
+#      *.vss Microsoft Visio 2003-2010 Stencil
 #      *.vdx Microsoft Visio 2003 XML Drawing
 #      *.vtx Microsoft Visio 2003 XML Template
 #      *.vsx Microsoft Visio 2003 XML Stencil
-#
-#      Legacy binary formats(*.vsd, *.vst, *.vss) are not supported yet.
-#      TODO: Implement a VSD parser by referencing `libvisio`.
-#      https://github.com/LibreOffice/libvisio (licensed under MPL-2.0)
 #
 #    - Project
 #      *.mpp Microsoft Project Document
@@ -417,6 +433,10 @@
 #        Sean Wilson, ActiveMime File Format
 #        https://github.com/idiom/activemime-format/blob/master/README.md
 #
+#    [libvisio]
+#        Eilidh McAdam; Fridrich Strba; David Tardon. "libvisio" (Git repository)
+#        URL: https://git.libreoffice.org/libvisio/
+#
 #    [UNICODE-MAPPING]
 #        https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP874.TXT
 #        https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP932.TXT
@@ -532,6 +552,27 @@
 #        bits go to length and more to distance (about 4 plus 12), sliding
 #        toward more for length and fewer for distance (ending near 12 plus
 #        4). hsvba's "vba::lz77" mirrors that behavior.
+#
+#    - Visio's LZ77-ish codec -- see [libvisio] src/lib/VSDInternalStream.cpp
+#
+#        In legacy .vsd files (Visio 2003-2010), which are OLE CFB storages,
+#        there's a top-level stream called "VisioDocument". Inside it is a
+#        nested CFB substorage for the VBA project, and that one is also
+#        compressed with a proprietary LZ77 variant.
+#
+#        Like MS-OVBA, there is no Huffman stage: a single flag byte flips
+#        between literals and matches. The plot twist is in the matches:
+#        instead of saying "go back N bytes," this codec points to an absolute
+#        seat number in the 4 KiB window (a circular-buffer index, modulo
+#        4096). Mathematically it’s the same show with different tickets
+#        -- distance and position convert back and forth without drama.
+#
+#        Despite the circular buffer, it’s still a sliding-window dictionary:
+#        the active 4 KiB is always the last output, and it advances as bytes
+#        are emitted while the buffer itself stays put.
+#
+#        Further details on the decoder implementation are provided in the
+#        comments of __vba__vsd__lz77__unpack_compressed_stream().
 #
 #    - ANSI Code Pages -- see [UNICODE-MAPPING]
 #
@@ -17908,6 +17949,10 @@ function __pcode__pack4(arg1, arg2, arg3, arg4) {
     return arg1 + arg2 * 16 + arg3 * 256 + arg3 * 4096;
 }
 # }}}
+# BEGIN: pcodedump-derived (GPL-3.0), file: pcodedump.py, commit 372029a {{{
+# NOTE: The upstream file did not contain a per-file copyright header.
+# Authorship is attributed to Vesselin Bontchev and contributors (per upstream repo).
+# Included here under GPL-3.0-only for project-wide consistency.
 # {{{ pcode__init
 function pcode__init(    _status) {
 
@@ -19641,6 +19686,7 @@ pcode__getname( \
      return _v;
 }
 # }}}
+# }}} END: pcodedump-derived
 # }}}
 # {{{ @module ooxml, parsing Office Open XML (OOXML)
 # {{{ ooxml::init
@@ -19970,6 +20016,7 @@ cfb__unpack_stream( \
     _id = astore__get(store, cfbpath "/@FileID" path "/id");
     if (_id == "") {
         E__message = sprintf("CFB file ID for path \"%s\" is not found.", path);
+        astore__pretty_print(store, cfbpath "/@FileID");
         return cfb__E_UNEXPECTED;
     }
 
@@ -20341,7 +20388,6 @@ __cfb__build_fat_chain( \
         # they represent the next sector number
         _difat_sector_no = stream__read_uint32(stream);
     }
-
     # traverse the DIFAT entries and build the FAT chain
     _m = 0;
     for (_i = 0; _i < _difats_cnt; ++_i) {
@@ -27135,7 +27181,7 @@ __vba__ppt__powerpointdocumentstream__unpack_persistdirectoryentry( \
     # rgPersistOffset is associated with persistId. The next entry, if
     # present, is associated with persistId plus 1. Each entry in
     # rgPersistOffset is associated with a persist object identifier in this
-    # manner, with the final entry associated with persistId + cPersist – 1.
+    # manner, with the final entry associated with persistId + cPersist - 1.
     _v = _id = stream__read_bits(stream, 20);
     if (astore__set(store, "persistId::bits<20>", _v) < 0) {
         return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
@@ -28460,6 +28506,627 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
 }
 # }}}
 # }}}  # vba::ppt::powerpointdocumentstream
+# {{{ @module vba::vsd::visiodocumentstream
+# analysis functions for "VisioDocument" stream
+# {{{ vba::vsd::visiodocumentstream::init
+function \
+vba__vsd__visiodocumentstream__init(    _status) {
+
+    if (__vba__vsd__visiodocumentstream__init_guard) {
+        return (1);
+    }
+
+    _status = cfb__init();
+    if (_status < 0) {
+        return _status;
+    }
+
+    _status = atom__declare(" \
+    atom VSDStreamType: uint32 {                    \
+        format: `0x%02x`                            \
+      , map: {                                      \
+         `0x0c`: `Foreign Data Stream`              \
+         `0x0d`: `OLE List Stream`                  \
+         `0x0e`: `Text Stream`                      \
+         `0x14`: `Trailer Stream`                   \
+         `0x15`: `Page Stream`                      \
+         `0x16`: `Colors Stream`                    \
+         `0x18`: `Font List Stream`                 \
+         `0x19`: `Font IX Stream`                   \
+         `0x1a`: `Styles Stram`                     \
+         `0x1d`: `Stencils Stream`                  \
+         `0x1e`: `Stencil Page Stream`              \
+         `0x1f`: `OLE Data Stream`                  \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    vba__vsd__visiodocumentstream__E_NOTIMPL      = -16385;
+    vba__vsd__visiodocumentstream__E_FAIL         = -16389;
+    vba__vsd__visiodocumentstream__E_ACCESSDENIED = -458757;
+    vba__vsd__visiodocumentstream__E_UNEXPECTED   = -65535;
+    vba__vsd__visiodocumentstream__S_OK           = 0;
+    vba__vsd__visiodocumentstream__S_FALSE        = 1;
+
+    __vba__vsd__visiodocumentstream__init_guard = 1;
+
+    return (0);
+}
+# }}}
+# BEGIN: libvisio-derived (MPL-3.0), file: src/lib/VSDParser.cpp, tag libvisio-0.1.8 {{{
+# /*
+#  * This file is part of the libvisio project.
+#  *
+#  * This Source Code Form is subject to the terms of the Mozilla Public
+#  * License, v. 2.0. If a copy of the MPL was not distributed with this
+#  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#  */
+#
+# {{{ vba::vsd::visiodocumentstream::unpack
+# '${__pp_comment:+'
+#
+#  This function was implemented based on insights from libvisio/src/lib/VSDParser.cpp
+#  https://git.libreoffice.org/libvisio/+/refs/tags/libvisio-0.1.8/src/lib/VSDParser.cpp
+#
+# '}'
+function \
+vba__vsd__visiodocumentstream__unpack( \
+    stream, store, cfbpath, vba_storage, \
+    \
+    _path, _status, _v, _stream, _format, _offset, _size, \
+    _ostream, _i, _j, _store, _shift, _count, _olestream, \
+    _vba_decompressed_chunk_stream, _streams, _index, _type, _window \
+) {
+    _path = "/Root Entry/VisioDocument";
+
+    _status = cfb__unpack_stream(stream, store, _path, _stream, cfbpath);
+    if (_status < 0) {
+        return _status;
+    }
+
+    astore__fork(store, "*Header", _store);
+    _status = __vba__vsd__visiodocumentstream__unpack_header(_stream, _store);
+    if (_status < 0) {
+        return _status;
+    }
+
+    astore__fork(store, "*TrailerStreamPointer", _store);
+    _status = __vba__vsd__visiodocumentstream__unpack_pointer( \
+        _stream, _store, ",mustbe(0x14:Trailer Stream)");
+    if (_status < 0) {
+        return _status;
+    }
+
+    _offset = astore__get(_store, "*Offset");
+    _size = astore__get(_store, "*Size");
+    _format = astore__get(_store, "*Format");
+
+    stream__iseek(_stream, _offset);
+    _status = __vba__vsd__lz77__unpack_stream( \
+        _stream, _ostream, _size, (_format % 4 >= 2));
+    if (_status < 0) {
+        return _status;
+    }
+
+    if (_format % 4 >= 2) {
+        _shift = 4;
+    } else {
+        _shift = 0;
+    }
+
+    if (vba__vsd__verbose) {  # debug
+        print "---------------- traling stream --------------------"
+        stream__dump(_ostream);
+    }
+
+    astore__fork(store, "*TrailerStream", _store);
+    _status = __vba__vsd__visiodocumentstream__unpack_trailerstream( \
+        _ostream, _store, _shift, _streams);
+    if (_status < 0) {
+        return _status;
+    }
+
+    stream__new(vba_storage, 16384);
+    for (_i = 1; _i <= _streams[0]; ++_i) {
+        _index = _streams[_i];
+        _offset = astore__get(_store, "*Pointers/" _index "/*Offset");
+        _size = astore__get(_store, "*Pointers/" _index "/*Size");
+        _format = astore__get(_store, "*Pointers/" _index "/*Format");
+
+        stream__iseek(_stream, _offset);
+        _status = __vba__vsd__lz77__unpack_stream( \
+            _stream, _olestream, _size, (_format % 4 >= 2));
+        if (_status < 0) {
+            return _status;
+        }
+
+        if (vba__vsd__verbose) {  # debug
+            print "---------------- OLE stream --------------------"
+            stream__dump(_olestream);
+        }
+
+        stream__iseek(_olestream, 0);
+        astore__fork(store, "*OLEChunkList", _store);
+        _status = __vba__vsd__visiodocumentstream__unpack_olechunklist( \
+            _olestream, _stream, _store, vba_storage);
+        if (_status < 0) {
+            return _status;
+        }
+    }
+
+    if (vba__vsd__verbose) {  # debug
+        print "---------------- VBA chunk stream --------------------" _i " - " _j
+        stream__dump(vba_storage);
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::vsd::visiodocumentstream::unpack_header
+# '${__pp_comment:+'
+#
+#  This function was implemented based on insights from libvisio/src/lib/VSDParser.cpp
+#  https://git.libreoffice.org/libvisio/+/refs/tags/libvisio-0.1.8/src/lib/VSDParser.cpp
+#
+# '}'
+function \
+__vba__vsd__visiodocumentstream__unpack_header( \
+    stream, store, \
+    \
+    _v \
+) {
+    _v = stream__read_raw_string(stream, 18);
+    if (astore__set(store, "textmagic,mustbe(Visio (TM) Drawing)", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_hex_string(stream, 2);
+    if (astore__set(store, "crlf,mustbe(0d0a)", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_hex_string(stream, 6);
+    if (astore__set(store, "*Unknown1", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "*MajorVersion::uint16,one_of(5,6,11)", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    if (_v == 5 || _v == 6) {  # v5 or v6
+        E__message = "VSD v5 and v6 format are not supported.";
+        return vba__vsd__visiodocumentstream__E_NOTIMPL;
+    }
+
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "*MinorVersion::uint16", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "*Unknown2::uint16", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Unknown3::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::vsd::visiodocumentstream::unpack_pointer
+# '${__pp_comment:+'
+#
+#  This function was implemented based on insights from libvisio/src/lib/VSDParser.cpp
+#  https://git.libreoffice.org/libvisio/+/refs/tags/libvisio-0.1.8/src/lib/VSDParser.cpp
+#
+# '}'
+function \
+__vba__vsd__visiodocumentstream__unpack_pointer( \
+    stream, store, expected_type, \
+    \
+    _v \
+) {
+#"mustbe(0x14:Trailer Stream)"
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Type::VSDStreamType" expected_type, _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Unknown::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Offset::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Size::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "*Format::hexint16", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::vsd::visiodocumentstream::unpack_trailerstream
+# '${__pp_comment:+'
+#
+#  This function was implemented based on insights from libvisio/src/lib/VSDParser.cpp
+#  https://git.libreoffice.org/libvisio/+/refs/tags/libvisio-0.1.8/src/lib/VSDParser.cpp
+#
+# '}'
+function \
+__vba__vsd__visiodocumentstream__unpack_trailerstream( \
+    stream, store, shift, streams, \
+    \
+    _v, _offset, _count, _i, _status, _type, _store \
+) {
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*Unknown::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = _offset = stream__read_uint32(stream);
+    if (astore__set(store, "*Offset::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    stream__iseek(stream, _offset + shift - 4);
+
+    _v = stream__read_uint32(stream);
+    if (astore__set(store, "*StreamList/*ListSize::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = _count = stream__read_uint32(stream);
+    if (astore__set(store, "*StreamList/*Count::int32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    stream__skip(stream, 4);
+
+    streams[0] = 0;
+
+    for (_i = 1; _i <= _count; ++_i) {
+        astore__fork(store, "*Pointers/" _i, _store);
+        _status = __vba__vsd__visiodocumentstream__unpack_pointer(stream, _store);
+        if (_status < 0) {
+            return _status;
+        }
+        _type = astore__get(store, "*Pointers/" _i "/*Type");
+        if (atom__tostring("VSDStreamType", _type) == "0x0d:OLE List Stream") {
+            streams[++streams[0]] = _i;
+        }
+    }
+
+    if (streams[0] == 0) {
+        return vba__vsd__visiodocumentstream__E_FAIL;
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::vsd::visiodocumentstream::unpack_olechunklist
+# '${__pp_comment:+'
+#
+#  This function was implemented based on insights from libvisio/src/lib/VSDParser.cpp
+#  https://git.libreoffice.org/libvisio/+/refs/tags/libvisio-0.1.8/src/lib/VSDParser.cpp
+#
+# '}'
+function \
+__vba__vsd__visiodocumentstream__unpack_olechunklist( \
+    olestream, stream, store, vba_storage, \
+    \
+    _v, _type, _offset, _size, _format, _count, _i, _status, _ostream, _store \
+) {
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown0::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown1::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown2::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = _type = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown3::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown4::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown5::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown6::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = _count = stream__read_uint32(olestream);
+    if (astore__set(store, "*Count::uint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    _v = stream__read_uint32(olestream);
+    if (astore__set(store, "*Unknown8::hexint32", _v) < 0) {
+        return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+    }
+
+    for (_i = 1; _i <= _count; ++_i) {
+        astore__fork(store, "*Pointers/" _i, _store);
+        _status = __vba__vsd__visiodocumentstream__unpack_pointer(olestream, _store);
+        if (_status < 0) {
+            return _status;
+        }
+        _offset = astore__get(_store, "*Offset");
+        _size = astore__get(_store, "*Size");
+        _format = astore__get(_store, "*Format");
+
+        stream__iseek(stream, _offset);
+
+        _status = __vba__vsd__lz77__unpack_stream( \
+            stream, _ostream, _size, (_format % 4 >= 2));
+        if (_status < 0) {
+            return _status;
+        }
+
+        if (vba__vsd__verbose) {  # debug
+            print "---------------- VBA chunk stream --------------------";
+            stream__dump(_ostream);
+        }
+
+        _v = _size = stream__read_uint32(_ostream);
+        if (astore__set(store, "*OLEChunks/" _i "/*Size::uint32", _v) < 0) {
+            return vba__vsd__visiodocumentstream__E_UNEXPECTED;
+        }
+
+        stream__copy(_ostream, vba_storage, _size);
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# }}} END: libvisio-derived
+# BEGIN: libvisio-derived (MPL-3.0), file: src/lib/VSDInternalStream.cpp, tag libvisio-0.1.8 {{{
+# /*
+#  * This file is part of the libvisio project.
+#  *
+#  * This Source Code Form is subject to the terms of the Mozilla Public
+#  * License, v. 2.0. If a copy of the MPL was not distributed with this
+#  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#  */
+#
+# {{{ (private)::vba::vsd::lz77::unpack_stream
+function \
+__vba__vsd__lz77__unpack_stream( \
+    istream, ostream, size, compressed, \
+    \
+    _i, _fbyte, _len, _pos, _window, _status \
+) {
+    stream__new(ostream, 4096);
+
+    if (compressed) {
+        _status = __vba__vsd__lz77__unpack_compressed_stream( \
+            istream, ostream, size);
+        if (_status < 0) {
+            return _status;
+        }
+    } else {
+        stream__copy(istream, ostream, size);
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# {{{ (private)::vba::vsd::lz77::unpack_compressed_stream
+#
+# This function provides decoding for the proprietary LZ77-style
+# compression used in Visio (*.vsd) files
+#
+# This codec is LZ77-style with a 4 KiB sliding window backed by a circular
+# buffer. The write index w and any match position are taken modulo 4096.
+#
+# Each match token encodes copy length and the absolute window position
+# (mod 4096) instead of the conventional backward distance.
+#
+# Although the buffer is circular, the dictionary is the last 4096 bytes
+# of already produced output, which advances as bytes are
+# emitted (i.e., a sliding window).
+#
+# TokenSequence
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |  *FlagByte    |            *Tokens (variable)                 |
+# +---------------+-----------------------------------------------+
+#
+# *FlagByte (per 8 items, LSB first):
+#
+#    For each bit in the FlagByte, consume from bit7 -> bit0.
+#    1 = literal byte (read 1 byte).
+#    0 = match token (read 2 bytes),
+#
+# *Tokens: Array of Literal or Token
+#
+# *Literal
+#
+#    A literal item represents one raw byte to be emitted and stored in the
+#    window.
+#
+#    Decoding:
+#      read 1 byte L              # no bias is applied
+#      out.append(L); win[w] = L
+#      w = (w + 1) & 0x0FFF       # modulo 4096
+#
+#    Range:
+#      L: 0..255 (byte)
+#
+# *Token (match token):
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |      *A       |*Length|  *B   |
+# +---------------+-------+-------+
+#
+#  *A: lower 8 bits of the position in the LZ77 window (raw)
+#
+#  *Length: 4-bit length field (raw)
+#
+#  *B: upper 4 bits of the position in the LZ77 window (raw)
+#
+#  Decoding:
+#    pos  = ((*B << 8) | *A) + 18   # fixed bias: 18
+#    len  = *Length + 3             # fixed bias: 3
+#    For i = 0 To len:
+#        ch = win[pos]
+#        out.append(ch); win[w] = L
+#        pos = (pos + 1) & 0x0FFF   # modulo 4096
+#        w = (w + 1) & 0x0FFF       # modulo 4096
+#
+#  Ranges:
+#    raw position: 0..4095  -> actual position: 18..4113
+#    raw length:   0..15    -> actual length:   3..18
+#
+#  This function is derived from a portion of libvisio
+#
+#  src/lib/VSDInternalStream.cpp:35-98
+#  https://git.libreoffice.org/libvisio/+/refs/heads/tag-libvisio-0.0.19/src/lib/VSDInternalStream.cpp#35
+#
+#  [original code]
+#
+#  if (!compressed)
+#  {
+#    m_buffer.assign(tmpBuffer, tmpBuffer + tmpNumBytesRead);
+#  }
+#  else
+#  {
+#    unsigned char buffer[4096] = { 0 };
+#    unsigned pos = 0;
+#    unsigned offset = 0;
+#
+#    while (offset < tmpNumBytesRead)
+#    {
+#      unsigned flag = tmpBuffer[offset++];
+#      if (offset > tmpNumBytesRead-1)
+#        break;
+#
+#      unsigned mask = 1;
+#      for (unsigned bit = 0; bit < 8 && offset < tmpNumBytesRead; ++bit)
+#      {
+#        if (flag & mask)
+#        {
+#          buffer[pos&4095] = tmpBuffer[offset++];
+#          m_buffer.push_back(buffer[pos&4095]);
+#          pos++;
+#        }
+#        else
+#        {
+#          if (offset > tmpNumBytesRead-2)
+#            break;
+#          unsigned char addr1 = tmpBuffer[offset++];
+#          unsigned char addr2 = tmpBuffer[offset++];
+#
+#          unsigned length = (addr2&15) + 3;
+#          unsigned pointer = (((unsigned)addr2 & 0xF0) << 4) | addr1;
+#          if (pointer > 4078)
+#            pointer -= 4078;
+#          else
+#            pointer += 18;
+#
+#          for (unsigned j = 0; j < length; ++j)
+#          {
+#            buffer[(pos+j) & 4095] = buffer[(pointer+j) & 4095];
+#            m_buffer.push_back(buffer[(pointer+j) & 4095]);
+#          }
+#          pos += length;
+#        }
+#        mask = mask << 1;
+#      }
+#    }
+#  }
+#
+function \
+__vba__vsd__lz77__unpack_compressed_stream( \
+    istream, ostream, size, \
+    \
+    _i, _fbyte, _len, _pos, _window \
+) {
+    stream__new(ostream, 4096);
+
+    # zero clear
+    for (_i = 1; _i <= 4096; ++_i) {
+        _window[_i] = 0;
+    }
+    _window[0] = 0;  # set current position
+    stream__oseek(ostream, 0);
+
+    while (size > 0) {
+        # FlagByte
+        _fbyte = stream__read_uint8(istream);
+        --size;
+        for (_i = 1; _i <= 8 && size > 0; ++_i) {
+            # if (_fbyte & (1 << _i) != 0)
+            if (_fbyte % num__pow2[_i] >= num__pow2[_i - 1]) {
+                # literal
+                if (_window[0] >= 4096) {  # reset position
+                    _window[0] -= 4096;
+                }
+                stream__write_uint8( \
+                    ostream, \
+                    _window[++_window[0]] = stream__read_uint8(istream));
+                --size;
+            } else if (size > 1) {
+                # copy operation
+                _pos = stream__read_uint8(istream) + 18; # position offset: 18
+                _len = stream__read_bits(istream, 4) + 3;  # length offset: 3
+                _pos += stream__read_bits(istream, 4) * 256;
+                # _pos %= 4096
+                if (_pos >= 4096) {
+                    _pos -= 4096;
+                }
+                stream__lz77_copy_variant_visio( \
+                    ostream, _window, _pos + 1, _len);
+                size -= 2;
+            }
+        }
+    }
+
+    return vba__vsd__visiodocumentstream__S_OK;
+}
+# }}}
+# }}} END: libvisio-derived
+# }}}  # vba::vsd::visiodocumentstream
 # {{{ @module vba::vbaprojectstream
 # analysis functions for _VBA_PROJECT stream
 function \
@@ -36532,11 +37199,12 @@ cli__init(    _i, _status, _buf, _test, _n, _arr) {
     OPT_PRINT_FRM    = 64;
     OPT_PRINT_USR    = 128;
     OPT_PRINT_PPT    = 256;
-    OPT_PRINT_ACM    = 512;
-    OPT_PRINT_ALL    = 1023;
+    OPT_PRINT_VSD    = 512;
+    OPT_PRINT_ACM    = 1024;
+    OPT_PRINT_ALL    = 2047;
     # experimental flags
-    OPT_PRINT_IDS    = 1024;
-    OPT_PRINT_PCD    = 2048;
+    OPT_PRINT_IDS    = 2048;
+    OPT_PRINT_PCD    = 4096;
 
     __cli__S_opt_print = OPT_PRINT_SRC;
 
@@ -36609,6 +37277,8 @@ cli__usage() {
           "             (default: off, only in .ppt/.ppt/.pps)\n" \
           "        ppt: Content stored in \"PowerPoint Document\" stream\n" \
           "             (default: off, only in .ppt/.ppt/.pps)\n" \
+          "        vsd: Content stored in \"VisioDocument\" stream\n" \
+          "             (default: off, only in .vsd/.vst/.vss)\n" \
           "        acm: Content stored in \"ActiveMime\" stream\n" \
           "             (default: off, only in Word 2003 XML)\n" \
           "        cfb: Content stored in Compound File Binary Format (default: off)\n" \
@@ -36712,6 +37382,8 @@ hsvba__cli_optparse( \
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_USR);
                 } else if (_subopt == "ppt") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PPT);
+                } else if (_subopt == "vsd") {
+                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_VSD);
                 } else if (_subopt == "acm") {
                     __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ACM);
                 } else if (_subopt == "all") {
@@ -37121,15 +37793,23 @@ cli__print_result( \
             if (_continue) {
                 printf(", ");
             }
+            astore__pretty_print(_store, "/Current User", "Current User");
+            _continue = 1;
+        }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_PPT)) {
+            if (_continue) {
+                printf(", ");
+            }
             astore__pretty_print( \
                 _store, "/PowerPoint Document", "PowerPoint Document");
             _continue = 1;
         }
-        if (num__and(__cli__S_opt_print, OPT_PRINT_USR)) {
+        if (num__and(__cli__S_opt_print, OPT_PRINT_VSD)) {
             if (_continue) {
                 printf(", ");
             }
-            astore__pretty_print(_store, "/Current User", "Current User");
+            astore__pretty_print( \
+                _store, "/VisioDocument", "VisioDocument");
             _continue = 1;
         }
         if (num__and(__cli__S_opt_print, OPT_PRINT_IDS)) {
@@ -37253,6 +37933,14 @@ cli__print_result( \
                 astore__pretty_print(_store, "/PowerPoint Document");
             }
         }
+        if (num__and(__cli__S_opt_print, OPT_PRINT_VSD)) {
+            if (astore__has(_store, "/VisioDocument")) {
+                print _hairline;
+                print " VisioDocument stream information";
+                print _hairline;
+                astore__pretty_print(_store, "/VisioDocument");
+            }
+        }
         if (num__and(__cli__S_opt_print, OPT_PRINT_ACM)) {
             if (astore__has(_store, "/ActiveMime")) {
                 print _hairline;
@@ -37271,7 +37959,7 @@ function \
 cli__process_vbaproject_binary( \
     stream, cfbpath, \
     \
-    _store, _status \
+    _store, _status, _vba_storage \
 ) {
     astore__new(_store, cfbpath);
 
@@ -37284,7 +37972,8 @@ cli__process_vbaproject_binary( \
     _status = __cli__detect_vbaroot(_store, cfbpath);
     if (_status < 0) {
         # may be PowerPoint(*.ppt) or Visio(*.vsd)
-        if (astore__has(_store, "/CFB/@FileID/Root Entry/Current User")) {
+        if (astore__has(_store, cfbpath "/@FileID/Root Entry/Current User")) {
+            # ppt
             E__message = "";
             astore__new(_store, "/Current User");
             _status = vba__ppt__currentuserstream__init();
@@ -37303,6 +37992,28 @@ cli__process_vbaproject_binary( \
             }
             _status = vba__ppt__powerpointdocumentstream__unpack( \
                 stream, _store, cfbpath);
+            if (_status < 0) {
+                return _status;
+            }
+
+            return cli__S_OK;
+        } else if (astore__has(_store, cfbpath "/@FileID/Root Entry/VisioDocument")) {
+            # visio
+            E__message = "";
+            astore__new(_store, "/VisioDocument");
+            _status = vba__vsd__visiodocumentstream__init();
+            if (_status < 0) {
+                return _status;
+            }
+
+            _status = vba__vsd__visiodocumentstream__unpack( \
+                stream, _store, cfbpath, _vba_storage);
+            if (_status < 0) {
+                return _status;
+            }
+
+            _status = cli__process_vbaproject_binary( \
+                _vba_storage, "/CFB_NESTED");
             if (_status < 0) {
                 return _status;
             }

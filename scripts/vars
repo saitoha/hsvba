@@ -1,9 +1,15 @@
 #!/bin/bash
 
+: ${vars_testfile:=./testdata/mso/word_office2007-12.0.6762.5000_dotm_ja-jp_001.dotm}
 cd "$(dirname "${0}")"/.. && {
     AWK=gawk AWKOPT=-d/dev/stdout \
-    ./hsvba ./testdata/mso/word_office2007-12.0.6762.5000_dotm_ja-jp_001.dotm |
-    grep ^_[^_] -c | xargs test 0 =
+    ./hsvba "${vars_testfile}" |
+    grep ^_[^_] -c | xargs test 0 = || {
+        echo "testdata: ${vars_testfile}" >&2
+        AWK=gawk AWKOPT=-d/dev/stdout \
+        ./hsvba "${vars_testfile}" | grep ^_[^_]
+        exit 1
+    }
 }
 
 # vim: set et ts=4 sw=0 sts=-1:
