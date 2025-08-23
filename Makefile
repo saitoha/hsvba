@@ -35,6 +35,7 @@ boxlogin: awkbox
 	    awkbox /bin/bash
 
 awkbox:
+	@ docker info >/dev/null 2>&1 || echo docker is not running >&2
 	@ scripts/awkbox awkbox 2> scripts/awkbox.log
 
 changelog:
