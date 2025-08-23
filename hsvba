@@ -382,7 +382,6 @@
 #        (protocol revision 10.1)
 #        https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-PPT/%5bMS-PPT%5d.pdf
 #
-#
 #    [MS-DTYP]
 #        Microsoft Corporation, Windows Data Types
 #        (protocol revision 42.0)
@@ -411,7 +410,7 @@
 #        https://ecma-international.org/publications-and-standards/standards/ecma-376/
 #
 #    [pcodedump]
-#        Vesselin Bontchev, A VBA p-code disassembler.
+#        Vesselin Bontchev, "pcodedmp.py - A VBA p-code disassembler"
 #        https://github.com/bontchev/pcodedmp
 #
 #    [ActiveMime]
@@ -496,7 +495,7 @@
 #
 #    - ActiveMime -- see [ActiveMime]
 #
-#        Word 2003 XML sometimes embeds ActiveMime: There’s no official spec,
+#        Word 2003 XML sometimes embeds ActiveMime: There's no official spec,
 #        but [ActiveMime] write-ups explain the basics:a tiny header followed
 #        by [RFC 1950] (zlib) data which inflates to a CFB containing the
 #        VBA project. The recipe is "zlib first, then CFB".
@@ -1075,6 +1074,7 @@ stream__init(    _status) {
 # - skip
 # - rewind
 # - iseek
+# - oseek
 # - pos
 # - search
 # - rsearch
@@ -1099,6 +1099,7 @@ stream__init(    _status) {
 # - copy
 # - lz77_copy
 # - decode_huffman
+# - dump
 #
 # private members
 # - __stream__M_iit:     an input byte iterator
@@ -1157,7 +1158,6 @@ stream__init(    _status) {
 #=# # }}}
 #=# ')"}'
 # }}}
-
 # {{{ stream::class_init
 function \
 __stream__class_init() {
@@ -1262,6 +1262,15 @@ function \
 stream__iseek(stream, n) {
     # '${__pp_debug_assert:+$'\nASSERT(n > 0)'}'
     stream[__stream__M_iit] = __stream__C_header_offset + n;
+
+    return (0);
+}
+# }}}
+# {{{ stream::oseek
+function \
+stream__oseek(stream, n) {
+    # '${__pp_debug_assert:+$'\nASSERT(n > 0)'}'
+    stream[__stream__M_oit] = __stream__C_header_offset + n;
 
     return (0);
 }
@@ -2440,16 +2449,43 @@ function \
 stream__lz77_copy( \
     stream, offset, len, \
     \
-    _i, _it, _c \
+    _it, _c \
 ) {
     _it = stream[__stream__M_oit];
 
-    for (_i = 0; _i < len; ++_i) {
+    while (len--) {
         _c = stream[_it - offset + 1];
         stream[++_it] = _c;
     }
 
     stream[__stream__M_oit] = _it;
+}
+# }}}
+# {{{ stream::lz77_copy_variant_visio
+# '${__pp_comment:+'
+#
+# '}'
+function \
+stream__lz77_copy_variant_visio( \
+    stream, win, pos, len, \
+    \
+    _iit, _oit \
+) {
+    _iit = win[0];
+    _oit = stream[__stream__M_oit];
+
+    while (len--) {
+        if (pos >= 4097) {  # reset input iterator
+            pos -= 4096;
+        }
+        if (_iit >= 4096) {  # reset output iterator
+            _iit -= 4096;
+        }
+        win[++_iit] = stream[++_oit] = win[pos++];
+    }
+
+    win[0] = _iit;
+    stream[__stream__M_oit] = _oit;
 }
 # }}}
 # {{{ stream::decode_huffman
@@ -2479,8 +2515,42 @@ stream__decode_huffman(stream, huffman_table,    _p, _l) {
     return huffman_table[_p];
 }
 # }}}
+# {{{ stream::dump
+function \
+stream__dump( \
+    stream, offset, size, \
+    \
+    _i, _j, _buf, _c, _it \
+) {
+    if (offset <= 0) {
+        offset = 1;
+    }
+    if (size <= 0) {
+        size = stream[__stream__M_oit] - __stream__C_header_offset;
+    }
+    _it = offset + __stream__C_header_offset;
+    for (_i = 1; _i <= size; _i += 16) {
+        printf "%08x: ", _i - 1;  # print address
+        for (_j = 1; _j <= 16; ++_j) {
+            if (_i + _j <= size + 1) {
+                _c = stream[_it++];
+                if (_c >= 32 && _c <= 126) {  # printable
+                    _buf[_j] = str__chr[_c];
+                } else {
+                    _buf[_j] = ".";
+                }
+                printf "%s", str__hex[_c] " ";
+            } else {
+                _buf[_j] = " ";
+                printf "   ";
+            }
+        }
+        print str__binary_join(_buf, 1, _j);
+    }
+}
 # }}}
-# }}}
+# }}} @class stream
+# }}} @module stream
 # {{{ @module addr, a simple addressing model
 #
 #  +------------------------------------+
