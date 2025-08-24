@@ -14,8 +14,9 @@ FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt update && apt install -y sudo make build-essential yacc default-jre-headless curl \
-                                 original-awk mawk gawk bioawk busybox golang
+RUN apt update && apt install -y sudo make build-essential yacc bison maven curl git \
+                                 original-awk mawk gawk bioawk busybox golang 9base \
+                                 vim emacs
 ENV LC_ALL=C.UTF-8
 ARG USERNAME=${user}
 ARG UID=${uid}
@@ -28,6 +29,9 @@ RUN echo "${user}:changeme" | chpasswd
 USER ${user}
 WORKDIR /home/${user}
 
+RUN mkdir bin
+ENV PATH=/home/${user}/bin:\$PATH
+
 # busybox
 RUN mkdir -p busybox/bin && \
     ln -s /bin/busybox busybox/bin/awk
@@ -39,25 +43,27 @@ ENV PATH=/home/${user}/go/bin:\$PATH
 
 # pawk
 COPY patches patches
-RUN curl -sL ${pawk_download_url} | tar xvz && cd pawk-20030606 && \
+RUN curl -sL ${pawk_download_url} | tar xvz && \
+    cd pawk-20030606 && \
     patch -p0 < ../patches/pawk.patch && \
-        make && mkdir bin && \
-        cp a.out bin/pawk
-ENV PATH=/home/${user}/pawk-20030606/bin:\$PATH
+    make PROFILE="-DPROFILE -DHAVE_STDLIB_H -DHAVE_UNISTD_H -DMAXPROFILE=65535 -DLINENO_T=int" && \
+    mkdir bin && \
+    cp -p a.out /home/${user}/bin/pawk
 
-# jawk
-RUN mkdir -p jawk/bin jawk/share
-RUN curl -sL "${jawk_download_url}" > jawk/share/jawk-1.02.jar
-COPY <<-__jawk__ jawk/bin/jawk
-#!/bin/sh
-LC_CTYPE=en_US.ISO8859-1 java \\\\
-    -Dfile.encoding=latin1 \\\\
-    -cp /home/${user}/jawk/share/jawk-1.02.jar \\\\
-    org.jawk.Awk "\\\${@}"
-__jawk__
-RUN sudo chown user:user jawk/bin/jawk && \
-        chmod +x jawk/bin/jawk
-ENV PATH=/home/${user}/jawk/bin:\$PATH
+# onetrueawk
+RUN git clone --depth=1 https://github.com/onetrueawk/awk onetrueawk && \
+    make -C onetrueawk && \
+    cp -p onetrueawk/a.out /home/${user}/bin/onetrueawk
+
+# 9base awk
+RUN ln -s /usr/lib/plan9/bin/awk bin/awk-9base
+
+# plan9port
+RUN git clone --depth=1 https://github.com/9fans/plan9port
+RUN echo 'WSYSTYPE=nowsys' >> plan9port/LOCAL.config
+RUN cd plan9port && ./INSTALL
+RUN ln -s /home/${user}/plan9port/bin/awk bin/awk-plan9port
+ENV PATH=/home/${user}/bin:\$PATH
 
 # wak
 RUN curl -sL ${wak_download_url} | tar xvz && \
@@ -65,7 +71,35 @@ RUN curl -sL ${wak_download_url} | tar xvz && \
         make && \
         sudo make install
 
-RUN sudo apt install -y vim
+# original jawk
+RUN mkdir -p jawk/bin jawk/share
+RUN curl -sL "${jawk_download_url}" > jawk/share/jawk-1.02.jar
+COPY <<-__jawk__ bin/jawk-1.02
+#!/bin/sh
+LC_CTYPE=en_US.ISO8859-1 java \\\\
+    -Dfile.encoding=latin1 \\\\
+    -cp /home/${user}/jawk/share/jawk-1.02.jar \\\\
+    org.jawk.Awk "\\\${@}" | cat
+__jawk__
+RUN sudo chown user:user bin/jawk-1.02 && \
+        chmod +x bin/jawk-1.02
+
+# hoijui's jawk
+RUN git clone --depth=1 https://github.com/hoijui/Jawk hoijui-jawk && \
+    cd hoijui-jawk && \
+    patch -p1 < ../patches/hoijui-jawk.patch && \
+    mvn package || true
+COPY <<-__jawk__ bin/jawk-1.03
+#!/bin/sh
+LC_CTYPE=en_US.ISO8859-1 java \\\\
+    -Dfile.encoding=latin1 \\\\
+    -cp /home/${user}/hoijui-jawk/target/jawk-1.03-SNAPSHOT-stand-alone.jar \\\\
+    org.jawk.Main "\\\${@}" | cat
+__jawk__
+RUN sudo chown user:user bin/jawk-1.03 && \
+        chmod +x bin/jawk-1.03
+
+
 RUN mkdir work
 WORKDIR /home/${user}/work
 

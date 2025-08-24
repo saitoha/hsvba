@@ -8,13 +8,17 @@ gawk
 wak
 goawk
 bioawk
-jawk        # original jawk 1.02
+jawk
+jawk-1.02   # original jawk 1.02
 jawk-1.03   # hoijui/Jawk
 pawk
 oawk
 original-awk
 bwk
 awk
+onetrueawk
+awk-plan9port
+awk-9base
 busybox
 9
 /bin/awk
@@ -23,13 +27,13 @@ busybox
 __awks__
 while read f comments; do
     realpath $f | xargs echo $f;
-done           |
-sort -k2       |
-uniq -f1       |
-cut -f1 -d\    |
+done                |
+LANG=C sort -k2 -r  |
+uniq -f1            |
+cut -f1 -d\         |
 while read -r awk; do
     trap break 2
-    if [[ "${awk##*/}" =~ busybox|9 ]]; then
+    if [[ "${awk##*/}" =~ ^(busybox|9)$ ]]; then
         AWK="${awk}" AWKOPT=awk "${@}"
     else
         AWK="${awk}" "${@}"
