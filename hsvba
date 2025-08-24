@@ -1159,17 +1159,17 @@ stream__init(    _status) {
 #      +----+----+----+----+----+----+---+---+---+---+---- ... ---+---+
 # idx  | 1  | 2  | 3  | 4  | 5  | 6  | 7 | 8 | 9 |10 |11          |   |
 #      +----+----+----+----+----+----+---+---+---+---+---- ... ---+---+
-#        |    |              ^                    ^                 ^
-#        |    |            offset              current             end
-#        |    |                                   |                 |
-#        +----------------------------------------+                 |
+#        |    |                   ^                ^                ^
+#        |    |                offset           current            end
+#        |    |                                    |                |
+#        +-----------------------------------------+                |
 #             +------------------------------------------- ... -----+
 #
 # Accessing only integer keys is an important optimization.
 #
 # The effect of this optimization is especially noticeable
 # in mawk and gawk, because they have internal optimized
-# array types such as "cint_array"(gawk) and "AY_SPLIT/AY_INT"(mawk).
+# array types such as "cint_array"(gawk) and "AY_INT"(mawk).
 #
 # Note that even a single access with a string key, an access with
 # a floating-point key, or an out-of-range index access will break
@@ -2444,12 +2444,12 @@ stream__write_string(stream, str,    _size, _i, _oit) {
 # }}}
 # {{{ stream::copy
 function \
-stream__copy(istream, ostream, size,    _i, _iit, _oit) {
+stream__copy(istream, ostream, size,    _iit, _oit) {
 
     _iit = istream[__stream__M_iit];
     _oit = ostream[__stream__M_oit];
 
-    for (_i = 0; _i < size; ++_i) {
+    while (size--) {
         ostream[++_oit] = istream[++_iit];
     }
 
