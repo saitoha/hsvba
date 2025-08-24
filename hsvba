@@ -26733,7 +26733,7 @@ vba__ppt__powerpointdocumentstream__init(    _status) {
 # '}'
 function \
 vba__ppt__powerpointdocumentstream__unpack( \
-    stream, store, cfbpath, \
+    stream, store, cfbpath, vba_storage, \
     \
     _r, _stream, _path, _store, _pos, _i, _idref_vba, _entry \
 ) {
@@ -26912,7 +26912,7 @@ vba__ppt__powerpointdocumentstream__unpack( \
     stream__iseek(_stream, _pos);
     astore__fork(store, "VbaProjectStg", _store);
     _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
-        _stream, _store);
+        _stream, _store, vba_storage);
     if (_r < 0) {
         return _r;
     }
@@ -28327,7 +28327,7 @@ __vba__ppt__powerpointdocumentstream__unpack_vbainfoatom( \
 #
 function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
-    stream, store, \
+    stream, store, vba_storage, \
     \
     _r, _store, _pos, _rec_instance \
 ) {
@@ -28346,14 +28346,14 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
     if (_rec_instance == 0) {
         astore__fork(store, "VbaProjectStgUncompressedAtom", _store);
         _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
-            stream, _store);
+            stream, _store, vba_storage);
         if (_r < 0) {
             return _r;
         }
     } else if (_rec_instance == 1) {
         astore__fork(store, "VbaProjectStgCompressedAtom", _store);
         _r = __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
-            stream, _store);
+            stream, _store, vba_storage);
         if (_r < 0) {
             return _r;
         }
@@ -28386,12 +28386,10 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstg( \
 #
 function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
-    stream, store, \
+    stream, store, vba_storage, \
     \
-    _r, _store, _pos \
+    _size \
 ) {
-    _pos = stream__pos(stream);
-
     # rh (8 bytes)
     #
     # A RecordHeader structure (section 2.3.1) that specifies the header
@@ -28405,15 +28403,10 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
     # +-----------------+----------------------------------------------+
     # | rh.recType      | MUST be RT_ExternalOleObjectStg.             |
     # +-----------------+----------------------------------------------+
-#    astore__fork(store, "rh::RecordHeader", _store);
-#    _r = vba__ppt__common__unpack_recordheader(stream, _store);
-#    if (_r < 0) {
-#        return _r;
-#    }
-    _r =  cli__process_vbaproject_binary(stream, "/CFB_NESTED");
-    if (_r < 0) {
-        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
-    }
+
+    _size = _size = astore__get(store, "../rh/recLen");
+    stream__new(vba_storage, 16384);
+    stream__copy(stream, vba_storage, _size);
 
     return __vba__ppt__powerpointdocumentstream__S_OK;
 }
@@ -28442,9 +28435,9 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstguncompressedatom( \
 #
 function \
 __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
-    stream, store, \
+    stream, store, vba_storage, \
     \
-    _r, _v, _store, _pos, _size, _ostream, _forecast_size \
+    _r, _v, _store, _pos, _size, _forecast_size \
 ) {
     _pos = stream__pos(stream);
 
@@ -28487,17 +28480,12 @@ __vba__ppt__powerpointdocumentstream__unpack_vbaprojectstgcompressedatom( \
     #
     #   rh.recLen - 4
     #
-    _size = astore__get(store, "../rh/recLen") - 4;  # sizeof(decompressedSize)
+    _size = astore__get(store, "../rh/recLen") - 4;  # sizeof(pptVbaProjStgCompressed)
 
     astore__fork(store, "pptVbaProjStgCompressed::RFC1950Stream", _store);
 
-    stream__new(_ostream, _forecast_size);
-    _r = zlib__rfc1950_decompress(stream, _size, _store, _ostream);
-    if (_r < 0) {
-        return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
-    }
-
-    _r =  cli__process_vbaproject_binary(_ostream, "/CFB_NESTED");
+    stream__new(vba_storage, _forecast_size);
+    _r = zlib__rfc1950_decompress(stream, _size, _store, vba_storage);
     if (_r < 0) {
         return __vba__ppt__powerpointdocumentstream__E_UNEXPECTED;
     }
@@ -37980,18 +37968,27 @@ cli__process_vbaproject_binary( \
             if (_status < 0) {
                 return _status;
             }
+
             _status = vba__ppt__currentuserstream__unpack( \
                 stream, _store, cfbpath);
             if (_status < 0) {
                 return _status;
             }
+
             astore__new(_store, "/PowerPoint Document");
             _status = vba__ppt__powerpointdocumentstream__init();
             if (_status < 0) {
                 return _status;
             }
+
             _status = vba__ppt__powerpointdocumentstream__unpack( \
-                stream, _store, cfbpath);
+                stream, _store, cfbpath, _vba_storage);
+            if (_status < 0) {
+                return _status;
+            }
+
+            _status = cli__process_vbaproject_binary( \
+                _vba_storage, "/CFB_NESTED");
             if (_status < 0) {
                 return _status;
             }
