@@ -1,0 +1,15 @@
+diff --git a/pom.xml b/pom.xml
+index 7228117..426e299 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -176,8 +176,9 @@
+ 		<plugins>
+ 			<plugin>
+ 				<artifactId>maven-compiler-plugin</artifactId>
+-				<version>3.5.1</version>
++				<version>3.13.0</version>
+ 				<configuration>
++					<release>8</release>
+ 					<compilerArgument>-Xlint:unchecked</compilerArgument>
+ 					<encoding>${project.build.sourceEncoding}</encoding>
+ 					<showDeprecation>true</showDeprecation>
