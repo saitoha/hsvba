@@ -6589,42 +6589,6 @@ astore__init(    _status) {
         return _status;
     }
 
-    # system colors
-    _status = atom__declare(" \
-    atom SystemColor: uint24 {                      \
-        map: {                                      \
-            0:  `COLOR_SCROLLBAR`                   \
-            1:  `COLOR_DESKTOP`                     \
-            2:  `COLOR_ACTIVECAPTION`               \
-            3:  `COLOR_INACTIVECAPTION`             \
-            4:  `COLOR_MENU`                        \
-            5:  `COLOR_WINDOW`                      \
-            6:  `COLOR_WINDOWFRAME`                 \
-            7:  `COLOR_MENUTEXT`                    \
-            8:  `COLOR_WINDOWTEXT`                  \
-            9:  `COLOR_CAPTIONTEXT`                 \
-           10: `COLOR_ACTIVEBORDER`                 \
-           11: `COLOR_INACTIVEBORDER`               \
-           12: `COLOR_APPWORKSPACE`                 \
-           13: `COLOR_HIGHLIGHT`                    \
-           14: `COLOR_HIGHLIGHTTEXT`                \
-           15: `COLOR_BTNFACE`                      \
-           16: `COLOR_BTNSHADOW`                    \
-           17: `COLOR_GRAYTEXT`                     \
-           18: `COLOR_BTNTEXT`                      \
-           19: `COLOR_INACTIVECAPTIONTEXT`          \
-           20: `COLOR_BTNHIGHLIGHT`                 \
-           21: `COLOR_3DDKSHADOW`                   \
-           22: `COLOR_3DLIGHT`                      \
-           23: `COLOR_INFOTEXT`                     \
-           24: `COLOR_INFOBK`                       \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
     # '${__pp_comment:+'
     #
     # SysKind (4 bytes):
@@ -6759,397 +6723,6 @@ astore__init(    _status) {
     atom SITE_TYPE: uint8 {                         \
         map: {                                      \
             1: `ST_Ole`                             \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    # '${__pp_comment:+'
-    #
-    # [MS-OFORMS]
-    # 2.5.50 MousePointer
-    # 2.5.50.1 fmMousePointer
-    #
-    # fmMousePointerDefault     0x00 Standard pointer.
-    # fmMousePointerArrow       0x01 Arrow.
-    # fmMousePointerCross       0x02 Cross-hair pointer.
-    # fmMousePointerIBeam       0x03 I-beam.
-    # fmMousePointerSizeNESW    0x06 Double arrow pointing northeast and southwest.
-    # fmMousePointerSizeNS      0x07 Double arrow pointing north and south.
-    # fmMousePointerSizeNWSE    0x08 Double arrow pointing northwest and southeast.
-    # fmMousePointerSizeWE      0x09 Double arrow pointing west and east.
-    # fmMousePointerUpArrow     0x0A Up arrow.
-    # fmMousePointerHourGlass   0x0B Hourglass.
-    # fmMousePointerNoDrop      0x0C "Not" symbol (circle with a diagonal line)
-    # fmMousePointerAppStarting 0x0D Arrow with an hourglass.
-    # fmMousePointerHelp        0x0E Arrow with a question mark.
-    # fmMousePointerSizeAll     0x0F "Size-all" cursor (arrows pointing north,
-    #                                south, east, and west).
-    # fmMousePointerCustom      0x63 Uses the icon specified by the MouseIcon property.
-    #
-    # '}'
-    _status = atom__declare(" \
-    atom fmMousePointer: uint8 {                    \
-        map: {                                      \
-            1: `fmMousePointerDefault`              \
-            2: `fmMousePointerArrow`                \
-            3: `fmMousePointerCross`                \
-            6: `fmMousePointerIBeam`                \
-            7: `fmMousePointerSizeNESW`             \
-            8: `fmMousePointerSizeNS`               \
-            9: `fmMousePointerSizeNWSE`             \
-           10: `fmMousePointerSizeWE`               \
-           11: `fmMousePointerUpArrow`              \
-           12: `fmMousePointerHourGlass`            \
-           13: `fmMousePointerNoDrop`               \
-           14: `fmMousePointerAppStarting`          \
-           15: `fmMousePointerHelp`                 \
-           16: `fmMousePointerSizeAll`              \
-           99: `fmMousePointerCustom`               \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # PictureAlignment (1 byte)
-    #
-    # [MS-OFORMS]
-    # 2.5.63 PictureAlignment
-    # 2.5.63.1 fmPictureAlignment
-    #
-    # An fmPictureAlignment that specifies the alignment of the picture in
-    # the Form or Image. The file format default is 0x02,
-    # fmPictureAlignmentCenter.
-    #
-    # fmPictureAlignmentTopLeft     0x00 The top-left corner.
-    # fmPictureAlignmentTopRight    0x01 The top-right corner.
-    # fmPictureAlignmentCenter      0x02 The center.
-    # fmPictureAlignmentBottomLeft  0x03 The bottom-left corner.
-    # fmPictureAlignmentBottomRight 0x04 The bottom-right corner.
-    #
-    _status = atom__declare(" \
-    atom fmPictureAlignment: uint8 {                \
-        map: {                                      \
-            0: `fmPictureAlignmentTopLeft`          \
-            1: `fmPictureAlignmentTopRight`         \
-            2: `fmPictureAlignmentCenter`           \
-            3: `fmPictureAlignmentBottomLeft`       \
-            4: `fmPictureAlignmentBottomRight`      \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # fmIMEMode (4 bits)
-    #
-    # [MS-OFORMS] 2.5.96.2 fmIMEMode
-    #
-    # The following table specifies the values of this enumeration and their
-    # meanings.
-    #
-    # fmIMEModeNoControl    0x0 Does not control IME.
-    # fmIMEModeOn           0x1 IME on.
-    # fmIMEModeOff          0x2 IME off. English mode.
-    # fmIMEModeDisable      0x3 IME off. User cannot turn on IME by keyboard.
-    # fmIMEModeHiragana     0x4 IME on with full-width hiragana mode.
-    # fmIMEModeKatakana     0x5 IME on with full-width katakana mode.
-    # fmIMEModeKatakanaHalf 0x6 IME on with half-width katakana mode.
-    # fmIMEModeAlphaFull    0x7 IME on with full-width alphanumeric mode.
-    # fmIMEModeAlpha        0x8 IME on with half-width alphanumeric mode.
-    # fmIMEModeHangulFull   0x9 IME on with full-width Hangul mode.
-    # fmIMEModeHangul       0xA IME on with half-width Hangul mode.
-    # fmIMEModeHanziFull    0xB IME on with full-width hanzi mode.
-    # fmIMEModeHanzi        0xC IME on with half-width hanzi mode.
-    #
-    _status = atom__declare(" \
-    atom fmIMEMode: bits<4> {                       \
-        map: {                                      \
-            0: `fmIMEModeNoControl`                 \
-            1: `fmIMEModeOn`                        \
-            2: `fmIMEModeOff`                       \
-            3: `fmIMEModeDisable`                   \
-            4: `fmIMEModeHiragana`                  \
-            5: `fmIMEModeKatakana`                  \
-            6: `fmIMEModeKatakanaHalf`              \
-            7: `fmIMEModeAlphaFull`                 \
-            8: `fmIMEModeAlpha`                     \
-            9: `fmIMEModeHangulFull`                \
-           10: `fmIMEModeHangul`                    \
-           11: `fmIMEModeHanziFull`                 \
-           12: `fmIMEModeHanzi`                     \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # fmBackStyle (1 byte)
-    #
-    # [MS-OFFICEVBA] BackStyle property (Microsoft Forms)
-    #
-    # +-----------------------+-------+--------------------------------------+
-    # | Constant              | Value | Description                          |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmBackStyleTransparent| 0     | The background is transparent.       |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmBackStyleOpaque     | 1     | The background is opaque (default).  |
-    # +-----------------------+-------+--------------------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmBackStyle: bits<1> {                     \
-        map: {                                      \
-            0: `fmBackStyleTransparent`             \
-            1: `fmBackStyleOpaque`                  \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # SpecialEffect property
-    #
-    # [MS-OFORMS] 2.5.80.1 fmSpecialEffect
-    #
-    # The following table specifies the values of this enumeration and
-    # their meanings. In this enumeration, "form" refers to the surface
-    # on which the control appears.
-    #
-    # +-----------------------+-------+--------------------------------------+
-    # | Name                  | Value | Meaning                              |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmSpecialEffectFlat   | 0x00  | Control appears flat.                |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmSpecialEffectRaised | 0x01  | Control appears to be raised up from |
-    # |                       |       | the form.                            |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmSpecialEffectSunken | 0x02  | Control appears to be carved into    |
-    # |                       |       | the form.                            |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmSpecialEffectEtched | 0x03  | The control border appears to be     |
-    # |                       |       | carved into the form.                |
-    # +-----------------------+-------+--------------------------------------+
-    # | fmSpecialEffectBump   | 0x06  | The control border appears to be     |
-    # |                       |       | raised up from the form.             |
-    # +-----------------------+-------+--------------------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmSpecialEffect: uint8 {                   \
-        map: {                                      \
-            0: `fmSpecialEffect`                    \
-            1: `fmSpecialEffectRaised`              \
-            2: `fmSpecialEffectSunken`              \
-            3: `fmSpecialEffectEtched`              \
-            6: `fmSpecialEffectBump`                \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # [MS-OFORMS] 2.5.8.1 fmBorderStyle
-    #
-    # The following table specifies the values of the fmBorderStyle
-    # enumeration and their meanings.
-    #
-    # +---------------------+-------+----------------------------------------+
-    # | Name                | Value | Meaning                                |
-    # +---------------------+-------+----------------------------------------+
-    # | fmBorderStyleNone   | 0x00  | The control has no visible border line.|
-    # +---------------------+-------+----------------------------------------+
-    # | fmBorderStyleSingle | 0x01  | The control has a single-line border.  |
-    # +---------------------+-------+----------------------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmBorderStyle: uint8 {                     \
-        map: {                                      \
-            0: `fmBorderStyleNone`                  \
-            1: `fmBorderStyleSingle`                \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # [MS-OFORMS] 2.5.64.1 fmPicturePosition
-    #
-    # The following table specifies the values of this enumeration and their
-    # meanings.
-    #
-    # +------------------------------+------------+-----------------------------+
-    # | Name                         | Value      | Meaning                     |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionLeftTop     | 0x00020000 | The picture appears to the  |
-    # |                              |            | left of the caption. The    |
-    # |                              |            | is caption aligned with     |
-    # |                              |            | the top of the picture.     |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionLeftCenter  | 0x00050003 | The picture appears to the  |
-    # |                              |            | left of the caption. The    |
-    # |                              |            | caption is centered         |
-    # |                              |            | relative to the picture.    |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionLeftBottom  | 0x00080006 | The picture appears to the  |
-    # |                              |            | left of the caption. The    |
-    # |                              |            | caption is aligned with the |
-    # |                              |            | bottom of the picture.      |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionRightTop    | 0x00000002 | The picture appears to the  |
-    # |                              |            | right of the caption. The   |
-    # |                              |            | caption is aligned with the |
-    # |                              |            | top of the picture.         |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionRightCenter | 0x00030005 | The picture appears to the  |
-    # |                              |            | right of the caption. The   |
-    # |                              |            | caption is centered         |
-    # |                              |            | relative to the picture.    |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionRightBottom | 0x00060008 | The picture appears to the  |
-    # |                              |            | right of the caption. The   |
-    # |                              |            | caption is aligned with the |
-    # |                              |            | bottom of the picture.      |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionAboveLeft   | 0x00060000 | The picture appears above   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | aligned with the left edge  |
-    # |                              |            | of the picture.             |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionAboveCenter | 0x00070001 | The picture appears above   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | centered below the picture. |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionAboveRight  | 0x00080002 | The picture appears above   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | aligned with the right edge |
-    # |                              |            | of the picture.             |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionBelowLeft   | 0x00000006 | The picture appears below   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | aligned with the left edge  |
-    # |                              |            | of the picture.             |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionBelowCenter | 0x00010007 | The picture appears below   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | centered above the picture. |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionBelowRight  | 0x00020008 | The picture appears below   |
-    # |                              |            | the caption. The caption is |
-    # |                              |            | aligned with the right edge |
-    # |                              |            | of the picture.             |
-    # +------------------------------+------------+-----------------------------+
-    # | fmPicturePositionCenter      | 0x00040004 | The picture appears in the  |
-    # |                              |            | center of the control. The  |
-    # |                              |            | caption is centered         |
-    # |                              |            | horizontally and vertically |
-    # |                              |            | above the picture.          |
-    # +------------------------------+------------+-----------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmPicturePosition: uint8 {                 \
-        map: {                                      \
-            131072: `fmPicturePositionLeftTop`      \
-            327683: `fmPicturePositionLeftCenter`   \
-            524294: `fmPicturePositionLeftBottom`   \
-                 2: `fmPicturePositionRightTop`     \
-            196613: `fmPicturePositionRightCenter`  \
-            393224: `fmPicturePositionRightBottom`  \
-            393216: `fmPicturePositionAboveLeft`    \
-            458753: `fmPicturePositionAboveCenter`  \
-            524290: `fmPicturePositionAboveRight`   \
-                 6: `fmPicturePositionBelowLeft`    \
-             65543: `fmPicturePositionBelowCenter`  \
-            131080: `fmPicturePositionBelowRight`   \
-            262148: `fmPicturePositionCenter`       \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # [MS-OFORMS] 2.5.29.2 fmFontPitch
-    #
-    # The following table specifies the values of the fmFontPitch enumeration and
-    # their meanings.
-    #
-    # +----------------+-------+------------------------------------------------+
-    # | Name           | Value | Meaning                                        |
-    # +----------------+-------+------------------------------------------------+
-    # | DEFAULT_PITCH  | 0x0   | Does not specify a character pitch. Behavior   |
-    # |                |       | is determined by the client application using  |
-    # |                |       | this field.                                    |
-    # +----------------+-------+------------------------------------------------+
-    # | FIXED_PITCH    | 0x1   | All characters have the same width.            |
-    # +----------------+-------+------------------------------------------------+
-    # | VARIABLE_PITCH | 0x2   | Characters have varying widths.                |
-    # +----------------+-------+------------------------------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmFontPitch: bits<4> {                     \
-        map: {                                      \
-            0: `DEFAULT_PITCH`                      \
-            1: `FIXED_PITCH`                        \
-            2: `VARIABLE_PITCH`                     \
-        }                                           \
-    }                                               \
-    ");
-    if (_status < 0) {
-        return _status;
-    }
-
-    #
-    # [MS-OFORMS] 2.5.29.3 fmFontFamily
-    #
-    # The following table specifies the values of the fmFontFamily enumeration and
-    # their meanings.
-    #
-    # +----------------+-------+------------------------------------------------+
-    # | Name           | Value | Meaning                                        |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_DONTCARE    | 0x0   | Specifies that the default font is used.       |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_ROMAN       | 0x1   | Specifies that fonts with variable stroke      |
-    # |                |       | width (proportional) and with serifs are used. |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_SWISS       | 0x2   | Specifies that fonts with variable stroke      |
-    # |                |       | width (proportional) and without serifs are    |
-    # |                |       | used.                                          |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_MODERN      | 0x3   | Specifies that fonts with constant stroke      |
-    # |                |       | width (monospace), with or without serifs are  |
-    # |                |       | used.                                          |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_SCRIPT      | 0x4   | Specifies that fonts designed to look like     |
-    # |                |       | handwriting are used.                          |
-    # +----------------+-------+------------------------------------------------+
-    # | FF_DECORATIVE  | 0x5   | Specifies that novelty fonts are used.         |
-    # +----------------+-------+------------------------------------------------+
-    #
-    _status = atom__declare(" \
-    atom fmFontFamily: bits<4> {                    \
-        map: {                                      \
-            0: `FF_DONTCARE`                        \
-            1: `FF_ROMAN`                           \
-            2: `FF_SWISS`                           \
-            3: `FF_MODERN`                          \
-            4: `FF_SCRIPT`                          \
-            5: `FF_DECORATIVE`                      \
         }                                           \
     }                                               \
     ");
@@ -30586,6 +30159,710 @@ forms20__init(    _status) {
     forms20__S_OK           = 0;
     forms20__S_FALSE        = 1;
 
+    # declare froms20-specific atoms
+
+    # system colors
+    #
+    # from winuser.h
+    #
+    _status = atom__declare(" \
+    atom SystemColor: uint24 {                      \
+        map: {                                      \
+            0:  `COLOR_SCROLLBAR`                   \
+            1:  `COLOR_DESKTOP`                     \
+            2:  `COLOR_ACTIVECAPTION`               \
+            3:  `COLOR_INACTIVECAPTION`             \
+            4:  `COLOR_MENU`                        \
+            5:  `COLOR_WINDOW`                      \
+            6:  `COLOR_WINDOWFRAME`                 \
+            7:  `COLOR_MENUTEXT`                    \
+            8:  `COLOR_WINDOWTEXT`                  \
+            9:  `COLOR_CAPTIONTEXT`                 \
+           10: `COLOR_ACTIVEBORDER`                 \
+           11: `COLOR_INACTIVEBORDER`               \
+           12: `COLOR_APPWORKSPACE`                 \
+           13: `COLOR_HIGHLIGHT`                    \
+           14: `COLOR_HIGHLIGHTTEXT`                \
+           15: `COLOR_BTNFACE`                      \
+           16: `COLOR_BTNSHADOW`                    \
+           17: `COLOR_GRAYTEXT`                     \
+           18: `COLOR_BTNTEXT`                      \
+           19: `COLOR_INACTIVECAPTIONTEXT`          \
+           20: `COLOR_BTNHIGHLIGHT`                 \
+           21: `COLOR_3DDKSHADOW`                   \
+           22: `COLOR_3DLIGHT`                      \
+           23: `COLOR_INFOTEXT`                     \
+           24: `COLOR_INFOBK`                       \
+           26: `COLOR_HOTLIGHT`                     \
+           27: `COLOR_GRADIENTACTIVECAPTION`        \
+           28: `COLOR_GRADIENTINACTIVECAPTION`      \
+           29: `COLOR_MENUHILIGHT`                  \
+           30: `COLOR_MENUBAR`                      \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # MaxLength (4 bytes)
+    #
+    # [MS-OFORMS] 2.5.47 MaxLength
+    # An unsigned integer that specifies the maximum number of characters
+    # that a user can enter in a TextBox or ComboBox. A value of zero
+    # specifies no limit.
+    # The file format default is 0x00000000, no limit.
+    # Applies to: ComboBox | TextBox
+    #
+    _status = atom__declare(" \
+    atom MaxLength: uint32 {                        \
+        map: {                                      \
+            0:  `no limit`                          \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # [MS-OFORMS] 2.5.8.1 fmBorderStyle
+    #
+    # The following table specifies the values of the fmBorderStyle
+    # enumeration and their meanings.
+    #
+    # +---------------------+-------+----------------------------------------+
+    # | Name                | Value | Meaning                                |
+    # +---------------------+-------+----------------------------------------+
+    # | fmBorderStyleNone   | 0x00  | The control has no visible border line.|
+    # +---------------------+-------+----------------------------------------+
+    # | fmBorderStyleSingle | 0x01  | The control has a single-line border.  |
+    # +---------------------+-------+----------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmBorderStyle: uint8 {                     \
+        map: {                                      \
+            0: `fmBorderStyleNone`                  \
+            1: `fmBorderStyleSingle`                \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # [MS-OFORMS] 2.5.64.1 fmPicturePosition
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +------------------------------+------------+-----------------------------+
+    # | Name                         | Value      | Meaning                     |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionLeftTop     | 0x00020000 | The picture appears to the  |
+    # |                              |            | left of the caption. The    |
+    # |                              |            | is caption aligned with     |
+    # |                              |            | the top of the picture.     |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionLeftCenter  | 0x00050003 | The picture appears to the  |
+    # |                              |            | left of the caption. The    |
+    # |                              |            | caption is centered         |
+    # |                              |            | relative to the picture.    |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionLeftBottom  | 0x00080006 | The picture appears to the  |
+    # |                              |            | left of the caption. The    |
+    # |                              |            | caption is aligned with the |
+    # |                              |            | bottom of the picture.      |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionRightTop    | 0x00000002 | The picture appears to the  |
+    # |                              |            | right of the caption. The   |
+    # |                              |            | caption is aligned with the |
+    # |                              |            | top of the picture.         |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionRightCenter | 0x00030005 | The picture appears to the  |
+    # |                              |            | right of the caption. The   |
+    # |                              |            | caption is centered         |
+    # |                              |            | relative to the picture.    |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionRightBottom | 0x00060008 | The picture appears to the  |
+    # |                              |            | right of the caption. The   |
+    # |                              |            | caption is aligned with the |
+    # |                              |            | bottom of the picture.      |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionAboveLeft   | 0x00060000 | The picture appears above   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | aligned with the left edge  |
+    # |                              |            | of the picture.             |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionAboveCenter | 0x00070001 | The picture appears above   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | centered below the picture. |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionAboveRight  | 0x00080002 | The picture appears above   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | aligned with the right edge |
+    # |                              |            | of the picture.             |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionBelowLeft   | 0x00000006 | The picture appears below   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | aligned with the left edge  |
+    # |                              |            | of the picture.             |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionBelowCenter | 0x00010007 | The picture appears below   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | centered above the picture. |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionBelowRight  | 0x00020008 | The picture appears below   |
+    # |                              |            | the caption. The caption is |
+    # |                              |            | aligned with the right edge |
+    # |                              |            | of the picture.             |
+    # +------------------------------+------------+-----------------------------+
+    # | fmPicturePositionCenter      | 0x00040004 | The picture appears in the  |
+    # |                              |            | center of the control. The  |
+    # |                              |            | caption is centered         |
+    # |                              |            | horizontally and vertically |
+    # |                              |            | above the picture.          |
+    # +------------------------------+------------+-----------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmPicturePosition: uint8 {                 \
+        map: {                                      \
+            131072: `fmPicturePositionLeftTop`      \
+            327683: `fmPicturePositionLeftCenter`   \
+            524294: `fmPicturePositionLeftBottom`   \
+                 2: `fmPicturePositionRightTop`     \
+            196613: `fmPicturePositionRightCenter`  \
+            393224: `fmPicturePositionRightBottom`  \
+            393216: `fmPicturePositionAboveLeft`    \
+            458753: `fmPicturePositionAboveCenter`  \
+            524290: `fmPicturePositionAboveRight`   \
+                 6: `fmPicturePositionBelowLeft`    \
+             65543: `fmPicturePositionBelowCenter`  \
+            131080: `fmPicturePositionBelowRight`   \
+            262148: `fmPicturePositionCenter`       \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # [MS-OFORMS] 2.5.29.2 fmFontPitch
+    #
+    # The following table specifies the values of the fmFontPitch enumeration and
+    # their meanings.
+    #
+    # +----------------+-------+------------------------------------------------+
+    # | Name           | Value | Meaning                                        |
+    # +----------------+-------+------------------------------------------------+
+    # | DEFAULT_PITCH  | 0x0   | Does not specify a character pitch. Behavior   |
+    # |                |       | is determined by the client application using  |
+    # |                |       | this field.                                    |
+    # +----------------+-------+------------------------------------------------+
+    # | FIXED_PITCH    | 0x1   | All characters have the same width.            |
+    # +----------------+-------+------------------------------------------------+
+    # | VARIABLE_PITCH | 0x2   | Characters have varying widths.                |
+    # +----------------+-------+------------------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmFontPitch: bits<4> {                     \
+        map: {                                      \
+            0: `DEFAULT_PITCH`                      \
+            1: `FIXED_PITCH`                        \
+            2: `VARIABLE_PITCH`                     \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # [MS-OFORMS] 2.5.29.3 fmFontFamily
+    #
+    # The following table specifies the values of the fmFontFamily enumeration and
+    # their meanings.
+    #
+    # +----------------+-------+------------------------------------------------+
+    # | Name           | Value | Meaning                                        |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_DONTCARE    | 0x0   | Specifies that the default font is used.       |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_ROMAN       | 0x1   | Specifies that fonts with variable stroke      |
+    # |                |       | width (proportional) and with serifs are used. |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_SWISS       | 0x2   | Specifies that fonts with variable stroke      |
+    # |                |       | width (proportional) and without serifs are    |
+    # |                |       | used.                                          |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_MODERN      | 0x3   | Specifies that fonts with constant stroke      |
+    # |                |       | width (monospace), with or without serifs are  |
+    # |                |       | used.                                          |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_SCRIPT      | 0x4   | Specifies that fonts designed to look like     |
+    # |                |       | handwriting are used.                          |
+    # +----------------+-------+------------------------------------------------+
+    # | FF_DECORATIVE  | 0x5   | Specifies that novelty fonts are used.         |
+    # +----------------+-------+------------------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmFontFamily: bits<4> {                    \
+        map: {                                      \
+            0: `FF_DONTCARE`                        \
+            1: `FF_ROMAN`                           \
+            2: `FF_SWISS`                           \
+            3: `FF_MODERN`                          \
+            4: `FF_SCRIPT`                          \
+            5: `FF_DECORATIVE`                      \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+
+    # [MS-OFORMS] 2.5.74.1 fmScrollBars
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # -------------------------+-------+-------------------------------------+
+    # | Name                   | Value | Meaning                             |
+    # +------------------------+-------+-------------------------------------+
+    # | fmScrollBarsNone       | 0x00  | Displays no scroll bars.            |
+    # +------------------------+-------+-------------------------------------+
+    # | fmScrollBarsHorizontal | 0x01  | Displays a horizontal scroll bar.   |
+    # +------------------------+-------+-------------------------------------+
+    # | fmScrollBarsVertical   | 0x02  | Displays a vertical scroll bar.     |
+    # +------------------------+-------+-------------------------------------+
+    # | fmScrollBarsBoth       | 0x03  | Displays both a horizontal and a    |
+    # |                        |       | vertical scroll bar.                |
+    # +------------------------+-------+-------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmScrollBars: uint8 {                      \
+        map: {                                      \
+            0:  `fmScrollBarsNone`                  \
+            1:  `fmScrollBarsHorizontal`            \
+            2:  `fmScrollBarsVertical`              \
+            3:  `fmScrollBarsBoth`                  \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.20.1 fmDisplayStyle
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # -----------------------------+-------+---------------------------------+
+    # | Name                       | Value | Meaning                         |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleText         | 0x01  | A TextBox control.              |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleList         | 0x02  | A ListBox control.              |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleCombo        | 0x03  | A ComboBox control in which the |
+    # |                            |       | TextBox part is directly.       |
+    # |                            |       | editable.<4>                    |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleCheckBox     | 0x04  | A CheckBox control.             |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleOptionButton | 0x05  | An OptionButton control.        |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleToggle       | 0x06  | A ToggleButton control.         |
+    # +----------------------------+-------+---------------------------------+
+    # | fmDisplayStyleDropList     | 0x07  | A ComboBox control in which the |
+    # |                            |       | TextBox part is not editable    |
+    # |                            |       | except by selecting a different |
+    # |                            |       | value from the ListBox part.<5> |
+    # +----------------------------+-------+---------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmDisplayStyle: uint8 {                    \
+        map: {                                      \
+            1:  `fmDisplayStyleText`                \
+            2:  `fmDisplayStyleList`                \
+            3:  `fmDisplayStyleCombo`               \
+            4:  `fmDisplayStyleCheckBox`            \
+            5:  `fmDisplayStyleOptionButton`        \
+            6:  `fmDisplayStyleToggle`              \
+            7:  `fmDisplayStyleDropList`            \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # '${__pp_comment:+'
+    #
+    # [MS-OFORMS]
+    # 2.5.50 MousePointer
+    # 2.5.50.1 fmMousePointer
+    #
+    # fmMousePointerDefault     0x00 Standard pointer.
+    # fmMousePointerArrow       0x01 Arrow.
+    # fmMousePointerCross       0x02 Cross-hair pointer.
+    # fmMousePointerIBeam       0x03 I-beam.
+    # fmMousePointerSizeNESW    0x06 Double arrow pointing northeast and southwest.
+    # fmMousePointerSizeNS      0x07 Double arrow pointing north and south.
+    # fmMousePointerSizeNWSE    0x08 Double arrow pointing northwest and southeast.
+    # fmMousePointerSizeWE      0x09 Double arrow pointing west and east.
+    # fmMousePointerUpArrow     0x0A Up arrow.
+    # fmMousePointerHourGlass   0x0B Hourglass.
+    # fmMousePointerNoDrop      0x0C "Not" symbol (circle with a diagonal line)
+    # fmMousePointerAppStarting 0x0D Arrow with an hourglass.
+    # fmMousePointerHelp        0x0E Arrow with a question mark.
+    # fmMousePointerSizeAll     0x0F "Size-all" cursor (arrows pointing north,
+    #                                south, east, and west).
+    # fmMousePointerCustom      0x63 Uses the icon specified by the MouseIcon property.
+    #
+    # '}'
+    _status = atom__declare(" \
+    atom fmMousePointer: uint8 {                    \
+        map: {                                      \
+            1: `fmMousePointerDefault`              \
+            2: `fmMousePointerArrow`                \
+            3: `fmMousePointerCross`                \
+            6: `fmMousePointerIBeam`                \
+            7: `fmMousePointerSizeNESW`             \
+            8: `fmMousePointerSizeNS`               \
+            9: `fmMousePointerSizeNWSE`             \
+           10: `fmMousePointerSizeWE`               \
+           11: `fmMousePointerUpArrow`              \
+           12: `fmMousePointerHourGlass`            \
+           13: `fmMousePointerNoDrop`               \
+           14: `fmMousePointerAppStarting`          \
+           15: `fmMousePointerHelp`                 \
+           16: `fmMousePointerSizeAll`              \
+           99: `fmMousePointerCustom`               \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # PictureAlignment (1 byte)
+    #
+    # [MS-OFORMS]
+    # 2.5.63 PictureAlignment
+    # 2.5.63.1 fmPictureAlignment
+    #
+    # An fmPictureAlignment that specifies the alignment of the picture in
+    # the Form or Image. The file format default is 0x02,
+    # fmPictureAlignmentCenter.
+    #
+    # fmPictureAlignmentTopLeft     0x00 The top-left corner.
+    # fmPictureAlignmentTopRight    0x01 The top-right corner.
+    # fmPictureAlignmentCenter      0x02 The center.
+    # fmPictureAlignmentBottomLeft  0x03 The bottom-left corner.
+    # fmPictureAlignmentBottomRight 0x04 The bottom-right corner.
+    #
+    _status = atom__declare(" \
+    atom fmPictureAlignment: uint8 {                \
+        map: {                                      \
+            0: `fmPictureAlignmentTopLeft`          \
+            1: `fmPictureAlignmentTopRight`         \
+            2: `fmPictureAlignmentCenter`           \
+            3: `fmPictureAlignmentBottomLeft`       \
+            4: `fmPictureAlignmentBottomRight`      \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # fmIMEMode (4 bits)
+    #
+    # [MS-OFORMS] 2.5.96.2 fmIMEMode
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # fmIMEModeNoControl    0x0 Does not control IME.
+    # fmIMEModeOn           0x1 IME on.
+    # fmIMEModeOff          0x2 IME off. English mode.
+    # fmIMEModeDisable      0x3 IME off. User cannot turn on IME by keyboard.
+    # fmIMEModeHiragana     0x4 IME on with full-width hiragana mode.
+    # fmIMEModeKatakana     0x5 IME on with full-width katakana mode.
+    # fmIMEModeKatakanaHalf 0x6 IME on with half-width katakana mode.
+    # fmIMEModeAlphaFull    0x7 IME on with full-width alphanumeric mode.
+    # fmIMEModeAlpha        0x8 IME on with half-width alphanumeric mode.
+    # fmIMEModeHangulFull   0x9 IME on with full-width Hangul mode.
+    # fmIMEModeHangul       0xA IME on with half-width Hangul mode.
+    # fmIMEModeHanziFull    0xB IME on with full-width hanzi mode.
+    # fmIMEModeHanzi        0xC IME on with half-width hanzi mode.
+    #
+    _status = atom__declare(" \
+    atom fmIMEMode: bits<4> {                       \
+        map: {                                      \
+            0: `fmIMEModeNoControl`                 \
+            1: `fmIMEModeOn`                        \
+            2: `fmIMEModeOff`                       \
+            3: `fmIMEModeDisable`                   \
+            4: `fmIMEModeHiragana`                  \
+            5: `fmIMEModeKatakana`                  \
+            6: `fmIMEModeKatakanaHalf`              \
+            7: `fmIMEModeAlphaFull`                 \
+            8: `fmIMEModeAlpha`                     \
+            9: `fmIMEModeHangulFull`                \
+           10: `fmIMEModeHangul`                    \
+           11: `fmIMEModeHanziFull`                 \
+           12: `fmIMEModeHanzi`                     \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    #
+    # fmBackStyle (1 byte)
+    #
+    # [MS-OFFICEVBA] BackStyle property (Microsoft Forms)
+    #
+    # +-----------------------+-------+--------------------------------------+
+    # | Constant              | Value | Description                          |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmBackStyleTransparent| 0     | The background is transparent.       |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmBackStyleOpaque     | 1     | The background is opaque (default).  |
+    # +-----------------------+-------+--------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmBackStyle: bits<1> {                     \
+        map: {                                      \
+            0: `fmBackStyleTransparent`             \
+            1: `fmBackStyleOpaque`                  \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.80.1 fmSpecialEffect
+    #
+    # The following table specifies the values of this enumeration and
+    # their meanings. In this enumeration, "form" refers to the surface
+    # on which the control appears.
+    #
+    # +-----------------------+-------+--------------------------------------+
+    # | Name                  | Value | Meaning                              |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmSpecialEffectFlat   | 0x00  | Control appears flat.                |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmSpecialEffectRaised | 0x01  | Control appears to be raised up from |
+    # |                       |       | the form.                            |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmSpecialEffectSunken | 0x02  | Control appears to be carved into    |
+    # |                       |       | the form.                            |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmSpecialEffectEtched | 0x03  | The control border appears to be     |
+    # |                       |       | carved into the form.                |
+    # +-----------------------+-------+--------------------------------------+
+    # | fmSpecialEffectBump   | 0x06  | The control border appears to be     |
+    # |                       |       | raised up from the form.             |
+    # +-----------------------+-------+--------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmSpecialEffect: uint8 {                   \
+        map: {                                      \
+            0: `fmSpecialEffect`                    \
+            1: `fmSpecialEffectRaised`              \
+            2: `fmSpecialEffectSunken`              \
+            3: `fmSpecialEffectEtched`              \
+            6: `fmSpecialEffectBump`                \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.45.1 fmMatchEntry
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +-------------------------+-------+------------------------------------+
+    # | Name                    | Value | Meaning                            |
+    # +-------------------------+-------+------------------------------------+
+    # | fmMatchEntryFirstLetter | 0x00  | The control searches for the next  |
+    # |                         |       | entry that starts with the         |
+    # |                         |       | character entered. Repeatedly      |
+    # |                         |       | typing the same letter cycles      |
+    # |                         |       | through all entries beginning with |
+    # |                         |       | that letter.                       |
+    # +-------------------------+-------+------------------------------------+
+    # | fmMatchEntryComplete    | 0x01  | As each character is typed, the    |
+    # |                         |       | control searches for an entry      |
+    # |                         |       | matching all characters entered.   |
+    # +-------------------------+-------+------------------------------------+
+    # | fmMatchEntryNone        | 0x02  | The list is not searched when      |
+    # |                         |       | characters are typed.              |
+    # +-------------------------+-------+------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmMatchEntry: uint8 {                      \
+        map: {                                      \
+            0: `fmMatchEntryFirstLetter`            \
+            1: `fmMatchEntryComplete`               \
+            2: `fmMatchEntryNone`                   \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.42.1 fmListStyle
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +-------------------+-------+-------------------------------------------+
+    # | Name              | Value | Meaning                                   |
+    # +-------------------+-------+-------------------------------------------+
+    # | fmListStylePlain  | 0x00  | Displays a list in which the background   |
+    # |                   |       | of an item is highlighted when it is      |
+    # |                   |       | selected.                                 |
+    # +-------------------+-------+-------------------------------------------+
+    # | fmListStyleOption | 0x01  | Displays a list in which an option button |
+    # |                   |       | (when the MultiSelect property is set to  |
+    # |                   |       | fmMultiSelectSingle) or a checkbox (when  |
+    # |                   |       | the MultiSelect property is               |
+    # |                   |       | fmMultiSelectMulti or                     |
+    # |                   |       | fmMultiSelectExtended) next to each entry |
+    # |                   |       | displays the selection state of that item.|
+    # +-------------------+-------+-------------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmListStyle: uint8 {                       \
+        map: {                                      \
+            0: `fmListStylePlain`                   \
+            1: `fmListStyleOption`                  \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.77.1 fmShowDropButtonWhen
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +----------------------------+-------+-----------------------------------+
+    # | Name                       | Value | Meaning                           |
+    # +----------------------------+-------+-----------------------------------+
+    # | fmShowDropButtonWhenNever  | 0x00  | Never show the drop button.       |
+    # +----------------------------+-------+-----------------------------------+
+    # | fmShowDropButtonWhenFocus  | 0x01  | Show the drop button when the     |
+    # |                            |       | control has the focus.            |
+    # +----------------------------+-------+-----------------------------------+
+    # | fmShowDropButtonWhenAlways | 0x02  | Show the drop button at all times.|
+    # +----------------------------+-------+-----------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmShowDropButtonWhen: uint8 {              \
+        map: {                                      \
+            0: `fmShowDropButtonWhenNever`          \
+            1: `fmShowDropButtonWhenFocus`          \
+            2: `fmShowDropButtonWhenAlways`         \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.22.1 fmDropButtonStyle
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +---------------------------+-------+-----------------------------------+
+    # | Name                      | Value | Meaning                           |
+    # +---------------------------+-------+-----------------------------------+
+    # | fmDropButtonStylePlain    | 0x00  | Displays a button with no symbol. |
+    # +---------------------------+-------+-----------------------------------+
+    # | fmDropButtonStyleArrow    | 0x01  | Displays a button with a down     |
+    # |                           |       | arrow.                            |
+    # +---------------------------+-------+-----------------------------------+
+    # | fmDropButtonStyleEllipsis | 0x02  | Displays a button with an         |
+    # |                           |       | ellipsis (...).                   |
+    # +---------------------------+-------+-----------------------------------+
+    # | fmDropButtonStyleReduce   | 0x03  | Displays a button with a          |
+    # |                           |       | horizontal line like an           |
+    # |                           |       | underscorecharacter.              |
+    # +---------------------------+-------+-----------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmDropButtonStyle: uint8 {                \
+        map: {                                     \
+            0: `fmDropButtonStylePlain`            \
+            1: `fmDropButtonStyleArrow`            \
+            2: `fmDropButtonStyleEllipsis`         \
+            3: `fmDropButtonStyleReduce`           \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+    # [MS-OFORMS] 2.5.22.1 fmDropButtonStyle
+    #
+    # The following table specifies the values of this enumeration and their
+    # meanings.
+    #
+    # +-----------------------+-------+----------------------------------------+
+    # | Name                  | Value | Meaning                                |
+    # +-----------------------+-------+----------------------------------------+
+    # | fmMultiSelectSingle   | 0x00  | Only one item can be selected.         |
+    # +-----------------------+-------+----------------------------------------+
+    # | fmMultiSelectMulti    | 0x01  | Pressing the SPACEBAR or clicking      |
+    # |                       |       | selects or deselects an item in        |
+    # |                       |       | the list.                              |
+    # +-----------------------+-------+----------------------------------------+
+    # | fmMultiSelectExtended | 0x02  | Pressing SHIFT and clicking the mouse, |
+    # |                       |       | or pressing SHIFT and one of the arrow |
+    # |                       |       | keys, extends the selection from the   |
+    # |                       |       | previously selected item to the current|
+    # |                       |       | item. Pressing CTRL and clicking the   |
+    # |                       |       | mouse selects or deselects an item.    |
+    # +-----------------------+-------+----------------------------------------+
+    #
+    _status = atom__declare(" \
+    atom fmMultiSelect: uint8 {                     \
+        map: {                                      \
+            0: `fmMultiSelectSingle`                \
+            1: `fmMultiSelectMulti`                 \
+            2: `fmMultiSelectExtended`              \
+        }                                           \
+    }                                               \
+    ");
+    if (_status < 0) {
+        return _status;
+    }
+
+
+#
+# [ commenting out the struct module because it is incomplete ]
+#
 #    _status = struct__declare(" \
 #                                                                            \
 #    struct fmPosition {                                                     \
@@ -31396,24 +31673,31 @@ function \
 forms20__unpack_formembeddedactivexcontrolcached( \
     stream, store, size, cache_index, \
     \
-    _v, _r, _remain, _store \
+    _v, _r, _remain, _store, _pos \
 ) {
-    _remain = stream__pos(stream) + size;
+    _pos = stream__pos(stream);
+    _remain = _pos + size;
 
     if (cache_index == 7) {
-        # skip
-        # # Form control
-        # astore__fork(store, "Form::FormControl", _store);
-        # _r = forms20__unpack_formcontrol(stream, _store);
-        # if (_r < 0) {
-        #     return _r;
-        # }
+        # Form control
+        astore__fork(store, "Form::FormControl", _store);
+        _r = forms20__unpack_formcontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 12) {
         # Image control
     } else if (cache_index == 14) {
         # Frame control
     } else if (cache_index == 15) {
         # MorphData control
+        astore__fork(store, "MorphData::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 16) {
         # SpinButton control
     } else if (cache_index == 17) {
@@ -31421,35 +31705,71 @@ forms20__unpack_formembeddedactivexcontrolcached( \
         astore__fork(store, "CommandButton::CommandButtonControl", _store);
         _r = forms20__unpack_commandbuttoncontrol(stream, _store);
         if (_r < 0) {
-            return _r;
+            # fallback
+            stream__iseek(stream, _pos);
         }
     } else if (cache_index == 18) {
-        # TabStrip control
+        # TODO: TabStrip control
     } else if (cache_index == 21) {
         # Label control
         astore__fork(store, "Label::LabelControl", _store);
         _r = forms20__unpack_labelcontrol(stream, _store);
         if (_r < 0) {
-            return _r;
+            # fallback
+            stream__iseek(stream, _pos);
         }
     } else if (cache_index == 23) {
         # TextBox control
-    } else if (cache_index == 23) {
-        # TextBox control
+        astore__fork(store, "TextBox::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 24) {
         # ListBox control
+        astore__fork(store, "ListBox::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 25) {
         # ComboBox control
+        astore__fork(store, "ComboBox::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 26) {
-        # Checkbox control
+        # CheckBox control
+        astore__fork(store, "CheckBox::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 27) {
         # OptionButton control
+        astore__fork(store, "OptionButton::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 28) {
         # ToggleButton control
+        astore__fork(store, "ToggleButton::MorphDataControl", _store);
+        _r = forms20__unpack_morphdatacontrol(stream, _store);
+        if (_r < 0) {
+            # fallback
+            stream__iseek(stream, _pos);
+        }
     } else if (cache_index == 47) {
-        # ScrollBar control
+        # TODO: ScrollBar control
     } else if (cache_index == 48) {
-        # MultiPage control
+        # TODO: MultiPage control
     }
 
     _remain -= stream__pos(stream);
@@ -31857,7 +32177,7 @@ forms20__unpack_commandbuttondatablock( \
     if (astore__get(store, "../PropMask/fPicturePosition")) {
         # '${__pp_comment:+'
         #
-        # PicturePosition (1 byte)
+        # PicturePosition (4 byte)
         #
         # [MS-OFORMS]
         # 2.5.64 PicturePosition
@@ -31986,7 +32306,7 @@ forms20__unpack_commandbuttonextradatablock( \
     \
     _store, _r, _size, _compressed \
 ) {
-    # Caption (variable bytes)
+    # Caption (variable)
     if (astore__get(store, "../PropMask/fCaption")) {
         if (! astore__has(store, "../DataBlock/Caption/cb")) {
             E__message = "\"../DataBlock/Caption/cb\" property not found";
@@ -32501,12 +32821,13 @@ forms20__unpack_labeldatablock( \
 
         # '${__pp_comment:+'
         #
-        # BorderColor (4 bytes)
+        # BorderStyle (4 bytes)
         #
         # [MS-OFORMS] 2.5.8 BorderStyle
         #
         # An fmBorderStyle that specifies the type of border used
-        # by the control.  The file format default of Label is 0:fmBorderStyleNone
+        # by the control.  The file format default of Label is
+        # 0:fmBorderStyleNone
         #
         # '}'
         _v = stream__read_uint8(stream);
@@ -32614,7 +32935,7 @@ forms20__unpack_labelextradatablock( \
     \
     _store, _r, _size, _compressed \
 ) {
-    # Caption (variable bytes)
+    # Caption (variable)
     if (astore__get(store, "../PropMask/fCaption")) {
         if (! astore__has(store, "../DataBlock/Caption/cb")) {
             E__message = "\"../DataBlock/Caption/cb\" property not found";
@@ -32736,6 +33057,1342 @@ forms20__unpack_labelstreamdata( \
         # no custom icon.
         #
         astore__fork(store, "MouseIcon::GuidAndPicture", _store);
+        _r = forms20__unpack_guidandpicture(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    return forms20__S_OK;
+}
+# }}}
+# }}}
+# {{{ [MS-OFORMS] 2.2.5 MorphData Control Structure
+#
+# '${__pp_comment:+'
+# The MorphDataControl structure is an aggregate of six controls: CheckBox,
+# ComboBox, ListBox, OptionButton, TextBox, and ToggleButton. The type of the
+# control is specified by the DisplayStyle property. This section specifies
+# the persistence format for all six controls.
+# '}'
+
+# {{{ [MS-OFORMS] 2.2.5.1 MorphDataControl
+#
+# '${__pp_comment:+'
+# Specifies the structure of the control as persisted to a stream.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# | MinorVersion  | MajorVersion  |         cbMorphData           |
+# +---------------+---------------+-------------------------------+
+# |                           PropMask                            |
+# +---------------------------------------------------------------+
+# |                      DataBlock(variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    ExtraDataBlock(variable)                   |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      StreamData(variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      TextProps(variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     rgColumnInfo(variable)                    |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+forms20__unpack_morphdatacontrol( \
+    stream, store, \
+    \
+    _store, _v, _r \
+) {
+    # MinorVersion (1 byte)
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "MinorVersion::uint8,mustbe(0)", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # MajorVersion (1 byte)
+    _v = stream__read_uint8(stream);
+    if (astore__set(store, "MajorVersion::uint8,mustbe(2)", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # cbMorphData (2 bytes)
+    _v = stream__read_uint16(stream);
+    if (astore__set(store, "cbMorphData", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # PropMask (4 bytes)
+    astore__fork(store, "PropMask::MorphDataPropMask", _store);
+    _r = forms20__unpack_morphdatapropmask(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    # DataBlock (variable)
+    astore__fork(store, "DataBlock::MorphDataDataBlock", _store);
+    _r = forms20__unpack_morphdatadatablock(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    # ExtraDataBlock (variable)
+    astore__fork(store, "ExtraDataBlock::MorphDataExtraDataBlock", _store);
+    _r = forms20__unpack_morphdataextradatablock(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    # StreamData (variable)
+    astore__fork(store, "StreamData::MorphDataStreamData", _store);
+    _r = forms20__unpack_morphdatastreamdata(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+    # TextProps (variable)
+    astore__fork(store, "TextProps::TextProps", _store);
+    _r = forms20__unpack_textprops(stream, _store);
+    if (_r < 0) {
+        return _r;
+    }
+
+#    # rgColumnInfo (variable)
+#    astore__fork(store, "TextProps::TextProps", _store);
+#    _r = forms20__unpack_rgColumnInfo(stream, _store);
+#    if (_r < 0) {
+#        return _r;
+#    }
+
+    return forms20__S_OK;
+}
+# }}}
+# {{{ [MS-OFORMS] 2.2.5.2 MorphDataPropMask
+# '${__pp_comment:+'
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|
+# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+# |g|                         UnusedBits3                         |
+# +-+-------------------------------------------------------------+
+#
+# '}'
+function \
+forms20__unpack_morphdatapropmask(stream, store,     _v) {
+
+    # A - fVariousPropertyBits (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fVariousPropertyBits::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # B - fBackColor (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fBackColor::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # C - fForeColor (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fForeColor::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # D - fMaxLength (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fMaxLength::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # E - fBorderStyle (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fBorderStyle::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # F - fScrollBars (1 bits)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fScrollBars::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # G - fDisplayStyle (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fDisplayStyle::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # H - fMousePointer (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fMousePointer::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # I - fSize (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fSize::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # J - fPasswordChar (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fPasswordChar::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # K - fListWidth (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fListWidth::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # L - fBoundColumn (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fBoundColumn::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # M - fTextColumn (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fTextColumn::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # N - fColumnCount (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fColumnCount::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # O - fListRows (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fListRows::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # P - fcColumnInfo (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fcColumnInfo::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # Q - fMatchEntry (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fMatchEntry::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # R - fListStyle (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fListStyle::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # S - fShowDropButtonWhen (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fShowDropButtonWhen::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # T - UnusedBits1 (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "UnusedBits1::bool,mustbe(0)", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # U - fDropButtonStyle (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fDropButtonStyle::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # V - fMultiSelect (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fMultiSelect::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # W - fValue (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fValue::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # X - fCaption (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fCaption::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # Y - fPicturePosition (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fPicturePosition::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # Z - fBorderColor (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fBorderColor::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # a - fSpecialEffect (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fSpecialEffect::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # b - fMouseIcon (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fMouseIcon::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # c - fPicture (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fPicture::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # d - fAccelerator (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fAccelerator::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # e - UnusedBits2 (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "UnusedBits2::bool,mustbe(0)", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # f - Reserved (1 bit)
+    # NOTE: spec says "MUST be set to 1"; however some real-world data has 0.
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "Reserved::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # g - fGroupName (1 bit)
+    _v = stream__read_bits(stream, 1);
+    if (astore__set(store, "fGroupName::bool", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    # UnusedBits3 (31 bits)
+    _v = stream__read_bits(stream, 31);
+    if (astore__set(store, "UnusedBits3::uint32,mustbe(0)", _v) < 0) {
+        return forms20__E_UNEXPECTED;
+    }
+
+    return forms20__S_OK;
+}
+# }}}
+# {{{ [MS-OFORMS] 2.2.4.3 MorphDataDataBlock
+# '${__pp_comment:+'
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                 VariousPropertyBits (optional)                |
+# +---------------------------------------------------------------+
+# |                     BackColor (optional)                      |
+# +---------------------------------------------------------------+
+# |                     ForeColor (optional)                      |
+# +---------------------------------------------------------------+
+# |                     MaxLength (optional)                      |
+# +---------------+---------------+---------------+---------------+
+# |  BorderStyle  |  ScrollBars   | DisplayStyle  | MousePointer  |
+# |  (optional)   |  (optional)   |  (optional)   |  (optional)   |
+# +---------------+---------------+---------------+---------------+
+# |                      Padding1 (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |    PasswordChar (optional)    |     Padding2 (variable)       |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      ListWidth (optional)                     |
+# +---------------------------------------------------------------+
+# |                      Padding3 (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |    BoundColumn (optional)     |      Padding4 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |    TextColumn (optional)      |      Padding5 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |    ColumnCount (optional)     |      Padding6 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |      ListRows (optional)      |      Padding7 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+---------------+---------------+
+# |          cColumnInfo          |  MatchEntry   |   ListStyle   |
+# |          (optional)           |  (optional)   |   (optional)  |
+# +---------------+---------------+---------------+---------------+
+# |ShowDropButton-|DropButtonStyle|  MultiSelect  |   Padding8    |
+# |When (optional)|  (optional)   |  (optional)   |   (variable)  |
+# +---------------+---------------+---------------+---------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                        Value (optional)                       |
+# +---------------------------------------------------------------+
+# |                      Padding9 (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                       Caption (optional)                      |
+# +---------------------------------------------------------------+
+# |                      Padding10 (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                   PicturePosition (optional)                  |
+# +---------------------------------------------------------------+
+# |                      Padding11 (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                     BorderColor (optional)                    |
+# +---------------------------------------------------------------+
+# |                      Padding12 (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                    SpecialEffect (optional)                   |
+# +---------------------------------------------------------------+
+# |                      Padding13 (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |      MouseIcon (optional)     |     Padding14 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |       Picture (optional)      |     Padding15 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +-------------------------------+-------------------------------+
+# |     Accelerator (optional)    |     Padding16 (variable)      |
+# +-------------------------------+-------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      GroupName (optional)                     |
+# +---------------------------------------------------------------+
+# |                      Padding17 (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+forms20__unpack_morphdatadatablock( \
+    stream, store, \
+    \
+    _v, _store, _r \
+) {
+    stream__set_align_base(stream);
+
+    if (astore__get(store, "../PropMask/fVariousPropertyBits")) {
+        # '${__pp_comment:+'
+        #
+        # VariousPropertyBits (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.96 VariousPropertyBits
+        #
+        # The file format default of MorphData is 0x0080001B
+        # (Reserved1,Enabled,BackStyle,Reserved2,WordWrap).
+        #
+        # '}'
+        astore__fork(store, "VariousPropertyBits::VariousPropertiesBitfield", _store);
+        _r = forms20__unpack_variouspropertybits(stream, _store);
+        if (_r < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fBackColor")) {
+        # '${__pp_comment:+'
+        #
+        # BackColor (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.3 BackColor
+        #
+        # the default value of MorphData is COLOR_BTNFACE (0x8000000f)
+        #
+        # '}'
+        astore__fork(store, "BackColor::OLE_COLOR", _store);
+        _r = forms20__unpack_olecolor(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fForeColor")) {
+        # '${__pp_comment:+'
+        #
+        # ForeColor (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.31 ForeColor
+        #
+        # the default value(MorphData) is COLOR_BTNTEXT (0x80000012)
+        #
+        # '}'
+        astore__fork(store, "ForeColor::OLE_COLOR", _store);
+        _r = forms20__unpack_olecolor(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fMaxLength")) {
+        # '${__pp_comment:+'
+        #
+        # MaxLength (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.47 MaxLength
+        # An unsigned integer that specifies the maximum number of characters
+        # that a user can enter in a TextBox or ComboBox. A value of zero
+        # specifies no limit.
+        # The file format default is 0x00000000, no limit.
+        # Applies to: ComboBox | TextBox
+        #
+        # '}'
+        _v = stream__read_uint32(stream);
+        if (astore__set(store, "MaxLength::MaxLength", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fBorderStyle")) {
+        # '${__pp_comment:+'
+        #
+        # BorderStyle (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.8 BorderStyle
+        #
+        # An fmBorderStyle that specifies the type of border used
+        # by the control.  The file format default of MorphData is
+        # 0:fmBorderStyleNone
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        astore__set(store, "BorderStyle::fmBorderStyle," \
+                           "a_kind_of(fmBorderStyle)", _v);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fScrollBars")) {
+        #
+        # ScrollBars (1 byte)
+        #
+        # [MS-OFORMS] 2.5.74 ScrollBars (MorphData)
+        #
+        # An fmScrollBars that specifies whether the control has vertical
+        # scroll bars, horizontal scroll bars, both, or neither. MUST be set
+        # to 0x03 (fmScrollBarsBoth) for ListBox controls.
+        #
+        # The file format default is 0x00, fmScrollBarsNone.
+        #
+        _v = stream__read_uint8(stream);
+        astore__set(store, "ScrollBars::fmScrollBars," \
+                           "a_kind_of(fmScrollBars)", _v);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fDisplayStyle")) {
+        #
+        # DisplayStyle (1 byte)
+        #
+        # [MS-OFORMS] 2.5.20 DisplayStyle
+        #
+        # An fmDisplayStyle that specifies the type of a MorphDataControl.
+        #
+        # The file format default is 0x01, fmDisplayStyleText.
+        #
+        _v = stream__read_uint8(stream);
+        astore__set(store, "DisplayStyle::fmDisplayStyle," \
+                           "a_kind_of(fmDisplayStyle)", _v);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fMousePointer")) {
+        # '${__pp_comment:+'
+        #
+        # MousePointer (1 byte)
+        #
+        # [MS-OFORMS] 2.5.50 MousePointer
+        # An unsigned integer that specifies the type of icon displayed as the
+        # mouse pointer for the control.
+        # SHOULD be a value from the fmMousePointer enumeration.<8>
+        # The file format default is 0x00, fmMousePointerDefault.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "MousePointer::fmMousePointer", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fPasswordChar")) {
+        #
+        # Padding1 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # PasswordChar (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.61 PasswordChar
+        #
+        # A Unicode character that specifies a character to be displayed in
+        # place of the characters entered in a TextBox. The null character
+        # specifies that the control displays the characters that the user
+        # types.
+        #
+        # The file format default is 0x0000, display the characters the user
+        # types.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "PasswordChar::hexint16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fListWidth")) {
+        #
+        # Padding2 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # ListWidth (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.43 ListWidth
+        #
+        # An unsigned integer that specifies the width, in HIMETRIC units, of
+        # the ListBox part of a ComboBox control. The value SHOULD be set to
+        # zero for ListBox controls. A value of zero specifies that the
+        # ListBox part is the same width as the TextBox part.<7>
+        #
+        # The file format default is 0x00, matches the TextBox part.
+        #
+        # '}'
+        _v = stream__read_uint32(stream);
+        if (astore__set(store, "ListWidth::uint32", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fBoundColumn")) {
+        #
+        # Padding3 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # BoundColumn (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.9 BoundColumn
+        #
+        # An unsigned integer that specifies how the Value property is
+        # determined for a ComboBox or ListBox when the MultiSelect property
+        # is set to 0x00 (fmMultiSelectSingle). The possible values for this
+        # property are specified in the following table.
+        #
+        # +--------------+---------------------------------------------------+
+        # | BoundColumn  | Meaning                                           |
+        # +--------------+---------------------------------------------------+
+        # | 0            | Specifies that the value of the Value property is |
+        # |              | the row number of the selected row.               |
+        # |              | Rows are numbered starting from zero.             |
+        # +--------------+---------------------------------------------------+
+        # | 1 or greater | Specifies the number of the column in the         |
+        # |              | selected row whose data is the value of the Value |
+        # |              | property. Columns are numbered starting from 1.   |
+        # +--------------+---------------------------------------------------+
+        #
+        # When the MultiSelect property is not set to 0x00
+        # (fmMultiSelectSingle), BoundColumn has no effect on the Value
+        # property.
+        #
+        # The file format default is 0x0001.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "BoundColumn::uint16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fTextColumn")) {
+        #
+        # Padding4 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # TextColumn (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.90 TextColumn
+        #
+        # A signed integer that specifies the column in a ComboBox or ListBox
+        # to display to the user. The possible values for this property are
+        # specified as follows:
+        #
+        #
+        # +--------------+---------------------------------------------------+
+        # | TextColumn   | Meaning                                           |
+        # +--------------+---------------------------------------------------+
+        # | -1           | Specifies that the first column that has a Width  |
+        # |              | greater than zero is displayed.                   |
+        # +--------------+---------------------------------------------------+
+        # | 0            | Specifies that row numbers are displayed.         |
+        # +--------------+---------------------------------------------------+
+        # | 1 or greater | Specifies the number of the column whose data is  |
+        # |              | displayed.                                        |
+        # +--------------+---------------------------------------------------+
+        #
+        # The file format default is 0xFFFF, show first column with width
+        # greater than zero.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "TextColumn::int16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fColumnCount")) {
+        #
+        # Padding5 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # TextColumn (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.14 ColumnCount
+        #
+        # A signed integer that specifies the number of columns to display in
+        # a ComboBox or ListBox. A value of -1 specifies that all columns are
+        # to be displayed. MUST be in the range from -1 through 32767.
+        #
+        # The file format default is 0x0001.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "ColumnCount::int16," \
+                               "in_range(-1,32767)", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fListRows")) {
+        #
+        # Padding6 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        # '${__pp_comment:+'
+        #
+        # ListRows (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.41 ListRows
+        #
+        # An unsigned integer that specifies the maximum number of rows to
+        # display in the list.
+        #
+        # The file format default is 0x0008.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "ListRows::uint16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding7 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fcColumnInfo")) {
+        # '${__pp_comment:+'
+        #
+        # cColumnInfo (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.11 cColumnInfo
+        #
+        # An unsigned integer that specifies the last column with a
+        # non-default width. Columns are counted starting at 1. A value of
+        # zero specifies that all columns have the default width.
+        #
+        # The file format default is 0x0000.
+        #
+        # '}'
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "cColumnInfo::uint16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fMatchEntry")) {
+        # '${__pp_comment:+'
+        #
+        # MatchEntry (1 byte)
+        #
+        # [MS-OFORMS] 2.5.45 MatchEntry
+        #
+        # An fmMatchEntry that specifies how a ListBox or ComboBox searches
+        # its list as the user types.
+        #
+        # The file format default is 0x02, fmMatchEntryNone.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "MatchEntry::fmMatchEntry", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fListStyle")) {
+        # '${__pp_comment:+'
+        #
+        # ListStyle (1 byte)
+        #
+        # [MS-OFORMS] 2.5.42 ListStyle
+        #
+        # An fmListStyle that specifies the visual appearance of the list in a
+        # ListBox or ComboBox.
+        #
+        # The file format default is 0x00, fmListStylePlain.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "ListStyle::fmListStyle", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fShowDropButtonWhen")) {
+        # '${__pp_comment:+'
+        #
+        # ShowDropButtonWhen (1 byte)
+        #
+        # [MS-OFORMS] 2.5.77 ShowDropButtonWhen
+        #
+        # An fmShowDropButtonWhen that specifies when to show the
+        # drop button for a ComboBox.
+        #
+        # The file format default is 0x00, fmShowDropButtonWhenNever.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "ShowDropButtonWhen::fmShowDropButtonWhen", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fDropButtonStyle")) {
+        # '${__pp_comment:+'
+        #
+        # DropButtonStyle (1 byte)
+        #
+        # [MS-OFORMS] 2.5.22 DropButtonStyle
+        #
+        # An fmDropButtonStyle that specifies the symbol displayed on the drop
+        # button in a ComboBox.
+        # SHOULD be set to 0x01 (fmDropButtonStyleArrow) for TextBox controls.<6>
+        #
+        # The file format default is 0x01, fmDropButtonStyleArrow.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "DropButtonStyle::fmDropButtonStyle", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    if (astore__get(store, "../PropMask/fMultiSelect")) {
+        # '${__pp_comment:+'
+        #
+        # MultiSelect (1 byte)
+        #
+        # [MS-OFORMS] 2.5.52 MultiSelect
+        #
+        # An fmMultiSelect that specifies whether the control permits multiple
+        # selections. SHOULD be set to 0x00 (fmMultiSelectSingle) for
+        # CheckBox, OptionButton, and ToggleButton controls.<9>
+        #
+        # The file format default is 0x00, fmMultiSelectSingle.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "MultiSelect::fmMultiSelect", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding8 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fValue")) {
+        # '${__pp_comment:+'
+        #
+        # Vlaue (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.95 Value
+        #
+        # An fmString that specifies the state or content of a control, as
+        # specified in the following table.
+        #
+        # +--------------+---------------------------------------------------+
+        # | Control      | Specifies                                         |
+        # +--------------+---------------------------------------------------+
+        # | CheckBox     | Whether the item is selected. Set to 1 to specify |
+        # | OptionButton | that the control is selected. Set to zero to      |
+        # | ToggleButton | specify that the control is cleared. Any other    |
+        # |              | string specifies that the control is neither      |
+        # |              | selected nor cleared.                             |
+        # +--------------+---------------------------------------------------+
+        # | ComboBox     | The value in the BoundColumn of the currently     |
+        # | ListBox      | selected row when MultiSelect is set to 0x00      |
+        # |              | (fmMultiSelectSingle). MUST be a zero-length      |
+        # |              | string for other values of MultiSelect, or when   |
+        # |              | there is no selected row, or when BoundColumn is  |
+        # |              | greater than the number of columns.               |
+        # +--------------+---------------------------------------------------+
+        # | TextBox      | The text in the control.                          |
+        # +--------------+---------------------------------------------------+
+        #
+        # The file format default is a zero-length string.
+        #
+        # '}'
+        astore__fork(store, "Value::CountOfBytesWithCompressionFlag", _store);
+        _r = forms20__unpack_countofbyteswithcompressionflag(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    #
+    # Padding9 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fCaption")) {
+        # '${__pp_comment:+'
+        #
+        # Caption (variable)
+        #
+        # [MS-OFORMS] 2.5.10 Caption
+        #
+        # An fmString that specifies the descriptive text that appears on a control to
+        # identify or describe it.
+        # The file format default is a zero-length string.
+        #
+        # '}'
+        astore__fork(store, "Caption::CountOfBytesWithCompressionFlag", _store);
+        _r = forms20__unpack_countofbyteswithcompressionflag(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    #
+    # Padding10 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fPicturePosition")) {
+        # '${__pp_comment:+'
+        #
+        # PicturePosition (4 byte)
+        #
+        # [MS-OFORMS]
+        # 2.5.64 PicturePosition
+        #
+        # An fmPicturePosition that specifies the location of the picture of a
+        # control relative to the caption of the control.
+        #
+        # The file format default is 0x00070001, fmPicturePositionAboveCenter.
+        #
+        # '}'
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "PicturePosition::fmPicturePosition", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding11 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fBorderColor")) {
+        # '${__pp_comment:+'
+        #
+        # BorderColor (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.7 BorderColor
+        #
+        # An OLE_COLOR that specifies the color of the border of the control.
+        # The file format default is specified in the following table.
+        #
+        # +--------------+---------------------+-----------------------------+
+        # | Control      | File format default | Meaning                     |
+        # +--------------+---------------------+-----------------------------+
+        # | ComboBox     | 0x80000006          | COLOR_WINDOWFRAME from the  |
+        # | Image        |                     | the system palette.         |
+        # | Label        |                     |                             |
+        # | ListBox      |                     |                             |
+        # | TextBox      |                     |                             |
+        # +--------------+---------------------+-----------------------------+
+        # | Form         | 0x80000012          | COLOR_BTNTEXT from the      |
+        # |              |                     | system palette.                            |
+        # +--------------+---------------------+-----------------------------+
+        #
+        # '}'
+        astore__fork(store, "BorderColor::OLE_COLOR", _store);
+        _r = forms20__unpack_olecolor(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    #
+    # Padding12 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fSpecialEffect")) {
+        #
+        # SpecialEffect (1 byte)
+        #
+        # [MS-OFORMS] 2.5.80 SpecialEffect
+        #
+        # An fmSpecialEffect that specifies the visual appearance of the
+        # control. MUST be set to 0x02 for ToggleButton controls.
+        #
+        # the default value of MorphData is 0x00 fmSpecialEffectFlat.
+        #
+        _v = stream__read_uint8(stream);
+        if (astore__set(store, "SpecialEffect::fmSpecialEffect", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding13 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fMouseIcon")) {
+        # MouseIcon (2 bytes)
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "MouseIcon::hexint16,mustbe(&HFFFF)", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding14 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fPicture")) {
+        # Picture (2 bytes)
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "Picture::hexint16,mustbe(&HFFFF)", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding15 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fAccelerator")) {
+        #
+        # Accelerator (2 bytes)
+        #
+        # [MS-OFORMS] 2.5.1 Accelerator
+        #
+        # A Unicode character that specifies the accelerator key
+        # for the control.
+        # The file format default is 0x0000, no accelerator.
+        #
+        _v = stream__read_uint16(stream);
+        if (astore__set(store, "Accelerator::hexint16", _v) < 0) {
+            return forms20__E_UNEXPECTED;
+        }
+    }
+
+    #
+    # Padding16 (variable)
+    #
+    stream__skip_to_align(stream, 4);
+
+    if (astore__get(store, "../PropMask/fGroupName")) {
+        # '${__pp_comment:+'
+        #
+        # GroupName (4 bytes)
+        #
+        # [MS-OFORMS] 2.5.36 GroupName
+        #
+        # An fmString that specifies a group of mutually exclusive controls.
+        #
+        # The file format default is a zero-length string.
+        #
+        # '}'
+        astore__fork(store, "GroupName::CountOfBytesWithCompressionFlag", _store);
+        _r = forms20__unpack_countofbyteswithcompressionflag(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    # Padding17 (variable)
+    stream__skip_to_align(stream, 4);
+
+    return forms20__S_OK;
+}
+# }}}
+# {{{ [MS-OFORMS] 2.2.4.4 MorphDataExtraDataBlock
+# '${__pp_comment:+'
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                        Size (variable)                        |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                        Value (variable)                       |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                       Caption (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                      GroupName (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+forms20__unpack_morphdataextradatablock( \
+    stream, store, \
+    \
+    _store, _r, _size, _compressed \
+) {
+    # *Padding1
+    stream__skip_to_align(stream, 4);
+
+    # Size (8 bytes)
+    if (astore__get(store, "../PropMask/fSize")) {
+        #
+        # [MS-OFORMS] 2.5.78 Size
+        #
+        # An fmSize that specifies width and height, in HIMETRIC units,
+        # of the control.
+        # Each control to which this property applies MUST persist a
+        # value for it.
+        #
+        # Applies to:
+        #
+        #   CheckBox
+        #   ComboBox
+        #   CommandButton
+        #   Image
+        #   MorphData
+        #   ListBox
+        #   OptionButton
+        #   TabStrip
+        #   TextBox
+        #   ToggleButton
+        #
+        astore__fork(store, "Size::fmSize", _store);
+        _r = forms20__unpack_fmsize(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    # Value (variable)
+    if (astore__get(store, "../PropMask/fValue")) {
+        if (! astore__has(store, "../DataBlock/Value/cb")) {
+            E__message = "\"../DataBlock/Value/cb\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        if (! astore__has(store, "../DataBlock/Value/fCompressed")) {
+            E__message = "\"../DataBlock/Value/fCompressed\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        _size = astore__get(store, "../DataBlock/Value/cb");
+        _compressed = astore__get(store, "../DataBlock/Value/fCompressed");
+
+        #
+        # [MS-OFORMS] 2.5.95 Value
+        #
+        astore__fork(store, "Value::fmString", _store);
+        _r = forms20__unpack_fmstring(stream, _store, _size, _compressed);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    # Caption (variable)
+    if (astore__get(store, "../PropMask/fCaption")) {
+        if (! astore__has(store, "../DataBlock/Caption/cb")) {
+            E__message = "\"../DataBlock/Caption/cb\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        if (! astore__has(store, "../DataBlock/Caption/fCompressed")) {
+            E__message = "\"../DataBlock/Caption/fCompressed\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        _size = astore__get(store, "../DataBlock/Caption/cb");
+        _compressed = astore__get(store, "../DataBlock/Caption/fCompressed");
+
+        #
+        # [MS-OFORMS] 2.5.10 Caption
+        #
+        # An fmString that specifies the descriptive text that appears
+        # on a control to identify or describe it. The file format default
+        # is a zero-length string.
+        #
+        astore__fork(store, "Caption::fmString", _store);
+        _r = forms20__unpack_fmstring(stream, _store, _size, _compressed);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    # GroupName (variable)
+    if (astore__get(store, "../PropMask/fGroupName")) {
+        if (! astore__has(store, "../DataBlock/GroupName/cb")) {
+            E__message = "\"../DataBlock/GroupName/cb\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        if (! astore__has(store, "../DataBlock/GroupName/fCompressed")) {
+            E__message = "\"../DataBlock/GroupName/fCompressed\" property not found";
+            return forms20__E_UNEXPECTED;
+        }
+        _size = astore__get(store, "../DataBlock/GroupName/cb");
+        _compressed = astore__get(store, "../DataBlock/GroupName/fCompressed");
+
+        #
+        # [MS-OFORMS] 2.5.95 GroupName
+        #
+        astore__fork(store, "GroupName::fmString", _store);
+        _r = forms20__unpack_fmstring(stream, _store, _size, _compressed);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    return forms20__S_OK;
+}
+# }}}
+# {{{ [MS-OFORMS] 2.2.5.5 MorphDataStreamData
+# '${__pp_comment:+'
+#
+# Specifies picture properties of the control that are not set to the
+# file format defaults. If the corresponding bit in the PropMask of
+# the MorphDataControl that contains this MorphDataStreamData is set to
+# zero, the property value MUST NOT be stored in the file.
+#
+# +===============================================================+
+# |                    1                   2                   3  |
+# |0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1|
+# +===============================================================+
+# |                      MouseIcon (variable)                     |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+# |                       Picture (variable)                      |
+# +---------------------------------------------------------------+
+# |                              ...                              |
+# +---------------------------------------------------------------+
+#
+# '}'
+function \
+forms20__unpack_morphdatastreamdata( \
+    stream, store, \
+    \
+    _store, _r \
+) {
+    # MouseIcon (variable)
+    if (astore__get(store, "../PropMask/fMouseIcon")) {
+        #
+        # [MS-OFORMS] 2.5.49 MouseIcon
+        #
+        # A GuidAndPicture that specifies a custom icon to display as the mouse
+        # pointer for the control, which is used when the value of the MousePointer
+        # property is set to 99, fmMousePointerCustom. The file format default is
+        # no custom icon.
+        #
+        astore__fork(store, "MouseIcon::GuidAndPicture", _store);
+        _r = forms20__unpack_guidandpicture(stream, _store);
+        if (_r < 0) {
+            return _r;
+        }
+    }
+
+    # Picture (variable)
+    if (astore__get(store, "../PropMask/fPicture")) {
+        #
+        # [MS-OFORMS] 2.5.62 Picture
+        #
+        # A GuidAndPicture that specifies the picture to display on a control.
+        # The file format default is no picture.
+        #
+        astore__fork(store, "Picture", _store);
         _r = forms20__unpack_guidandpicture(stream, _store);
         if (_r < 0) {
             return _r;
@@ -33566,7 +35223,7 @@ forms20__unpack_formextradatablock( \
         }
     }
 
-    # CaptionString (variable bytes)
+    # CaptionString (variable)
     if (astore__get(store, "../PropMask/fCaption")) {
         if (! astore__has(store, "../DataBlock/LengthAndCompression/cb")) {
             E__message = "\"../DataBlock/LengthAndCompression/cb\" property not found";
@@ -35273,6 +36930,7 @@ forms20__unpack_textprops( \
     \
     _store, _v, _r \
 ) {
+    stream__skip_to_align(stream, 4);
     # MinorVersion (1 byte)
     _v = stream__read_uint8(stream);
     if (astore__set(store, "MinorVersion::uint8,mustbe(0)", _v) < 0) {
@@ -35570,7 +37228,7 @@ forms20__unpack_textpropsextradatablock( \
     \
     _store, _r, _size, _compressed \
 ) {
-    # FontName (variable bytes)
+    # FontName (variable)
     if (astore__get(store, "../PropMask/fFontName")) {
         if (! astore__has(store, "../DataBlock/FontName/cb")) {
             E__message = "\"../DataBlock/FontName/cb\" property not found";
@@ -37449,9 +39107,10 @@ __cli__dirty_extract_vba_from_zip( \
     }
     if (! _relpath) {
         E__message = sprintf( \
-            "Office document file (type: %s or %s) is not found.", \
+            "Office document file (type: %s or %s) is not found in %s.", \
             ooxml__C_schema_OFFICEDOCUMENT, \
-            ooxml__C_schema_VISIODOCUMENT);
+            ooxml__C_schema_VISIODOCUMENT, \
+            _relpath);
         return cli__E_ACCESSDENIED;
     }
 
