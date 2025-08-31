@@ -6452,6 +6452,12 @@ astore__init(    _status) {
       , format: `&H%0{(n - 1) / 4 + 1}X`            \
     }                                               \
                                                     \
+    atom bitprop<n> {                               \
+        type: unsigned integer                      \
+      , size: n bits                                \
+      , format: `%d`                                \
+    }                                               \
+                                                    \
     atom bool: bits<1> {                            \
         format: `%d`                                \
       , map: {                                      \
@@ -30530,20 +30536,20 @@ forms20__init(    _status) {
     _status = atom__declare(" \
     atom fmMousePointer: uint8 {                    \
         map: {                                      \
-            1: `fmMousePointerDefault`              \
-            2: `fmMousePointerArrow`                \
-            3: `fmMousePointerCross`                \
-            6: `fmMousePointerIBeam`                \
-            7: `fmMousePointerSizeNESW`             \
-            8: `fmMousePointerSizeNS`               \
-            9: `fmMousePointerSizeNWSE`             \
-           10: `fmMousePointerSizeWE`               \
-           11: `fmMousePointerUpArrow`              \
-           12: `fmMousePointerHourGlass`            \
-           13: `fmMousePointerNoDrop`               \
-           14: `fmMousePointerAppStarting`          \
-           15: `fmMousePointerHelp`                 \
-           16: `fmMousePointerSizeAll`              \
+            0: `fmMousePointerDefault`              \
+            1: `fmMousePointerArrow`                \
+            2: `fmMousePointerCross`                \
+            3: `fmMousePointerIBeam`                \
+            6: `fmMousePointerSizeNESW`             \
+            7: `fmMousePointerSizeNS`               \
+            8: `fmMousePointerSizeNWSE`             \
+            9: `fmMousePointerSizeWE`               \
+           10: `fmMousePointerUpArrow`              \
+           11: `fmMousePointerHourGlass`            \
+           12: `fmMousePointerNoDrop`               \
+           13: `fmMousePointerAppStarting`          \
+           14: `fmMousePointerHelp`                 \
+           15: `fmMousePointerSizeAll`              \
            99: `fmMousePointerCustom`               \
         }                                           \
     }                                               \
@@ -30607,7 +30613,7 @@ forms20__init(    _status) {
     # fmIMEModeHanzi        0xC IME on with half-width hanzi mode.
     #
     _status = atom__declare(" \
-    atom fmIMEMode: bits<4> {                       \
+    atom fmIMEMode: bitprop<4> {                    \
         map: {                                      \
             0: `fmIMEModeNoControl`                 \
             1: `fmIMEModeOn`                        \
@@ -30643,7 +30649,7 @@ forms20__init(    _status) {
     # +-----------------------+-------+--------------------------------------+
     #
     _status = atom__declare(" \
-    atom fmBackStyle: bits<1> {                     \
+    atom fmBackStyle: bitprop<1> {                  \
         map: {                                      \
             0: `fmBackStyleTransparent`             \
             1: `fmBackStyleOpaque`                  \
@@ -33399,7 +33405,7 @@ forms20__unpack_morphdatapropmask(stream, store,     _v) {
 
     # UnusedBits3 (31 bits)
     _v = stream__read_bits(stream, 31);
-    if (astore__set(store, "UnusedBits3::uint32,mustbe(0)", _v) < 0) {
+    if (astore__set(store, "UnusedBits3::bits<31>,mustbe(0)", _v) < 0) {
         return forms20__E_UNEXPECTED;
     }
 
@@ -33671,7 +33677,7 @@ forms20__unpack_morphdatadatablock( \
         #
         # Padding1 (variable)
         #
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # '${__pp_comment:+'
         #
@@ -33724,7 +33730,7 @@ forms20__unpack_morphdatadatablock( \
         #
         # Padding3 (variable)
         #
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # '${__pp_comment:+'
         #
@@ -33766,7 +33772,7 @@ forms20__unpack_morphdatadatablock( \
         #
         # Padding4 (variable)
         #
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # '${__pp_comment:+'
         #
@@ -33805,7 +33811,7 @@ forms20__unpack_morphdatadatablock( \
         #
         # Padding5 (variable)
         #
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # '${__pp_comment:+'
         #
@@ -33831,7 +33837,7 @@ forms20__unpack_morphdatadatablock( \
         #
         # Padding6 (variable)
         #
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # '${__pp_comment:+'
         #
@@ -33851,12 +33857,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding7 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fcColumnInfo")) {
+        #
+        # Padding7 (variable)
+        #
+        stream__skip_to_align(stream, 2);
+
         # '${__pp_comment:+'
         #
         # cColumnInfo (2 bytes)
@@ -33973,12 +33979,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding8 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fValue")) {
+        #
+        # Padding8 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
         # '${__pp_comment:+'
         #
         # Vlaue (4 bytes)
@@ -34017,12 +34023,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding9 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fCaption")) {
+        #
+        # Padding9 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
         # '${__pp_comment:+'
         #
         # Caption (variable)
@@ -34041,12 +34047,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding10 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fPicturePosition")) {
+        #
+        # Padding10 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
         # '${__pp_comment:+'
         #
         # PicturePosition (4 byte)
@@ -34066,12 +34072,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding11 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fBorderColor")) {
+        #
+        # Padding11 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
         # '${__pp_comment:+'
         #
         # BorderColor (4 bytes)
@@ -34102,14 +34108,14 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding12 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fSpecialEffect")) {
         #
-        # SpecialEffect (1 byte)
+        # Padding12 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
+        #
+        # SpecialEffect (4 byte)
         #
         # [MS-OFORMS] 2.5.80 SpecialEffect
         #
@@ -34118,18 +34124,18 @@ forms20__unpack_morphdatadatablock( \
         #
         # the default value of MorphData is 0x00 fmSpecialEffectFlat.
         #
-        _v = stream__read_uint8(stream);
+        _v = stream__read_uint32(stream);
         if (astore__set(store, "SpecialEffect::fmSpecialEffect", _v) < 0) {
             return forms20__E_UNEXPECTED;
         }
     }
 
-    #
-    # Padding13 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fMouseIcon")) {
+        #
+        # Padding13 (variable)
+        #
+        stream__skip_to_align(stream, 2);
+
         # MouseIcon (2 bytes)
         _v = stream__read_uint16(stream);
         if (astore__set(store, "MouseIcon::hexint16,mustbe(&HFFFF)", _v) < 0) {
@@ -34137,12 +34143,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding14 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fPicture")) {
+        #
+        # Padding14 (variable)
+        #
+        stream__skip_to_align(stream, 2);
+
         # Picture (2 bytes)
         _v = stream__read_uint16(stream);
         if (astore__set(store, "Picture::hexint16,mustbe(&HFFFF)", _v) < 0) {
@@ -34150,12 +34156,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding15 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fAccelerator")) {
+        #
+        # Padding15 (variable)
+        #
+        stream__skip_to_align(stream, 2);
+
         #
         # Accelerator (2 bytes)
         #
@@ -34171,12 +34177,12 @@ forms20__unpack_morphdatadatablock( \
         }
     }
 
-    #
-    # Padding16 (variable)
-    #
-    stream__skip_to_align(stream, 4);
-
     if (astore__get(store, "../PropMask/fGroupName")) {
+        #
+        # Padding16 (variable)
+        #
+        stream__skip_to_align(stream, 4);
+
         # '${__pp_comment:+'
         #
         # GroupName (4 bytes)
@@ -35539,6 +35545,7 @@ forms20__unpack_formdesignexdata( \
     _store, _r \
 ) {
     if (astore__get(store, "../DataBlock/BooleanProperties/FORM_FLAG_DESINKPERSISTED")) {
+        stream__skip_to_align(stream, 4);
         #
         # DesignEx (variable)
         #
@@ -36319,7 +36326,7 @@ forms20__unpack_olesiteconcreatecontrol( \
     }
 
 #    stream__skip_to_align(stream, 4);
-#
+
 #    # *ControlCLSID (32 bytes)
 #    _remain -= stream__pos(stream);
 #    if (_remain >= 32) {
@@ -37175,7 +37182,7 @@ forms20__unpack_textpropsdatablock( \
 
     if (astore__get(store, "../PropMask/fFontWeight")) {
         # Padding1(variable)
-        stream__skip_to_align(stream, 4);
+        stream__skip_to_align(stream, 2);
 
         # FontWeight (2 bytes)
         #
@@ -38396,7 +38403,7 @@ forms20__unpack_variouspropertybits( \
 
     # Unused1 (5 bits):
     _v = stream__read_bits(stream, 5);
-    if (astore__set(store, "Unused1::uint8,mustbe(0)", _v) < 0) {
+    if (astore__set(store, "Unused1::bits<5>,mustbe(0)", _v) < 0) {
         return forms20__E_UNEXPECTED;
     }
 

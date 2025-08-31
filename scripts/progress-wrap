@@ -2,6 +2,7 @@
 : "${_bar:=$(printf '%.s#' {1..60})}" \
   "${_start:=$(date +%s)}" \
   "${_sgr0:=$(tput sgr0)}" \
+  "${_setaf1:=$(tput setaf 1)}" \
   "${_bold:=$(tput bold)}" \
   "${_sc:=$(tput sc)}" \
   "${_rc:=$(tput rc)}" \
@@ -28,9 +29,10 @@ cd "$(dirname "${0}")"/.. && {
     trap 'echo "${_ed} ${_cnorm}"; exit 130;' 2 && { \
         printf "${_civis}${_ind}${_ind}${_ind}${_ind}${_ind}${_cuu5}${_sc}"; 
         "${@}" | while read -r file r; do \
-            test "${r}" = 0 && : $((++i)); \
-            printf "${_rc}%s${_el}\n[%-${#_bar}s] %3s${_el}\n[%2d / %2d] %s${_ed}" \
+            test "${r}" = 0 && : $((++i)) || : $((++e)); \
+            printf "${_rc}%s${_el} %s\n[%-${#_bar}s] %3s${_el}\n[%2d / %2d] %s${_ed}" \
                 "[${_bold}${AWK:=auto detected AWK}${_sgr0}]" \
+                "$(test -n "${e}" && printf "${_setaf1}%d errors${_sgr0}" ${e})" \
                 "${_bar:0:$((i * ${#_bar} / _cnt))}" \
                 "${_bold}$(($("${date_bin}" "${date_arg}") - _start))s${_sgr0}" \
                 "${i}" "${_cnt}" "${file}"; \
