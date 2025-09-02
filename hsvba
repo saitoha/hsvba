@@ -15659,7 +15659,7 @@ zlib__inflate( \
     #
     # '}'
     _bfinal = stream__read_bits(istream, 1);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         _status = astore__set(_store, "BFINAL", _bfinal);
         if (_status < 0) {
             return _status;
@@ -15667,7 +15667,7 @@ zlib__inflate( \
     }
 
     _btype = stream__read_bits(istream, 2);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         _status = astore__set(_store, "BTYPE", _btype);
         if (_status < 0) {
             return _status;
@@ -16164,14 +16164,14 @@ __zlib__inflate__uncompressed_block( \
     stream__skip_to_align(istream, 1);
 
     _len = stream__read_uint16(istream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         if (astore__set(store, "LEN", _len) < 0) {
             return (-1);
         }
     }
 
     _nlen = stream__read_uint16(istream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         if (astore__set(store, "NLEN", _nlen) < 0) {
             return (-1);
         }
@@ -16297,19 +16297,19 @@ __zlib__inflate__dynamic_huffman_block( \
     #
     # '}'
     _hlit = stream__read_bits(istream, 5);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         if (astore__set(store, "HLIT", _hlit) < 0) {
             return (-1);
         }
     }
     _hdist = stream__read_bits(istream, 5);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         if (astore__set(store, "HDIST", _hdist) < 0) {
             return (-1);
         }
     }
     _hclen = stream__read_bits(istream, 4);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zlib__verbose_export) {
         if (astore__set(store, "HCLEN", _hclen) < 0) {
             return (-1);
         }
@@ -17003,7 +17003,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # number of this disk
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "number of this disk", _v);
         if (_status < 0) {
             return _status;
@@ -17012,7 +17012,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # number of this disk with the start of the central directory
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "number of this disk with the start of the central directory", _v);
         if (_status < 0) {
             return _status;
@@ -17021,7 +17021,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # total number of entries in the central directory on this disk
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "total number of entries in the central directory on this disk", _v);
         if (_status < 0) {
             return _status;
@@ -17037,7 +17037,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # size of the central directory
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "size of the central directory", _v);
         if (_status < 0) {
             return _status;
@@ -17053,7 +17053,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # .ZIP file comment length
     _v = _zip_file_comment_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "ZIP file comment length", _v);
         if (_status < 0) {
             return _status;
@@ -17062,7 +17062,7 @@ __zip__unpack_end_of_central_directory_record( \
 
     # .ZIP file comment
     _v = stream__read_raw_string(stream, _zip_file_comment_length);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "ZIP file comment", _v);
         if (_status < 0) {
             return _status;
@@ -17127,7 +17127,7 @@ __zip__unpack_central_header( \
 
     # version made by
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "version made by", _v);
         if (_status < 0) {
             return _status;
@@ -17135,7 +17135,7 @@ __zip__unpack_central_header( \
     }
 
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "version needed to extract", _v);
         if (_status < 0) {
             return _status;
@@ -17144,7 +17144,7 @@ __zip__unpack_central_header( \
 
     # general purpose bit flag
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "general purpose bit flag", _v);
         if (_status < 0) {
             return _status;
@@ -17153,7 +17153,7 @@ __zip__unpack_central_header( \
 
     # compression method
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "compression method", _v);
         if (_status < 0) {
             return _status;
@@ -17162,7 +17162,7 @@ __zip__unpack_central_header( \
 
     # last mod file time
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "last mod file time", _v);
         if (_status < 0) {
             return _status;
@@ -17171,7 +17171,7 @@ __zip__unpack_central_header( \
 
     # last mod file date
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "last mod file date", _v);
         if (_status < 0) {
             return _status;
@@ -17180,7 +17180,7 @@ __zip__unpack_central_header( \
 
     # crc-32
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "crc-32", _v);
         if (_status < 0) {
             return _status;
@@ -17189,7 +17189,7 @@ __zip__unpack_central_header( \
 
     # compressed size
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "compressed size", _v);
         if (_status < 0) {
             return _status;
@@ -17198,7 +17198,7 @@ __zip__unpack_central_header( \
 
     # uncompressed size
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "uncompressed size", _v);
         if (_status < 0) {
             return _status;
@@ -17207,7 +17207,7 @@ __zip__unpack_central_header( \
 
     # file name length
     _v = _file_name_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "file name length", _v);
         if (_status < 0) {
             return _status;
@@ -17216,7 +17216,7 @@ __zip__unpack_central_header( \
 
     # extra field length
     _v = _extra_field_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "extra field length", _v);
         if (_status < 0) {
             return _status;
@@ -17225,7 +17225,7 @@ __zip__unpack_central_header( \
 
     # file comment length
     _v = _file_comment_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "file comment_length", _v);
         if (_status < 0) {
             return _status;
@@ -17234,7 +17234,7 @@ __zip__unpack_central_header( \
 
     # disk number start
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "disk number start", _v);
         if (_status < 0) {
             return _status;
@@ -17243,7 +17243,7 @@ __zip__unpack_central_header( \
 
     # internal file attributes
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "internal file attributes", _v);
         if (_status < 0) {
             return _status;
@@ -17252,7 +17252,7 @@ __zip__unpack_central_header( \
 
     # external file attributes
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "external file attributes", _v);
         if (_status < 0) {
             return _status;
@@ -17275,7 +17275,7 @@ __zip__unpack_central_header( \
 
     # extra field
     _v = stream__read_hex_string(stream, _extra_field_length);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "extra field", _v);
         if (_status < 0) {
             return _status;
@@ -17284,7 +17284,7 @@ __zip__unpack_central_header( \
 
     # extra field
     _v = stream__read_hex_string(stream, _file_comment_length);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(store, "file comment", _v);
         if (_status < 0) {
             return _status;
@@ -17367,7 +17367,7 @@ __zip__unpack_local_file_header( \
     #
     # '}'
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "version needed to extract::uint8,le(20)", _v);
         if (_status < 0) {
             return _status;
@@ -17376,7 +17376,7 @@ __zip__unpack_local_file_header( \
 
     # general purpose bit flag
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "general purpose bit flag", _v);
         if (_status < 0) {
             return _status;
@@ -17424,7 +17424,7 @@ __zip__unpack_local_file_header( \
     #
     # '}'
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "compression method::uint16,mustbe(8)", _v);
         if (_status < 0) {
             return _status;
@@ -17433,7 +17433,7 @@ __zip__unpack_local_file_header( \
 
     # last mod file time
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "last mod file time", _v);
         if (_status < 0) {
             return _status;
@@ -17442,7 +17442,7 @@ __zip__unpack_local_file_header( \
 
     # last mod file date
     _v = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "last mod file date", _v);
         if (_status < 0) {
             return _status;
@@ -17451,7 +17451,7 @@ __zip__unpack_local_file_header( \
 
     # crc-32
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "crc-32", _v);
         if (_status < 0) {
             return _status;
@@ -17460,7 +17460,7 @@ __zip__unpack_local_file_header( \
 
     # compressed size
     _v = stream__read_uint32(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "compressed size", _v);
         if (_status < 0) {
             return _status;
@@ -17476,7 +17476,7 @@ __zip__unpack_local_file_header( \
 
     # file name length
     _v = _file_name_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "file name length", _v);
         if (_status < 0) {
             return _status;
@@ -17485,7 +17485,7 @@ __zip__unpack_local_file_header( \
 
     # extra field length
     _v = _extra_field_length = stream__read_uint16(stream);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "extra field length", _v);
         if (_status < 0) {
             return _status;
@@ -17494,7 +17494,7 @@ __zip__unpack_local_file_header( \
 
     # file name
     _v = stream__read_raw_string(stream, _file_name_length);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "file name", _v);
         if (_status < 0) {
             return _status;
@@ -17503,7 +17503,7 @@ __zip__unpack_local_file_header( \
 
     # extra field
     _v = stream__read_hex_string(stream, _extra_field_length);
-    if (num__and(__cli__S_opt_print, OPT_PRINT_ZIP)) {
+    if (zip__verbose_export) {
         _status = astore__set(_store, "extra field", _v);
         if (_status < 0) {
             return _status;
@@ -29827,7 +29827,7 @@ vba__modulestream__unpack( \
 ) {
     astore__new(_store, "/VBA/Project/ModulesRecord/Modules");
 
-    if (num__and(__cli__S_opt_print, OPT_PRINT_PCD)) {
+    if (pcode__verbose_export) {
         pcode__init();
     }
 
@@ -29850,7 +29850,7 @@ vba__modulestream__unpack( \
             return _r;
         }
 
-        if (num__and(__cli__S_opt_print, OPT_PRINT_PCD)) {
+        if (pcode__verbose_export) {
             astore__new(_store_p, "/P-code/" _stream_name);
             if (astore__set(_store_p, "Name", _stream_name) < 0) {
                 return vba__modulestream__E_UNEXPECTED;
@@ -29864,7 +29864,7 @@ vba__modulestream__unpack( \
             }
         }
 
-        if (num__and(__cli__S_opt_print, OPT_PRINT_SRC)) {
+        if (vba__modulestream__verbose_export) {
             stream__iseek(_istream, _offset);
 
             astore__new(_store_p, "/VBA/@LZ77CompressedStream" _path);
@@ -38862,6 +38862,7 @@ cli__init(    _i, _status, _buf, _test, _n, _arr) {
     OPT_PRINT_PCD    = 4096;
 
     __cli__S_opt_print = OPT_PRINT_SRC;
+    vba__modulestream__verbose_export = 1;
 
     __cli__S_filecount = 0;
 
@@ -39016,33 +39017,37 @@ hsvba__cli_optparse( \
             for (_n in _opts) {
                 _subopt = _opts[_n];
                 if (_subopt == "zip") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ZIP);
+                    __cli__S_opt_print += OPT_PRINT_ZIP;
+                    zlib__verbose_export = 1;
+                    zip__verbose_export = 1;
                 } else if (_subopt == "oox") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_OOX);
+                    __cli__S_opt_print += OPT_PRINT_OOX;
                 } else if (_subopt == "cfb") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_CFB);
+                    __cli__S_opt_print += OPT_PRINT_CFB;
                 } else if (_subopt == "prj") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PRJ);
+                    __cli__S_opt_print += OPT_PRINT_PRJ;
                 } else if (_subopt == "dir") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_DIR);
+                    __cli__S_opt_print += OPT_PRINT_DIR;
                 } else if (_subopt == "frm") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_FRM);
+                    __cli__S_opt_print += OPT_PRINT_FRM;
                 } else if (_subopt == "src") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_SRC);
+                    __cli__S_opt_print += OPT_PRINT_SRC;
+                    pcode__verbose_export = 1;
                 } else if (_subopt == "ids") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_IDS);
+                    __cli__S_opt_print += OPT_PRINT_IDS;
                 } else if (_subopt == "pcd") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PCD);
+                    __cli__S_opt_print += OPT_PRINT_PCD;
+                    vba__modulestream__verbose_export = 1;
                 } else if (_subopt == "usr") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_USR);
+                    __cli__S_opt_print += OPT_PRINT_USR;
                 } else if (_subopt == "ppt") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_PPT);
+                    __cli__S_opt_print += OPT_PRINT_PPT;
                 } else if (_subopt == "vsd") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_VSD);
+                    __cli__S_opt_print += OPT_PRINT_VSD;
                 } else if (_subopt == "acm") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ACM);
+                    __cli__S_opt_print += OPT_PRINT_ACM;
                 } else if (_subopt == "all") {
-                    __cli__S_opt_print = num__or(__cli__S_opt_print, OPT_PRINT_ALL);
+                    __cli__S_opt_print += OPT_PRINT_ALL;
                 } else if (_subopt == "nul") {
                     __cli__S_opt_print = OPT_PRINT_NULL;
                 } else {
